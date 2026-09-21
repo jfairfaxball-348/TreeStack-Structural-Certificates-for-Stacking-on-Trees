@@ -133,7 +133,7 @@ theorem taskScheduleSafe_append (gain : α → ℤ) (a : ℤ)
   induction xs generalizing a with
   | nil => simp [TaskScheduleSafe, taskGainSum]
   | cons x xs ih =>
-      simp [TaskScheduleSafe, taskGainSum, ih, add_assoc]
+      simp [TaskScheduleSafe, taskGainSum, ih, add_assoc, and_assoc]
 
 theorem taskGainSum_nonpos (gain : α → ℤ) :
     ∀ tasks : List α,
@@ -221,18 +221,24 @@ theorem taskGainSum_partition (gain : α → ℤ) (tasks : List α) :
       by_cases hp : 0 < gain t
       · have hz : gain t ≠ 0 := by linarith
         have hn : ¬ gain t < 0 := by linarith
+        have ih' := ih
+        simp only [positiveTasks, zeroTasks, negativeTasks] at ih'
         simp [taskGainSum, positiveTasks, zeroTasks, negativeTasks,
-          hp, hz, hn, ih]
-        ring
+          hp, hz, hn]
+        linarith
       · by_cases hz : gain t = 0
         · have hn : ¬ gain t < 0 := by linarith
+          have ih' := ih
+          simp only [positiveTasks, zeroTasks, negativeTasks] at ih'
           simp [taskGainSum, positiveTasks, zeroTasks, negativeTasks,
-            hp, hz, hn, ih]
-          ring
+            hp, hz, hn]
+          exact ih'
         · have hn : gain t < 0 := by omega
+          have ih' := ih
+          simp only [positiveTasks, zeroTasks, negativeTasks] at ih'
           simp [taskGainSum, positiveTasks, zeroTasks, negativeTasks,
-            hp, hz, hn, ih]
-          ring
+            hp, hz, hn]
+          linarith
 
 theorem taskGainSum_orderedTasks (gain : α → ℤ) (tasks : List α) :
     taskGainSum gain (orderedTasks gain tasks) =
