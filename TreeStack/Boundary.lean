@@ -102,6 +102,24 @@ noncomputable def carrier (B : OrientedBranch T) : Finset V :=
   classical
   simp [carrier]
 
+@[simp] theorem carrier_erase_parent (B : OrientedBranch T) :
+    B.carrier.erase B.parent = B.vertices := by
+  classical
+  ext v
+  constructor
+  · intro hv
+    have hv' : v ∈ B.carrier ∧ v ≠ B.parent := by
+      simpa using hv
+    have hcases : v = B.parent ∨ v ∈ B.vertices := by
+      simpa [carrier] using hv'.1
+    exact hcases.resolve_left hv'.2
+  · intro hv
+    have hne : v ≠ B.parent := by
+      intro h
+      subst v
+      exact B.parent_not_mem_vertices hv
+    simp [carrier, hv, hne]
+
 /-- A move signature uses no vertex outside the branch plus its boundary
 vertex. -/
 def MoveSignature.SupportedOn (m : MoveSignature T) (B : OrientedBranch T) : Prop :=
@@ -426,9 +444,7 @@ theorem carrierMass_withBoundary_eq_of_not_occupied
   classical
   have hp : B.parent ∈ B.carrier := by
     simp [carrier]
-  have herase : B.carrier.erase B.parent = B.vertices := by
-    ext v
-    simp [carrier, B.parent_not_mem_vertices]
+  have herase := B.carrier_erase_parent
   have hz := (B.not_occupied_iff_zero_on_vertices C).1 hEmpty
   have hsum : ∑ v ∈ B.vertices, B.withBoundary C q v = 0 := by
     apply Finset.sum_eq_zero
@@ -446,9 +462,7 @@ theorem carrierMass_eq_parent_of_cleared
   classical
   have hp : B.parent ∈ B.carrier := by
     simp [carrier]
-  have herase : B.carrier.erase B.parent = B.vertices := by
-    ext v
-    simp [carrier, B.parent_not_mem_vertices]
+  have herase := B.carrier_erase_parent
   have hsum : ∑ v ∈ B.vertices, D v = 0 := by
     apply Finset.sum_eq_zero
     intro v hv
@@ -562,9 +576,7 @@ theorem signedCarrierMass_withBoundary_eq_of_not_occupied
   classical
   have hp : B.parent ∈ B.carrier := by
     simp [carrier]
-  have herase : B.carrier.erase B.parent = B.vertices := by
-    ext v
-    simp [carrier, B.parent_not_mem_vertices]
+  have herase := B.carrier_erase_parent
   have hz := (B.not_occupied_iff_zero_on_vertices C).1 hEmpty
   have hsum :
       ∑ v ∈ B.vertices,
@@ -588,9 +600,7 @@ theorem signedCarrierMass_eq_parent_of_cleared
   classical
   have hp : B.parent ∈ B.carrier := by
     simp [carrier]
-  have herase : B.carrier.erase B.parent = B.vertices := by
-    ext v
-    simp [carrier, B.parent_not_mem_vertices]
+  have herase := B.carrier_erase_parent
   have hsum :
       ∑ v ∈ B.vertices, B.boundaryParityWeight v * (D v : ℤ) = 0 := by
     apply Finset.sum_eq_zero
