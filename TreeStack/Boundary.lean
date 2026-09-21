@@ -701,6 +701,202 @@ theorem ClearOutcome.exists_emptyExcursion_signature
   rw [ha]
   ring
 
+
+/-- Net signature flux contributed by all genuine child edges at the branch
+root. This is the signature analogue of the recursive child-message sum. -/
+noncomputable def signatureChildFluxSum
+    (m : MoveSignature T) (B : OrientedBranch T) : ℤ :=
+  ∑ v : V,
+    if h : T.graph.Adj B.root v ∧ v ≠ B.parent then
+      (m.count v B.root : ℤ) - 2 * (m.count B.root v : ℤ)
+    else
+      0
+
+theorem MoveSignature.incoming_root_eq_parent_add_children
+    (m : MoveSignature T) (B : OrientedBranch T) :
+    (m.incoming B.root : ℤ) =
+      (m.count B.parent B.root : ℤ) +
+        ∑ v : V,
+          if h : T.graph.Adj B.root v ∧ v ≠ B.parent then
+            (m.count v B.root : ℤ)
+          else
+            0 := by
+  classical
+  rw [MoveSignature.incoming]
+  push_cast
+  calc
+    (∑ v : V, (m.count v B.root : ℤ)) =
+        ∑ v : V,
+          ((if v = B.parent then (m.count B.parent B.root : ℤ) else 0) +
+            if h : T.graph.Adj B.root v ∧ v ≠ B.parent then
+              (m.count v B.root : ℤ)
+            else
+              0) := by
+      apply Finset.sum_congr rfl
+      intro v _
+      by_cases hvp : v = B.parent
+      · subst v
+        simp
+      · by_cases hadj : T.graph.Adj B.root v
+        · simp [hvp, hadj]
+        · have hz : m.count v B.root = 0 := by
+            apply Nat.eq_zero_of_not_pos
+            intro hpos
+            exact hadj (m.supported hpos).symm
+          simp [hvp, hadj, hz]
+    _ =
+        (m.count B.parent B.root : ℤ) +
+          ∑ v : V,
+            if h : T.graph.Adj B.root v ∧ v ≠ B.parent then
+              (m.count v B.root : ℤ)
+            else
+              0 := by
+      rw [Finset.sum_add_distrib]
+      simp
+
+theorem MoveSignature.outgoing_root_eq_parent_add_children
+    (m : MoveSignature T) (B : OrientedBranch T) :
+    (m.outgoing B.root : ℤ) =
+      (m.count B.root B.parent : ℤ) +
+        ∑ v : V,
+          if h : T.graph.Adj B.root v ∧ v ≠ B.parent then
+            (m.count B.root v : ℤ)
+          else
+            0 := by
+  classical
+  rw [MoveSignature.outgoing]
+  push_cast
+  calc
+    (∑ v : V, (m.count B.root v : ℤ)) =
+        ∑ v : V,
+          ((if v = B.parent then (m.count B.root B.parent : ℤ) else 0) +
+            if h : T.graph.Adj B.root v ∧ v ≠ B.parent then
+              (m.count B.root v : ℤ)
+            else
+              0) := by
+      apply Finset.sum_congr rfl
+      intro v _
+      by_cases hvp : v = B.parent
+      · subst v
+        simp
+      · by_cases hadj : T.graph.Adj B.root v
+        · simp [hvp, hadj]
+        · have hz : m.count B.root v = 0 := by
+            apply Nat.eq_zero_of_not_pos
+            intro hpos
+            exact hadj (m.supported hpos)
+          simp [hvp, hadj, hz]
+    _ =
+        (m.count B.root B.parent : ℤ) +
+          ∑ v : V,
+            if h : T.graph.Adj B.root v ∧ v ≠ B.parent then
+              (m.count B.root v : ℤ)
+            else
+              0 := by
+      rw [Finset.sum_add_distrib]
+      simp
+
+theorem signatureChildFluxSum_eq
+    (m : MoveSignature T) (B : OrientedBranch T) :
+    signatureChildFluxSum m B =
+      (∑ v : V,
+        if h : T.graph.Adj B.root v ∧ v ≠ B.parent then
+          (m.count v B.root : ℤ)
+        else
+          0) -
+      2 * (∑ v : V,
+        if h : T.graph.Adj B.root v ∧ v ≠ B.parent then
+          (m.count B.root v : ℤ)
+        else
+          0) := by
+  classical
+  rw [signatureChildFluxSum]
+  calc
+    (∑ v : V,
+      if h : T.graph.Adj B.root v ∧ v ≠ B.parent then
+        (m.count v B.root : ℤ) - 2 * (m.count B.root v : ℤ)
+      else 0) =
+        ∑ v : V,
+          ((if h : T.graph.Adj B.root v ∧ v ≠ B.parent then
+              (m.count v B.root : ℤ)
+            else 0) -
+            2 * (if h : T.graph.Adj B.root v ∧ v ≠ B.parent then
+              (m.count B.root v : ℤ)
+            else 0)) := by
+      apply Finset.sum_congr rfl
+      intro v _
+      by_cases h : T.graph.Adj B.root v ∧ v ≠ B.parent <;> simp [h]
+    _ = _ := by
+      rw [Finset.sum_sub_distrib, ← Finset.mul_sum]
+
+/-- The clearing balance at the branch root, separated into the external
+boundary edge and the total flux of genuine child branches. -/
+theorem MoveSignature.root_balance_with_child_flux
+    (m : MoveSignature T) (C : Configuration V) (B : OrientedBranch T)
+    (hbal : m.BalancesAt C B.root) :
+    (C B.root : ℤ) + signatureChildFluxSum m B +
+        (m.count B.parent B.root : ℤ) -
+      2 * (m.count B.root B.parent : ℤ) = 0 := by
+  rw [MoveSignature.BalancesAt,
+    m.incoming_root_eq_parent_add_children B,
+    m.outgoing_root_eq_parent_add_children B] at hbal
+  rw [signatureChildFluxSum_eq]
+  ring_nf at hbal ⊢
+  exact hbal
+
+/-- If a is no larger than b and the two integers have the same residue
+modulo three, then a is exactly b minus three times a natural number. -/
+theorem exists_nat_three_loss {a b : ℤ}
+    (hle : a ≤ b) (hmod : a % 3 = b % 3) :
+    ∃ k : ℕ, a = b - 3 * (k : ℤ) := by
+  have hme : a ≡ b [ZMOD 3] := by
+    change a % 3 = b % 3
+    exact hmod
+  have hdvd : (3 : ℤ) ∣ b - a :=
+    Int.modEq_iff_dvd.mp hme
+  rcases hdvd with ⟨k, hk⟩
+  have hk0 : 0 ≤ k := by
+    omega
+  refine ⟨k.toNat, ?_⟩
+  rw [Int.toNat_of_nonneg hk0]
+  omega
+
+/-- The transfer keeps the same residue modulo three when its input is
+lowered by three. -/
+theorem F_sub_three_mod_three (z : ℤ) :
+    F (z - 3) % 3 = F z % 3 := by
+  unfold F
+  split_ifs <;> omega
+
+/-- Iterated form of the three-step transfer inequality. -/
+theorem F_sub_three_mul_le (z : ℤ) :
+    ∀ k : ℕ, F (z - 3 * (k : ℤ)) ≤ F z
+  | 0 => by simp
+  | k + 1 => by
+      calc
+        F (z - 3 * ((k + 1 : ℕ) : ℤ)) =
+            F ((z - 3 * (k : ℤ)) - 3) := by
+              congr 1
+              push_cast
+              ring
+        _ ≤ F (z - 3 * (k : ℤ)) :=
+          F_sub_three_le _
+        _ ≤ F z :=
+          F_sub_three_mul_le z k
+
+/-- Iterated residue form accompanying the three-step transfer inequality. -/
+theorem F_sub_three_mul_mod_three (z : ℤ) :
+    ∀ k : ℕ, F (z - 3 * (k : ℤ)) % 3 = F z % 3
+  | 0 => by simp
+  | k + 1 => by
+      have harg :
+          z - 3 * ((k + 1 : ℕ) : ℤ) =
+            (z - 3 * (k : ℤ)) - 3 := by
+        push_cast
+        ring
+      rw [harg, F_sub_three_mod_three]
+      exact F_sub_three_mul_mod_three z k
+
 /-- The exact boundary theorem in the form targeted by the Phase 1 induction.
 This is a proposition/target definition; later proofs must establish it from
 legal move sequences and the recursive message.
