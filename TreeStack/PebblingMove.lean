@@ -45,12 +45,15 @@ theorem mass_move_add_one {V : Type*} [Fintype V] [DecidableEq V]
     (C : Configuration V) {u v : V} (huv : u ≠ v) (hu : 2 ≤ C u) :
     mass (move C u v) + 1 = mass C := by
   classical
-  rw [mass, move, Finset.sum_update_of_mem (Finset.mem_univ v),
+  simp only [mass, move]
+  rw [Finset.sum_update_of_mem (Finset.mem_univ v),
     Finset.sdiff_singleton_eq_erase]
-  rw [Finset.sum_update_of_mem (by simp [huv]),
+  have huv_mem : u ∈ Finset.univ.erase v := by simp [huv]
+  rw [Finset.sum_update_of_mem (s := Finset.univ.erase v) (i := u)
+      (f := C) (b := C u - 2) huv_mem,
     Finset.sdiff_singleton_eq_erase]
   have hv := Finset.sum_erase_add Finset.univ C (Finset.mem_univ v)
-  have hu' := Finset.sum_erase_add (Finset.univ.erase v) C (by simp [huv])
+  have hu' := Finset.sum_erase_add (Finset.univ.erase v) C huv_mem
   omega
 
 /-- A stack is already stackable without making a move. -/
@@ -100,8 +103,9 @@ theorem not_stackable_oneOn_of_two_le_card {V : Type*} [DecidableEq V]
       by_contra hvr
       have hz := hstack.2 v hvr
       simp [oneOn, hv] at hz
-    have hcard : s.card ≤ ({r} : Finset V).card := Finset.card_le_card hsub
-    simp at hcard
+    have hcard : s.card ≤ 1 := by
+      simpa using (Finset.card_le_card hsub)
+    have : 2 ≤ 1 := le_trans hs hcard
     omega
   · exact no_step_oneOn s hstep
 
@@ -125,11 +129,13 @@ theorem exists_two_le_of_card_lt_mass {V : Type*} [Fintype V]
     (C : Configuration V) (h : Fintype.card V < mass C) :
     ∃ v, 2 ≤ C v := by
   by_contra hn
-  push_neg at hn
+  push Not at hn
   have hmass : mass C ≤ Fintype.card V := by
     rw [mass]
     calc
-      (∑ v, C v) ≤ ∑ _v : V, 1 := Finset.sum_le_sum fun v _ => by omega
+      (∑ v, C v) ≤ ∑ _v : V, 1 := Finset.sum_le_sum fun v _ => by
+        have hv := hn v
+        omega
       _ = Fintype.card V := by simp
   omega
 
