@@ -16,3 +16,7 @@ test = ["pytest>=8,<9"]
 pythonpath = ["."]
 testpaths = ["tests"]
 
+
+
+[tool.setuptools.packages.find]
+include = ["treestack*"]

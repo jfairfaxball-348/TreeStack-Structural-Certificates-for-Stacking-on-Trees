@@ -1,0 +1,42 @@
+name: Lean
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Install Python test dependencies
+        run: python3 -m pip install -e '.[test]'
+      - name: Python regression suite
+        run: |
+          python3 -m pytest -q
+          python3 -m treestack.src.verify --max-order 6 --max-total 8
+          python3 -m compileall -q treestack
+      - name: Reject Lean proof holes
+        shell: bash
+        run: |
+          if grep -R -n -E '(^|[[:space:]])(sorry|admit|axiom)([[:space:]]|$)' TreeStack --include='*.lean'; then
+            echo "Forbidden Lean proof placeholder found"
+            exit 1
+          fi
+      - uses: leanprover/lean-action@38fbc41a8c28c4cbaec22d7f7de508ec2e7c0dd9
+        with:
+          build: true
+      - name: Phase 1 theorem axiom audit
+        run: lake env lean Audit.lean
