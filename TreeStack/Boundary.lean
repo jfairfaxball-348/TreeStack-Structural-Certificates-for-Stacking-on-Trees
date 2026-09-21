@@ -376,7 +376,7 @@ theorem ClearOutcome.exists_feasibleClearing_signature
 
 /-- Total pebble mass on the branch carrier. -/
 noncomputable def carrierMass (B : OrientedBranch T) (C : Configuration V) : ℕ :=
-  ∑ v in B.carrier, C v
+  ∑ v ∈ B.carrier, C v
 
 theorem carrierMass_move_add_one (B : OrientedBranch T)
     (C : Configuration V) {u v : V} (huv : u ≠ v) (hu : 2 ≤ C u)
@@ -427,7 +427,7 @@ theorem carrierMass_withBoundary_eq_of_not_occupied
   rw [carrierMass, carrier, Finset.sum_insert B.parent_not_mem_vertices]
   rw [B.withBoundary_parent C q]
   have hz := (B.not_occupied_iff_zero_on_vertices C).1 hEmpty
-  have hsum : ∑ v in B.vertices, B.withBoundary C q v = 0 := by
+  have hsum : ∑ v ∈ B.vertices, B.withBoundary C q v = 0 := by
     apply Finset.sum_eq_zero
     intro v hv
     rw [B.withBoundary_of_mem_vertices C q hv, hz v hv]
@@ -439,7 +439,7 @@ theorem carrierMass_eq_parent_of_cleared
     B.carrierMass D = D B.parent := by
   classical
   rw [carrierMass, carrier, Finset.sum_insert B.parent_not_mem_vertices]
-  have hsum : ∑ v in B.vertices, D v = 0 := by
+  have hsum : ∑ v ∈ B.vertices, D v = 0 := by
     apply Finset.sum_eq_zero
     intro v hv
     exact hClear v hv
@@ -497,7 +497,7 @@ theorem boundaryParityWeight_adj_neg (B : OrientedBranch T)
 /-- Signed carrier mass for the tree bipartition based at the boundary. -/
 noncomputable def signedCarrierMass
     (B : OrientedBranch T) (C : Configuration V) : ℤ :=
-  ∑ v in B.carrier, B.boundaryParityWeight v * (C v : ℤ)
+  ∑ v ∈ B.carrier, B.boundaryParityWeight v * (C v : ℤ)
 
 theorem signedCarrierMass_move (B : OrientedBranch T)
     (C : Configuration V) {u v : V} (huv : T.graph.Adj u v)
@@ -507,9 +507,9 @@ theorem signedCarrierMass_move (B : OrientedBranch T)
   classical
   rw [signedCarrierMass]
   calc
-    (∑ w in B.carrier,
+    (∑ w ∈ B.carrier,
         B.boundaryParityWeight w * (move C u v w : ℤ)) =
-        ∑ w in B.carrier,
+        ∑ w ∈ B.carrier,
           B.boundaryParityWeight w *
             ((C w : ℤ) + (if w = v then 1 else 0) -
               2 * (if w = u then 1 else 0)) := by
@@ -517,7 +517,7 @@ theorem signedCarrierMass_move (B : OrientedBranch T)
       intro w hw
       rw [move_balance_int C huv.ne hu w]
     _ =
-        (∑ w in B.carrier, B.boundaryParityWeight w * (C w : ℤ)) +
+        (∑ w ∈ B.carrier, B.boundaryParityWeight w * (C w : ℤ)) +
           B.boundaryParityWeight v - 2 * B.boundaryParityWeight u := by
       simp [Finset.sum_add_distrib, Finset.sum_sub_distrib,
         mul_add, mul_sub, huB, hvB]
@@ -552,7 +552,7 @@ theorem signedCarrierMass_withBoundary_eq_of_not_occupied
   rw [B.withBoundary_parent C q, B.boundaryParityWeight_parent]
   have hz := (B.not_occupied_iff_zero_on_vertices C).1 hEmpty
   have hsum :
-      ∑ v in B.vertices,
+      ∑ v ∈ B.vertices,
         B.boundaryParityWeight v * (B.withBoundary C q v : ℤ) = 0 := by
     apply Finset.sum_eq_zero
     intro v hv
@@ -568,7 +568,7 @@ theorem signedCarrierMass_eq_parent_of_cleared
   rw [signedCarrierMass, carrier, Finset.sum_insert B.parent_not_mem_vertices]
   rw [B.boundaryParityWeight_parent]
   have hsum :
-      ∑ v in B.vertices, B.boundaryParityWeight v * (D v : ℤ) = 0 := by
+      ∑ v ∈ B.vertices, B.boundaryParityWeight v * (D v : ℤ) = 0 := by
     apply Finset.sum_eq_zero
     intro v hv
     rw [hClear v hv]
