@@ -76,14 +76,16 @@ branch.  This deliberately includes causal outward crossing; balance equations
 alone permit phantom unschedulable solutions at nonpositive effective input. -/
 def MoveSignature.FeasibleClearing (m : MoveSignature T)
     (C : Configuration V) (B : OrientedBranch T) : Prop :=
-  m.SupportedOn B ∧ m.Clears C B ∧ m.CausalOutward B
+  MoveSignature.SupportedOn m B ∧
+    MoveSignature.Clears m C B ∧
+    MoveSignature.CausalOutward m B
 
 /-- Signature-level balance for an initially and finally empty branch.
 Unlike `FeasibleClearing`, no causal outward condition is imposed; these
 signatures model optional empty-branch excursions. -/
 def MoveSignature.EmptyExcursion (m : MoveSignature T)
     (B : OrientedBranch T) : Prop :=
-  m.SupportedOn B ∧
+  MoveSignature.SupportedOn m B ∧
     ∀ v ∈ B.vertices,
       (m.incoming v : ℤ) - 2 * (m.outgoing v : ℤ) = 0
 
