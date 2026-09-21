@@ -1015,7 +1015,7 @@ theorem signature_branchFlux_bounds
             3 * (∑ v : V, (k v : ℤ)) := by
         rw [Finset.sum_sub_distrib, ← Finset.mul_sum]
       _ = childMessageSum C B - 3 * (K : ℤ) := by
-        rw [hK]
+        rw [childMessageSum, hK]
   have hRoot :=
     MoveSignature.root_balance_with_child_flux m C B
       (hClears B.root B.root_mem_vertices)
@@ -1133,7 +1133,7 @@ theorem ClearOutcome.boundary_le_message
     branchMessage_eq_some_of_occupied C B hOcc
   have hd : d = F (effectiveInput C B) := by
     rw [hMsgCanonical] at hMsg
-    exact Option.some.inj hMsg
+    exact (Option.some.inj hMsg).symm
   have hParent := hmBal B.parent
   rw [B.withBoundary_parent C q,
     MoveSignature.incoming_parent_eq_boundary B m hmSupp,
@@ -1149,7 +1149,7 @@ theorem ClearOutcome.boundary_le_message
         rw [MoveSignature.boundaryFlux]
         ring
   rw [hFlux, hd]
-  exact add_le_add_left hBound.1 _
+  linarith [hBound.1]
 
 /-- If the boundary plus recursive message is nonpositive, no legal clearing
 can leave a positive boundary pile. -/
