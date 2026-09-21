@@ -73,7 +73,7 @@ def MoveSignature.CausalOutward (m : MoveSignature T)
 
 /-- Signature-level data used by the upper-bound induction for a nonempty
 branch.  This deliberately includes causal outward crossing; balance equations
-alone admit phantom unschedulable solutions at nonpositive effective input. -/
+alone permit phantom unschedulable solutions at nonpositive effective input. -/
 def MoveSignature.FeasibleClearing (m : MoveSignature T)
     (C : Configuration V) (B : OrientedBranch T) : Prop :=
   m.SupportedOn B ∧ m.Clears C B ∧ m.CausalOutward B
@@ -129,8 +129,8 @@ def ClearOutcome (B : OrientedBranch T) (C : Configuration V)
   B.BranchReach (B.withBoundary C q) D ∧ B.Cleared D
 
 /-- The exact boundary theorem in the form targeted by the Phase 1 induction.
-This is a proposition/target definition, not an axiom: later proofs must
-establish it from legal move sequences and the recursive message.
+This is a proposition/target definition; later proofs must establish it from
+legal move sequences and the recursive message.
 
 For an occupied branch with integer message `d`, every clear outcome leaves
 at most `q+d` pebbles at the boundary; when `q+d>0` that value is attained;
