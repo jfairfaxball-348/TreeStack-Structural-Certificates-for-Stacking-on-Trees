@@ -373,6 +373,282 @@ theorem ClearOutcome.exists_feasibleClearing_signature
       rw [MoveSignature.boundaryFlux]
       ring
 
+
+/-- Total pebble mass on the branch carrier. -/
+noncomputable def carrierMass (B : OrientedBranch T) (C : Configuration V) : ℕ :=
+  ∑ v in B.carrier, C v
+
+theorem carrierMass_move_add_one (B : OrientedBranch T)
+    (C : Configuration V) {u v : V} (huv : u ≠ v) (hu : 2 ≤ C u)
+    (huB : u ∈ B.carrier) (hvB : v ∈ B.carrier) :
+    B.carrierMass (move C u v) + 1 = B.carrierMass C := by
+  classical
+  simp only [carrierMass, move]
+  rw [Finset.sum_update_of_mem hvB, Finset.sdiff_singleton_eq_erase]
+  have hu_mem : u ∈ B.carrier.erase v := by
+    simp [huB, huv]
+  rw [Finset.sum_update_of_mem (s := B.carrier.erase v) (i := u)
+      (f := C) (b := C u - 2) hu_mem,
+    Finset.sdiff_singleton_eq_erase]
+  have hv := Finset.sum_erase_add B.carrier C hvB
+  have hu' := Finset.sum_erase_add (B.carrier.erase v) C hu_mem
+  omega
+
+theorem BranchReach.carrierMass_le
+    (B : OrientedBranch T) {C D : Configuration V}
+    (hreach : B.BranchReach C D) :
+    B.carrierMass D ≤ B.carrierMass C := by
+  induction hreach with
+  | refl => rfl
+  | tail hCE hED ih =>
+      rcases hED with ⟨u, v, huv, hlegal, huB, hvB, rfl⟩
+      have hdrop :=
+        B.carrierMass_move_add_one _ huv.ne hlegal huB hvB
+      omega
+
+theorem not_occupied_iff_zero_on_vertices
+    (B : OrientedBranch T) (C : Configuration V) :
+    ¬ B.Occupied C ↔ ∀ v ∈ B.vertices, C v = 0 := by
+  constructor
+  · intro h v hv
+    apply Nat.eq_zero_of_not_pos
+    intro hpos
+    exact h ⟨v, hv, hpos⟩
+  · intro hz hOcc
+    rcases hOcc with ⟨v, hv, hpos⟩
+    rw [hz v hv] at hpos
+    omega
+
+theorem carrierMass_withBoundary_eq_of_not_occupied
+    (B : OrientedBranch T) (C : Configuration V) (q : ℕ)
+    (hEmpty : ¬ B.Occupied C) :
+    B.carrierMass (B.withBoundary C q) = q := by
+  classical
+  rw [carrierMass, carrier, Finset.sum_insert B.parent_not_mem_vertices]
+  rw [B.withBoundary_parent C q]
+  have hz := (B.not_occupied_iff_zero_on_vertices C).1 hEmpty
+  have hsum : ∑ v in B.vertices, B.withBoundary C q v = 0 := by
+    apply Finset.sum_eq_zero
+    intro v hv
+    rw [B.withBoundary_of_mem_vertices C q hv, hz v hv]
+  rw [hsum]
+  omega
+
+theorem carrierMass_eq_parent_of_cleared
+    (B : OrientedBranch T) (D : Configuration V) (hClear : B.Cleared D) :
+    B.carrierMass D = D B.parent := by
+  classical
+  rw [carrierMass, carrier, Finset.sum_insert B.parent_not_mem_vertices]
+  have hsum : ∑ v in B.vertices, D v = 0 := by
+    apply Finset.sum_eq_zero
+    intro v hv
+    exact hClear v hv
+  rw [hsum]
+  omega
+
+/-- A legal initially empty excursion cannot increase the boundary pile. -/
+theorem BranchReach.empty_boundary_nonincrease
+    (B : OrientedBranch T) (C : Configuration V) (q : ℕ)
+    {D : Configuration V} (hEmpty : ¬ B.Occupied C)
+    (hreach : B.BranchReach (B.withBoundary C q) D)
+    (hClear : B.Cleared D) :
+    D B.parent ≤ q := by
+  have hle := BranchReach.carrierMass_le B hreach
+  rw [B.carrierMass_eq_parent_of_cleared D hClear,
+    B.carrierMass_withBoundary_eq_of_not_occupied C q hEmpty] at hle
+  exact hle
+
+/-- The ±1 bipartite weight based at the exterior boundary vertex. -/
+noncomputable def boundaryParityWeight (B : OrientedBranch T) (v : V) : ℤ :=
+  if T.graph.dist B.parent v % 2 = 0 then 1 else -1
+
+@[simp] theorem boundaryParityWeight_parent (B : OrientedBranch T) :
+    B.boundaryParityWeight B.parent = 1 := by
+  simp [boundaryParityWeight]
+
+theorem boundaryParityWeight_adj_neg (B : OrientedBranch T)
+    {u v : V} (huv : T.graph.Adj u v) :
+    B.boundaryParityWeight v = -B.boundaryParityWeight u := by
+  let col := T.isTree.coloringTwoOfVert B.parent
+  have hne : col u ≠ col v := col.valid huv
+  have hval :
+      T.graph.dist B.parent u % 2 ≠ T.graph.dist B.parent v % 2 := by
+    intro h
+    apply hne
+    apply Fin.ext
+    exact h
+  have huLt : T.graph.dist B.parent u % 2 < 2 :=
+    Nat.mod_lt _ (by omega)
+  have hvLt : T.graph.dist B.parent v % 2 < 2 :=
+    Nat.mod_lt _ (by omega)
+  unfold boundaryParityWeight
+  by_cases hu0 : T.graph.dist B.parent u % 2 = 0
+  · have hv0 : T.graph.dist B.parent v % 2 ≠ 0 := by
+      intro hv0
+      exact hval (hu0.trans hv0.symm)
+    simp [hu0, hv0]
+  · have hu1 : T.graph.dist B.parent u % 2 = 1 := by omega
+    have hv0 : T.graph.dist B.parent v % 2 = 0 := by
+      by_contra hv0
+      have hv1 : T.graph.dist B.parent v % 2 = 1 := by omega
+      exact hval (hu1.trans hv1.symm)
+    simp [hu0, hv0]
+
+/-- Signed carrier mass for the tree bipartition based at the boundary. -/
+noncomputable def signedCarrierMass
+    (B : OrientedBranch T) (C : Configuration V) : ℤ :=
+  ∑ v in B.carrier, B.boundaryParityWeight v * (C v : ℤ)
+
+theorem signedCarrierMass_move (B : OrientedBranch T)
+    (C : Configuration V) {u v : V} (huv : T.graph.Adj u v)
+    (hu : 2 ≤ C u) (huB : u ∈ B.carrier) (hvB : v ∈ B.carrier) :
+    B.signedCarrierMass (move C u v) =
+      B.signedCarrierMass C - 3 * B.boundaryParityWeight u := by
+  classical
+  rw [signedCarrierMass]
+  calc
+    (∑ w in B.carrier,
+        B.boundaryParityWeight w * (move C u v w : ℤ)) =
+        ∑ w in B.carrier,
+          B.boundaryParityWeight w *
+            ((C w : ℤ) + (if w = v then 1 else 0) -
+              2 * (if w = u then 1 else 0)) := by
+      apply Finset.sum_congr rfl
+      intro w hw
+      rw [move_balance_int C huv.ne hu w]
+    _ =
+        (∑ w in B.carrier, B.boundaryParityWeight w * (C w : ℤ)) +
+          B.boundaryParityWeight v - 2 * B.boundaryParityWeight u := by
+      simp [Finset.sum_add_distrib, Finset.sum_sub_distrib,
+        mul_add, mul_sub, huB, hvB]
+    _ = B.signedCarrierMass C - 3 * B.boundaryParityWeight u := by
+      rw [B.boundaryParityWeight_adj_neg huv, signedCarrierMass]
+      ring
+
+theorem signedCarrierMass_move_mod_three (B : OrientedBranch T)
+    (C : Configuration V) {u v : V} (huv : T.graph.Adj u v)
+    (hu : 2 ≤ C u) (huB : u ∈ B.carrier) (hvB : v ∈ B.carrier) :
+    B.signedCarrierMass (move C u v) ≡ B.signedCarrierMass C [ZMOD 3] := by
+  rw [B.signedCarrierMass_move C huv hu huB hvB, Int.modEq_iff_dvd]
+  refine ⟨B.boundaryParityWeight u, ?_⟩
+  ring
+
+theorem BranchReach.signedCarrierMass_modEq
+    (B : OrientedBranch T) {C D : Configuration V}
+    (hreach : B.BranchReach C D) :
+    B.signedCarrierMass D ≡ B.signedCarrierMass C [ZMOD 3] := by
+  induction hreach with
+  | refl => exact Int.ModEq.refl _
+  | tail hCE hED ih =>
+      rcases hED with ⟨u, v, huv, hlegal, huB, hvB, rfl⟩
+      exact (B.signedCarrierMass_move_mod_three _ huv hlegal huB hvB).trans ih
+
+theorem signedCarrierMass_withBoundary_eq_of_not_occupied
+    (B : OrientedBranch T) (C : Configuration V) (q : ℕ)
+    (hEmpty : ¬ B.Occupied C) :
+    B.signedCarrierMass (B.withBoundary C q) = q := by
+  classical
+  rw [signedCarrierMass, carrier, Finset.sum_insert B.parent_not_mem_vertices]
+  rw [B.withBoundary_parent C q, B.boundaryParityWeight_parent]
+  have hz := (B.not_occupied_iff_zero_on_vertices C).1 hEmpty
+  have hsum :
+      ∑ v in B.vertices,
+        B.boundaryParityWeight v * (B.withBoundary C q v : ℤ) = 0 := by
+    apply Finset.sum_eq_zero
+    intro v hv
+    rw [B.withBoundary_of_mem_vertices C q hv, hz v hv]
+    simp
+  rw [hsum]
+  norm_num
+
+theorem signedCarrierMass_eq_parent_of_cleared
+    (B : OrientedBranch T) (D : Configuration V) (hClear : B.Cleared D) :
+    B.signedCarrierMass D = D B.parent := by
+  classical
+  rw [signedCarrierMass, carrier, Finset.sum_insert B.parent_not_mem_vertices]
+  rw [B.boundaryParityWeight_parent]
+  have hsum :
+      ∑ v in B.vertices, B.boundaryParityWeight v * (D v : ℤ) = 0 := by
+    apply Finset.sum_eq_zero
+    intro v hv
+    rw [hClear v hv]
+    simp
+  rw [hsum]
+  norm_num
+
+/-- An initially and finally empty legal branch excursion preserves the
+boundary pile modulo three. -/
+theorem BranchReach.empty_boundary_mod_three
+    (B : OrientedBranch T) (C : Configuration V) (q : ℕ)
+    {D : Configuration V} (hEmpty : ¬ B.Occupied C)
+    (hreach : B.BranchReach (B.withBoundary C q) D)
+    (hClear : B.Cleared D) :
+    (D B.parent : ℤ) ≡ (q : ℤ) [ZMOD 3] := by
+  have hmod := BranchReach.signedCarrierMass_modEq B hreach
+  rw [B.signedCarrierMass_eq_parent_of_cleared D hClear,
+    B.signedCarrierMass_withBoundary_eq_of_not_occupied C q hEmpty] at hmod
+  exact hmod
+
+/-- Every legal empty-branch excursion has exact boundary flux -3k for some
+nonnegative integer k.  The branch remains EMPTY at the message level; zero is
+used here only as the omitted formal gain in this excursion calculation. -/
+theorem ClearOutcome.exists_emptyExcursion_signature
+    (B : OrientedBranch T) (C : Configuration V) (q : ℕ)
+    {D : Configuration V} (hEmpty : ¬ B.Occupied C)
+    (hClear : B.ClearOutcome C q D) :
+    ∃ m : MoveSignature T,
+      MoveSignature.EmptyExcursion m B ∧
+      (D B.parent : ℤ) =
+        (q : ℤ) + MoveSignature.boundaryFlux m B ∧
+      ∃ k : ℤ, 0 ≤ k ∧ MoveSignature.boundaryFlux m B = -3 * k := by
+  rcases BranchReach.exists_moveSignature B hClear.1 with
+    ⟨m, hmSupp, hmBal, hmPersist⟩
+  have hz := (B.not_occupied_iff_zero_on_vertices C).1 hEmpty
+  have hExc : MoveSignature.EmptyExcursion m B := by
+    refine ⟨hmSupp, ?_⟩
+    intro v hv
+    have h := hmBal v
+    rw [hClear.2 v hv, B.withBoundary_of_mem_vertices C q hv, hz v hv] at h
+    omega
+  have hParent := hmBal B.parent
+  rw [B.withBoundary_parent C q,
+    MoveSignature.incoming_parent_eq_boundary B m hmSupp,
+    MoveSignature.outgoing_parent_eq_boundary B m hmSupp] at hParent
+  have hFlux :
+      (D B.parent : ℤ) =
+        (q : ℤ) + MoveSignature.boundaryFlux m B := by
+    calc
+      (D B.parent : ℤ) =
+          (q : ℤ) + (m.count B.root B.parent : ℤ) -
+            2 * (m.count B.parent B.root : ℤ) := hParent
+      _ = (q : ℤ) + MoveSignature.boundaryFlux m B := by
+        rw [MoveSignature.boundaryFlux]
+        ring
+  have hNonpos : MoveSignature.boundaryFlux m B ≤ 0 := by
+    have hle :=
+      BranchReach.empty_boundary_nonincrease B C q hEmpty hClear.1 hClear.2
+    omega
+  have hBoundaryMod :=
+    BranchReach.empty_boundary_mod_three B C q hEmpty hClear.1 hClear.2
+  have hFluxMod :
+      MoveSignature.boundaryFlux m B ≡ 0 [ZMOD 3] := by
+    rw [Int.modEq_iff_dvd] at hBoundaryMod ⊢
+    have heq :
+        (q : ℤ) - (D B.parent : ℤ) =
+          -MoveSignature.boundaryFlux m B := by
+      omega
+    rw [heq] at hBoundaryMod
+    simpa using hBoundaryMod
+  have hDvd : (3 : ℤ) ∣ MoveSignature.boundaryFlux m B :=
+    Int.modEq_zero_iff_dvd.mp hFluxMod
+  rcases hDvd with ⟨a, ha⟩
+  have haNonpos : a ≤ 0 := by
+    rw [ha] at hNonpos
+    omega
+  refine ⟨m, hExc, hFlux, -a, by omega, ?_⟩
+  rw [ha]
+  ring
+
 /-- The exact boundary theorem in the form targeted by the Phase 1 induction.
 This is a proposition/target definition; later proofs must establish it from
 legal move sequences and the recursive message.
