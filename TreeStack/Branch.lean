@@ -174,6 +174,36 @@ theorem childBranch_card_lt (B : OrientedBranch T) (c : B.Child) :
   classical
   simpa [card] using Finset.card_lt_card (B.childBranch_vertices_ssubset c)
 
+/-- Any tree edge leaving an oriented branch is exactly its deleted boundary
+edge.  Every other adjacent edge survives in the deleted graph and therefore
+keeps both endpoints in the same connected component. -/
+theorem edge_leaving_vertices_eq_boundary (B : OrientedBranch T)
+    {u v : V} (hu : u ∈ B.vertices) (hv : v ∉ B.vertices)
+    (huv : T.graph.Adj u v) :
+    s(u, v) = s(B.root, B.parent) := by
+  classical
+  by_contra hne
+  have hu' : u ∈ B.component.supp := by
+    simpa [vertices] using hu
+  have hadjDeleted : B.deletedGraph.Adj u v := by
+    rw [deletedGraph, SimpleGraph.deleteEdges_adj]
+    exact ⟨huv, by simpa using hne⟩
+  have hv' : v ∈ B.component.supp :=
+    B.component.mem_supp_of_adj_mem_supp hu' hadjDeleted
+  exact hv (by simpa [vertices] using hv')
+
+/-- The external boundary vertex has no neighbor inside the branch other than
+the branch root. -/
+theorem eq_root_of_mem_vertices_adj_parent (B : OrientedBranch T)
+    {u : V} (hu : u ∈ B.vertices) (hup : T.graph.Adj u B.parent) :
+    u = B.root := by
+  have hEdge :=
+    B.edge_leaving_vertices_eq_boundary hu B.parent_not_mem_vertices hup
+  rw [Sym2.eq_iff] at hEdge
+  rcases hEdge with h | h
+  · exact h.1
+  · exact (B.root_ne_parent h.2).elim
+
 end OrientedBranch
 
 end TreeStack
