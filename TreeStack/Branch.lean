@@ -39,7 +39,8 @@ noncomputable def card (B : OrientedBranch T) : ℕ :=
 @[simp] theorem root_mem_vertices (B : OrientedBranch T) :
     B.root ∈ B.vertices := by
   classical
-  simp [vertices, component]
+  rw [vertices, Set.mem_toFinset]
+  exact SimpleGraph.ConnectedComponent.connectedComponentMk_mem
 
 /-- In a tree, the parent endpoint is not in the root-side component after
 deleting the boundary edge. -/
@@ -48,9 +49,10 @@ theorem parent_not_mem_vertices (B : OrientedBranch T) :
   classical
   intro hp
   have hp' : B.parent ∈ B.component.supp := by
-    simpa [vertices] using hp
-  have hr' : B.root ∈ B.component.supp := by
-    simp [component]
+    rw [vertices, Set.mem_toFinset] at hp
+    exact hp
+  have hr' : B.root ∈ B.component.supp :=
+    SimpleGraph.ConnectedComponent.connectedComponentMk_mem
   have hreach : B.deletedGraph.Reachable B.root B.parent :=
     B.component.reachable_of_mem_supp hr' hp'
   have hbridge : T.graph.IsBridge s(B.root, B.parent) :=
