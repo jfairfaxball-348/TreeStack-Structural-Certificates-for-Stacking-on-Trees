@@ -1,0 +1,28 @@
+name: Lean Phase 1
+
+on:
+  push:
+    branches:
+      - chatgpt/lean-phase1-branch-certificate
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Reject proof holes
+        shell: bash
+        run: |
+          if grep -R -n -E '\\b(sorry|admit|axiom)\\b' TreeStack --include='*.lean'; then
+            echo "Forbidden Lean proof placeholder found"
+            exit 1
+          fi
+      - uses: leanprover/lean-action@v1
+        with:
+          build: true
+          use-mathlib-cache: true
+          test: false
