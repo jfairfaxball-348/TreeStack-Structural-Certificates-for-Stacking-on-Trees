@@ -897,6 +897,200 @@ theorem F_sub_three_mul_mod_three (z : ℤ) :
       rw [harg, F_sub_three_mod_three]
       exact F_sub_three_mul_mod_three z k
 
+
+/-- Recursive signature bound.  Every genuine child contributes its recursive
+message minus a nonnegative multiple of three; an empty child contributes only
+such a three-step loss.  At an occupied branch the resulting boundary flux is
+bounded by the recursive transfer and has the same residue modulo three. -/
+theorem signature_branchFlux_bounds
+    (m : MoveSignature T) (C : Configuration V) (B : OrientedBranch T)
+    (hClears : MoveSignature.Clears m C B)
+    (hCausal :
+      ∀ A : OrientedBranch T,
+        A.vertices ⊆ B.vertices →
+        A.Occupied C →
+        MoveSignature.CausalOutward m A) :
+    (B.Occupied C →
+      MoveSignature.boundaryFlux m B ≤ F (effectiveInput C B) ∧
+      MoveSignature.boundaryFlux m B % 3 =
+        F (effectiveInput C B) % 3) ∧
+    (¬ B.Occupied C →
+      ∃ k : ℕ,
+        MoveSignature.boundaryFlux m B = -3 * (k : ℤ)) := by
+  classical
+  have hChildLoss :
+      ∀ v : V,
+        ∃ k : ℕ,
+          (if h : T.graph.Adj B.root v ∧ v ≠ B.parent then
+              (m.count v B.root : ℤ) -
+                2 * (m.count B.root v : ℤ)
+            else
+              0) =
+            (if h : T.graph.Adj B.root v ∧ v ≠ B.parent then
+                messageContribution
+                  (branchMessage C
+                    (B.childBranch
+                      { vertex := v
+                        adj := h.1
+                        ne_parent := h.2 }))
+              else
+                0) -
+              3 * (k : ℤ) := by
+    intro v
+    by_cases h : T.graph.Adj B.root v ∧ v ≠ B.parent
+    · let c : B.Child :=
+        { vertex := v
+          adj := h.1
+          ne_parent := h.2 }
+      have hChildClears :
+          MoveSignature.Clears m C (B.childBranch c) := by
+        intro w hw
+        exact hClears w (B.childBranch_vertices_subset c hw)
+      have hChildCausal :
+          ∀ A : OrientedBranch T,
+            A.vertices ⊆ (B.childBranch c).vertices →
+            A.Occupied C →
+            MoveSignature.CausalOutward m A := by
+        intro A hA hOcc
+        apply hCausal A
+        intro w hw
+        exact B.childBranch_vertices_subset c (hA hw)
+        exact hOcc
+      have hRec :=
+        signature_branchFlux_bounds m C (B.childBranch c)
+          hChildClears hChildCausal
+      by_cases hOcc : (B.childBranch c).Occupied C
+      · have hBound := hRec.1 hOcc
+        rcases exists_nat_three_loss hBound.1 hBound.2 with ⟨k, hk⟩
+        refine ⟨k, ?_⟩
+        have hmsg :=
+          branchMessage_eq_some_of_occupied C (B.childBranch c) hOcc
+        simpa [h, c, MoveSignature.boundaryFlux, hmsg] using hk
+      · rcases hRec.2 hOcc with ⟨k, hk⟩
+        refine ⟨k, ?_⟩
+        have hmsg :=
+          branchMessage_eq_empty_of_not_occupied C (B.childBranch c) hOcc
+        simpa [h, c, MoveSignature.boundaryFlux, hmsg] using hk
+    · refine ⟨0, ?_⟩
+      simp [h]
+  choose k hk using hChildLoss
+  let K : ℕ := ∑ v : V, k v
+  have hK :
+      (K : ℤ) = ∑ v : V, (k v : ℤ) := by
+    simp [K]
+  have hChildSum :
+      signatureChildFluxSum m B =
+        childMessageSum C B - 3 * (K : ℤ) := by
+    rw [signatureChildFluxSum, childMessageSum]
+    calc
+      (∑ v : V,
+        if h : T.graph.Adj B.root v ∧ v ≠ B.parent then
+          (m.count v B.root : ℤ) - 2 * (m.count B.root v : ℤ)
+        else
+          0) =
+          ∑ v : V,
+            ((if h : T.graph.Adj B.root v ∧ v ≠ B.parent then
+                messageContribution
+                  (branchMessage C
+                    (B.childBranch
+                      { vertex := v
+                        adj := h.1
+                        ne_parent := h.2 }))
+              else
+                0) - 3 * (k v : ℤ)) := by
+        apply Finset.sum_congr rfl
+        intro v _
+        exact hk v
+      _ =
+          (∑ v : V,
+            if h : T.graph.Adj B.root v ∧ v ≠ B.parent then
+              messageContribution
+                (branchMessage C
+                  (B.childBranch
+                    { vertex := v
+                      adj := h.1
+                      ne_parent := h.2 }))
+            else
+              0) -
+            3 * (∑ v : V, (k v : ℤ)) := by
+        rw [Finset.sum_sub_distrib, ← Finset.mul_sum]
+      _ = childMessageSum C B - 3 * (K : ℤ) := by
+        rw [hK]
+  have hRoot :=
+    MoveSignature.root_balance_with_child_flux m C B
+      (hClears B.root B.root_mem_vertices)
+  have hBal :
+      (effectiveInput C B - 3 * (K : ℤ)) +
+          (m.count B.parent B.root : ℤ) -
+        2 * (m.count B.root B.parent : ℤ) = 0 := by
+    rw [hChildSum] at hRoot
+    rw [effectiveInput]
+    omega
+  constructor
+  · intro hOcc
+    have hOut :=
+      hCausal B (by intro w hw; exact hw) hOcc
+    have hA : 1 ≤ (m.count B.root B.parent : ℤ) := by
+      exact_mod_cast hOut
+    have hIn : 0 ≤ (m.count B.parent B.root : ℤ) := by
+      positivity
+    have hLocalLe :=
+      one_vertex_flux_le
+        (y := effectiveInput C B - 3 * (K : ℤ))
+        (A := (m.count B.root B.parent : ℤ))
+        (B := (m.count B.parent B.root : ℤ))
+        hA hIn hBal
+    have hLocalMod :=
+      one_vertex_flux_mod_three
+        (y := effectiveInput C B - 3 * (K : ℤ))
+        (A := (m.count B.root B.parent : ℤ))
+        (B := (m.count B.parent B.root : ℤ))
+        hA hIn hBal
+    constructor
+    · rw [MoveSignature.boundaryFlux]
+      exact hLocalLe.trans
+        (F_sub_three_mul_le (effectiveInput C B) K)
+    · rw [MoveSignature.boundaryFlux]
+      calc
+        ((m.count B.root B.parent : ℤ) -
+              2 * (m.count B.parent B.root : ℤ)) % 3 =
+            F (effectiveInput C B - 3 * (K : ℤ)) % 3 :=
+          hLocalMod
+        _ = F (effectiveInput C B) % 3 :=
+          F_sub_three_mul_mod_three (effectiveInput C B) K
+  · intro hEmpty
+    have hZero :=
+      (B.not_occupied_iff_zero_on_vertices C).1 hEmpty
+    have hRootZero : C B.root = 0 :=
+      hZero B.root B.root_mem_vertices
+    have hChildMessageZero : childMessageSum C B = 0 := by
+      rw [childMessageSum]
+      apply Finset.sum_eq_zero
+      intro v _
+      by_cases h : T.graph.Adj B.root v ∧ v ≠ B.parent
+      · let c : B.Child :=
+          { vertex := v
+            adj := h.1
+            ne_parent := h.2 }
+        have hChildEmpty : ¬ (B.childBranch c).Occupied C := by
+          rintro ⟨w, hw, hwpos⟩
+          exact hEmpty
+            ⟨w, B.childBranch_vertices_subset c hw, hwpos⟩
+        have hmsg :=
+          branchMessage_eq_empty_of_not_occupied C (B.childBranch c)
+            hChildEmpty
+        simp [h, c, hmsg]
+      · simp [h]
+    rw [hChildSum] at hRoot
+    simp [hRootZero, hChildMessageZero] at hRoot
+    refine ⟨m.count B.root B.parent + 2 * K, ?_⟩
+    rw [MoveSignature.boundaryFlux]
+    push_cast
+    omega
+termination_by B.card
+decreasing_by
+  exact B.childBranch_card_lt c
+
 /-- The exact boundary theorem in the form targeted by the Phase 1 induction.
 This is a proposition/target definition; later proofs must establish it from
 legal move sequences and the recursive message.
