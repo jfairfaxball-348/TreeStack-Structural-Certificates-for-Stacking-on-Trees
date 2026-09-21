@@ -664,13 +664,17 @@ def childOfVertex (B : OrientedBranch T) (v : V)
   adj := h.1
   ne_parent := h.2
 
+/-- Predicate for vertices indexing occupied genuine children. -/
+def IsOccupiedChildVertex
+    (B : OrientedBranch T) (C : Configuration V) (v : V) : Prop :=
+  ∃ h : B.IsChildVertex v,
+    (B.childBranch (B.childOfVertex v h)).Occupied C
+
 /-- An executable child task is a genuine child branch that is occupied in
 the original configuration. Empty child branches are absent from this type,
 rather than represented by zero-gain tasks. -/
 def OccupiedChild (B : OrientedBranch T) (C : Configuration V) :=
-  {v : V //
-    ∃ h : B.IsChildVertex v,
-      (B.childBranch (B.childOfVertex v h)).Occupied C}
+  {v : V // B.IsOccupiedChildVertex C v}
 
 noncomputable instance OccupiedChild.instFintype
     (B : OrientedBranch T) (C : Configuration V) :
@@ -697,6 +701,34 @@ theorem OccupiedChild.occupied
     (t : B.OccupiedChild C) :
     t.child.vertex = t.1 := rfl
 
+/-- The summand appearing in childMessageSum at a vertex. -/
+noncomputable def childMessageTerm
+    (B : OrientedBranch T) (C : Configuration V) (v : V) : ℤ :=
+  if h : B.IsChildVertex v then
+    messageContribution
+      (branchMessage C (B.childBranch (B.childOfVertex v h)))
+  else
+    0
+
+theorem childMessageSum_eq_sum_term
+    (B : OrientedBranch T) (C : Configuration V) :
+    childMessageSum C B = ∑ v : V, B.childMessageTerm C v := by
+  rfl
+
+theorem childMessageTerm_eq_zero_of_not_occupiedChild
+    (B : OrientedBranch T) (C : Configuration V) {v : V}
+    (hv : ¬ B.IsOccupiedChildVertex C v) :
+    B.childMessageTerm C v = 0 := by
+  by_cases h : B.IsChildVertex v
+  · have hnot :
+        ¬ (B.childBranch (B.childOfVertex v h)).Occupied C := by
+      intro hocc
+      exact hv ⟨h, hocc⟩
+    simp [childMessageTerm, h,
+      branchMessage_eq_empty_of_not_occupied C
+        (B.childBranch (B.childOfVertex v h)) hnot]
+  · simp [childMessageTerm, h]
+
 /-- Recursive integer gain attached to an occupied child task. -/
 noncomputable def OccupiedChild.gain
     {B : OrientedBranch T} {C : Configuration V}
@@ -710,6 +742,14 @@ theorem OccupiedChild.gain_eq_F
   rw [OccupiedChild.gain,
     branchMessage_eq_some_of_occupied C (B.childBranch t.child) t.occupied]
   rfl
+
+theorem OccupiedChild.gain_eq_term
+    {B : OrientedBranch T} {C : Configuration V}
+    (t : B.OccupiedChild C) :
+    t.gain = B.childMessageTerm C t.1 := by
+  have h : B.IsChildVertex t.1 := Classical.choose t.2
+  simp [OccupiedChild.gain, OccupiedChild.child,
+    childMessageTerm, h]
 
 /-- The unscheduled child-task list contains every occupied genuine child once
 and contains no empty branch. -/
@@ -731,6 +771,53 @@ theorem occupiedChildTasks_nodup
     t ∈ B.occupiedChildTasks C := by
   classical
   exact Finset.mem_toList.mpr (Finset.mem_univ t)
+
+/-- The occupied executable tasks carry exactly the recursive child-message
+sum. Empty genuine children contribute zero to childMessageSum but are absent
+from the task list. -/
+theorem taskGainSum_occupiedChildTasks
+    (B : OrientedBranch T) (C : Configuration V) :
+    taskGainSum
+        (fun t : B.OccupiedChild C => t.gain)
+        (B.occupiedChildTasks C) =
+      childMessageSum C B := by
+  classical
+  calc
+    taskGainSum
+        (fun t : B.OccupiedChild C => t.gain)
+        (B.occupiedChildTasks C) =
+        ∑ t : B.OccupiedChild C, t.gain := by
+          rw [occupiedChildTasks, taskGainSum_toList]
+    _ = ∑ t : B.OccupiedChild C,
+          B.childMessageTerm C t.1 := by
+          apply Finset.sum_congr rfl
+          intro t _
+          exact t.gain_eq_term
+    _ = ∑ v ∈
+          (Finset.univ.filter fun v : V =>
+            B.IsOccupiedChildVertex C v),
+          B.childMessageTerm C v := by
+          symm
+          change
+            (∑ v ∈
+              (Finset.univ.filter fun v : V =>
+                B.IsOccupiedChildVertex C v),
+              B.childMessageTerm C v) =
+            ∑ t : {v : V // B.IsOccupiedChildVertex C v},
+              B.childMessageTerm C t.1
+          exact Finset.sum_subtype
+            (Finset.univ.filter fun v : V =>
+              B.IsOccupiedChildVertex C v)
+            (fun v => by simp)
+            (fun v => B.childMessageTerm C v)
+    _ = ∑ v : V, B.childMessageTerm C v := by
+          apply Finset.sum_subset (Finset.filter_subset _ _)
+          intro v hvUniv hvNot
+          have hvNotOcc : ¬ B.IsOccupiedChildVertex C v := by
+            intro hvOcc
+            exact hvNot (Finset.mem_filter.mpr ⟨hvUniv, hvOcc⟩)
+          exact B.childMessageTerm_eq_zero_of_not_occupiedChild C hvNotOcc
+    _ = childMessageSum C B := (B.childMessageSum_eq_sum_term C).symm
 
 /-- A final configuration obtained by a legal branch-local sequence which
 clears the entire branch. -/
