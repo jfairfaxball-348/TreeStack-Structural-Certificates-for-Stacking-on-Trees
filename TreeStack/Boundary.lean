@@ -838,8 +838,8 @@ theorem MoveSignature.root_balance_with_child_flux
         (m.count B.parent B.root : ℤ) -
       2 * (m.count B.root B.parent : ℤ) = 0 := by
   rw [MoveSignature.BalancesAt,
-    m.incoming_root_eq_parent_add_children B,
-    m.outgoing_root_eq_parent_add_children B] at hbal
+    MoveSignature.incoming_root_eq_parent_add_children m B,
+    MoveSignature.outgoing_root_eq_parent_add_children m B] at hbal
   rw [signatureChildFluxSum_eq]
   ring_nf at hbal ⊢
   exact hbal
