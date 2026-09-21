@@ -48,7 +48,7 @@ python -m pytest -q
 python -m treestack.src.verify --max-order 6 --max-total 8
 ```
 
-At the current revision, the pytest suite contains 22 tests.  The verifier
+At the current revision, the pytest suite contains 23 tests.  The verifier
 command above checks 131,958 rooted cases from 23,079 configurations on 13
 unlabeled trees and stops at the first message/reachability disagreement.
 
@@ -77,9 +77,12 @@ project stage.
 
 Lean Phase 1 is underway. The current formal development has machine-checked
 the exact-size stacking semantics, the audit repair proving upward closure of
-universal exact sizes, and the arithmetic core of the branch transfer
-function. The exact branch boundary invariant and root-score theorem are the
-next major formal targets.
+universal exact sizes, the arithmetic core of the branch transfer function,
+the source-exact estimator with its elementary lower bound, and initial
+deleted-edge oriented-branch infrastructure. The immediate formal frontier is
+strict child-branch cardinality decrease for the well-founded recursive
+message definition; the exact branch boundary invariant and root-score theorem
+remain downstream targets.
 
 The Lean environment is pinned by `lean-toolchain` and
 `lake-manifest.json`. To reproduce the full CI path:
