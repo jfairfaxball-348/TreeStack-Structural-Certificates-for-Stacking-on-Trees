@@ -96,6 +96,8 @@ theorem not_stackable_oneOn_of_two_le_card {V : Type*} [DecidableEq V]
     have hr : r ∈ s := by
       by_contra hnr
       have hz : oneOn s r = 0 := by simp [oneOn, hnr]
+      have hpos := hstack.1
+      rw [hz] at hpos
       omega
     have hsub : s ⊆ {r} := by
       intro v hv
