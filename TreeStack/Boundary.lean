@@ -92,15 +92,20 @@ def taskGainSum (gain : α → ℤ) : List α → ℤ
   | [] => 0
   | t :: ts => gain t + taskGainSum gain ts
 
+/-- The recursive task sum is the ordinary sum of the mapped list. -/
+theorem taskGainSum_eq_list_sum (gain : α → ℤ) :
+    ∀ tasks : List α,
+      taskGainSum gain tasks = (tasks.map gain).sum
+  | [] => by simp [taskGainSum]
+  | t :: ts => by
+      simp [taskGainSum, taskGainSum_eq_list_sum gain ts]
+
 /-- The list sum agrees with the corresponding finite-set sum. -/
 theorem taskGainSum_toList [DecidableEq α]
     (gain : α → ℤ) (s : Finset α) :
-    taskGainSum gain s.toList = ∑ t ∈ s, gain t := by
-  induction s using Finset.induction_on with
-  | empty =>
-      simp [taskGainSum]
-  | @insert a s ha ih =>
-      simp [ha, taskGainSum, ih]
+    taskGainSum gain s.toList = Finset.sum s gain := by
+  rw [taskGainSum_eq_list_sum]
+  exact Finset.sum_to_list s gain
 
 /-- A task order is safe from an initial pile `a` if every successive task
 leaves a strictly positive pile.  This is exactly the precondition needed to
@@ -718,14 +723,14 @@ theorem occupiedChildTasks_nodup
     (B : OrientedBranch T) (C : Configuration V) :
     (B.occupiedChildTasks C).Nodup := by
   classical
-  simp [occupiedChildTasks]
+  exact Finset.nodup_toList (Finset.univ : Finset (B.OccupiedChild C))
 
 @[simp] theorem mem_occupiedChildTasks
     (B : OrientedBranch T) (C : Configuration V)
     (t : B.OccupiedChild C) :
     t ∈ B.occupiedChildTasks C := by
   classical
-  simp [occupiedChildTasks]
+  exact Finset.mem_toList.mpr (Finset.mem_univ t)
 
 /-- A final configuration obtained by a legal branch-local sequence which
 clears the entire branch. -/
