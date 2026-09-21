@@ -78,11 +78,12 @@ project stage.
 Lean Phase 1 is underway. The current formal development has machine-checked
 the exact-size stacking semantics, the audit repair proving upward closure of
 universal exact sizes, the arithmetic core of the branch transfer function,
-the source-exact estimator with its elementary lower bound, and initial
-deleted-edge oriented-branch infrastructure. The immediate formal frontier is
-strict child-branch cardinality decrease for the well-founded recursive
-message definition; the exact branch boundary invariant and root-score theorem
-remain downstream targets.
+the source-exact estimator with its elementary lower bound, strict child-branch
+containment/cardinality decrease, and the well-founded recursive branch
+message with `EMPTY` kept separate from integer zero. Move-signature and
+branch-local legal-reachability structures now state the exact boundary
+invariant precisely. The immediate formal frontier is proving that invariant;
+the rooted score theorem remains downstream.
 
 The Lean environment is pinned by `lean-toolchain` and
 `lake-manifest.json`. To reproduce the full CI path:

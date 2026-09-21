@@ -102,6 +102,108 @@ def childBranch (B : OrientedBranch T) (c : B.Child) : OrientedBranch T where
 @[simp] theorem childBranch_parent (B : OrientedBranch T) (c : B.Child) :
     (B.childBranch c).parent = B.root := rfl
 
+/-- The child edge differs from the boundary edge of its parent branch. -/
+theorem childEdge_ne_boundary (B : OrientedBranch T) (c : B.Child) :
+    s(B.root, c.vertex) ≠ s(B.root, B.parent) := by
+  intro h
+  rw [Sym2.eq_iff] at h
+  rcases h with h | h
+  · exact c.ne_parent h.2
+  · exact B.root_ne_parent h.1
+
+/-- Every vertex on a genuine child side also lies on the parent branch side.
+The proof uses the fact that both deleted edges are bridges in the tree:
+a walk in the child side cannot cross the parent's boundary edge without first
+reaching the parent-branch root while avoiding the child edge. -/
+theorem childBranch_vertices_subset (B : OrientedBranch T) (c : B.Child) :
+    (B.childBranch c).vertices ⊆ B.vertices := by
+  classical
+  intro x hx
+  rw [vertices, Set.mem_toFinset] at hx ⊢
+  have hc :
+      c.vertex ∈ (B.childBranch c).component.supp :=
+    SimpleGraph.ConnectedComponent.connectedComponentMk_mem
+  have hreachChild :
+      (B.childBranch c).deletedGraph.Reachable c.vertex x :=
+    (B.childBranch c).component.reachable_of_mem_supp hc hx
+  have hreachChild' :
+      (T.graph.deleteEdges {s(c.vertex, B.root)}).Reachable c.vertex x := by
+    simpa [deletedGraph, childBranch] using hreachChild
+  rcases SimpleGraph.reachable_deleteEdges_iff_exists_walk.mp hreachChild' with
+    ⟨p, hchildEdge⟩
+  have hparentEdge : s(B.root, B.parent) ∉ p.edges := by
+    intro hp
+    have hrootSupp : B.root ∈ p.support :=
+      p.fst_mem_support_of_mem_edges hp
+    let q : T.graph.Walk c.vertex B.root := p.takeUntil B.root hrootSupp
+    have hqChild : s(c.vertex, B.root) ∉ q.edges := by
+      intro hq
+      exact hchildEdge (p.edges_takeUntil_subset_edges hrootSupp hq)
+    have hreachRoot :
+        (T.graph.deleteEdges {s(c.vertex, B.root)}).Reachable c.vertex B.root :=
+      SimpleGraph.reachable_deleteEdges_iff_exists_walk.mpr ⟨q, hqChild⟩
+    have hbridge : T.graph.IsBridge s(c.vertex, B.root) :=
+      (SimpleGraph.isAcyclic_iff_forall_adj_isBridge.mp T.isTree.isAcyclic) c.adj.symm
+    exact (SimpleGraph.isBridge_iff.mp hbridge) hreachRoot
+  have hreachInParent :
+      B.deletedGraph.Reachable c.vertex x := by
+    simpa [deletedGraph] using
+      (SimpleGraph.reachable_deleteEdges_iff_exists_walk.mpr ⟨p, hparentEdge⟩)
+  have hrootChild :
+      B.deletedGraph.Adj B.root c.vertex := by
+    rw [deletedGraph, SimpleGraph.deleteEdges_adj]
+    refine ⟨c.adj, ?_⟩
+    simpa using B.childEdge_ne_boundary c
+  have hrootReach : B.deletedGraph.Reachable B.root x :=
+    hrootChild.reachable.trans hreachInParent
+  rw [SimpleGraph.ConnectedComponent.mem_supp_iff, component]
+  exact (SimpleGraph.ConnectedComponent.sound hrootReach).symm
+
+/-- A genuine child branch is a strict subset of its parent branch. -/
+theorem childBranch_vertices_ssubset (B : OrientedBranch T) (c : B.Child) :
+    (B.childBranch c).vertices ⊂ B.vertices := by
+  classical
+  rw [Finset.ssubset_iff_of_subset (B.childBranch_vertices_subset c)]
+  refine ⟨B.root, B.root_mem_vertices, ?_⟩
+  simpa using (B.childBranch c).parent_not_mem_vertices
+
+/-- Child-branch cardinality strictly decreases relative to the parent branch.
+This is the recursion measure needed for branch messages. -/
+theorem childBranch_card_lt (B : OrientedBranch T) (c : B.Child) :
+    (B.childBranch c).card < B.card := by
+  classical
+  simpa [card] using Finset.card_lt_card (B.childBranch_vertices_ssubset c)
+
+/-- Any tree edge leaving an oriented branch is exactly its deleted boundary
+edge.  Every other adjacent edge survives in the deleted graph and therefore
+keeps both endpoints in the same connected component. -/
+theorem edge_leaving_vertices_eq_boundary (B : OrientedBranch T)
+    {u v : V} (hu : u ∈ B.vertices) (hv : v ∉ B.vertices)
+    (huv : T.graph.Adj u v) :
+    s(u, v) = s(B.root, B.parent) := by
+  classical
+  by_contra hne
+  have hu' : u ∈ B.component.supp := by
+    simpa [vertices] using hu
+  have hadjDeleted : B.deletedGraph.Adj u v := by
+    rw [deletedGraph, SimpleGraph.deleteEdges_adj]
+    exact ⟨huv, by simpa using hne⟩
+  have hv' : v ∈ B.component.supp :=
+    B.component.mem_supp_of_adj_mem_supp hu' hadjDeleted
+  exact hv (by simpa [vertices] using hv')
+
+/-- The external boundary vertex has no neighbor inside the branch other than
+the branch root. -/
+theorem eq_root_of_mem_vertices_adj_parent (B : OrientedBranch T)
+    {u : V} (hu : u ∈ B.vertices) (hup : T.graph.Adj u B.parent) :
+    u = B.root := by
+  have hEdge :=
+    B.edge_leaving_vertices_eq_boundary hu B.parent_not_mem_vertices hup
+  rw [Sym2.eq_iff] at hEdge
+  rcases hEdge with h | h
+  · exact h.1
+  · exact (B.root_ne_parent h.2.symm).elim
+
 end OrientedBranch
 
 end TreeStack
