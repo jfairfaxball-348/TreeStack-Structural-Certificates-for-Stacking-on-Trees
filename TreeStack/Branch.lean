@@ -202,7 +202,7 @@ theorem eq_root_of_mem_vertices_adj_parent (B : OrientedBranch T)
   rw [Sym2.eq_iff] at hEdge
   rcases hEdge with h | h
   · exact h.1
-  · exact (B.root_ne_parent h.2).elim
+  · exact (B.root_ne_parent h.2.symm).elim
 
 end OrientedBranch
 
