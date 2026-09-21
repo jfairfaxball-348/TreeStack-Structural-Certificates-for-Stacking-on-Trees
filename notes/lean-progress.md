@@ -159,9 +159,21 @@ theorems. The CI also rejects occurrences of `sorry`, `admit`, or
 project-specific `axiom` declarations in the `TreeStack/*.lean` source
 tree.
 
-At the previous compiling checkpoint, `lake build` passed under Lean 4.34.0
-and Mathlib `5ed2965...`. The final Fischer-style combined CI result is
-recorded by the pull request check for this branch.
+PR #4 combined CI run 35624780508 passed on 2026-09-21 with the following
+results:
+
+- `python3 -m pip install -e '.[test]'`: success;
+- `python3 -m pytest -q`: **23 passed in 4.40s**;
+- `python3 -m treestack.src.verify --max-order 6 --max-total 8`:
+  **verified 131,958 rooted cases from 23,079 configurations on 13 trees**;
+- `python3 -m compileall -q treestack`: success;
+- Lean proof-hole scan: success;
+- `lake build`: **Build completed successfully (8928 jobs)**;
+- `lake env lean Audit.lean`: success.
+
+The axiom audit reported only Mathlib/Lean standard logical axioms among the
+audited theorems: `propext`, `Classical.choice`, and `Quot.sound`.
+No project-specific axiom or `sorryAx` was reported.
 
 ## Trust statement
 
