@@ -102,9 +102,8 @@ noncomputable def carrier (B : OrientedBranch T) : Finset V :=
   classical
   simp [carrier]
 
-@[simp] theorem carrier_erase_parent (B : OrientedBranch T) :
+@[simp] theorem carrier_erase_parent [DecidableEq V] (B : OrientedBranch T) :
     B.carrier.erase B.parent = B.vertices := by
-  classical
   ext v
   constructor
   · intro hv
