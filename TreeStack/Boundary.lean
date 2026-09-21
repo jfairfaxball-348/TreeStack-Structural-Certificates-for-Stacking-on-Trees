@@ -92,6 +92,16 @@ def taskGainSum (gain : α → ℤ) : List α → ℤ
   | [] => 0
   | t :: ts => gain t + taskGainSum gain ts
 
+/-- The list sum agrees with the corresponding finite-set sum. -/
+theorem taskGainSum_toList [DecidableEq α]
+    (gain : α → ℤ) (s : Finset α) :
+    taskGainSum gain s.toList = ∑ t in s, gain t := by
+  induction s using Finset.induction_on with
+  | empty =>
+      simp [taskGainSum]
+  | @insert a s ha ih =>
+      simp [ha, taskGainSum, ih]
+
 /-- A task order is safe from an initial pile `a` if every successive task
 leaves a strictly positive pile.  This is exactly the precondition needed to
 apply the occupied-child boundary invariant task by task. -/
@@ -637,6 +647,78 @@ theorem occupied_withBoundary_iff (B : OrientedBranch T)
     exact ⟨v, hv, by simpa [B.withBoundary_of_mem_vertices C q hv] using hpos⟩
   · rintro ⟨v, hv, hpos⟩
     exact ⟨v, hv, by simpa [B.withBoundary_of_mem_vertices C q hv] using hpos⟩
+
+/-- Predicate saying that a vertex indexes a genuine child branch. -/
+def IsChildVertex (B : OrientedBranch T) (v : V) : Prop :=
+  T.graph.Adj B.root v ∧ v ≠ B.parent
+
+/-- The genuine child branch indexed by a vertex satisfying the child predicate. -/
+def childOfVertex (B : OrientedBranch T) (v : V)
+    (h : B.IsChildVertex v) : B.Child where
+  vertex := v
+  adj := h.1
+  ne_parent := h.2
+
+/-- An executable child task is a genuine child branch that is occupied in
+the original configuration. Empty child branches are absent from this type,
+rather than represented by zero-gain tasks. -/
+def OccupiedChild (B : OrientedBranch T) (C : Configuration V) :=
+  {v : V //
+    ∃ h : B.IsChildVertex v,
+      (B.childBranch (B.childOfVertex v h)).Occupied C}
+
+/-- The genuine child carried by an occupied-child task. -/
+noncomputable def OccupiedChild.child
+    {B : OrientedBranch T} {C : Configuration V}
+    (t : B.OccupiedChild C) : B.Child :=
+  B.childOfVertex t.1 (Classical.choose t.2)
+
+/-- The child represented by an occupied-child task is occupied. -/
+theorem OccupiedChild.occupied
+    {B : OrientedBranch T} {C : Configuration V}
+    (t : B.OccupiedChild C) :
+    (B.childBranch t.child).Occupied C := by
+  exact Classical.choose_spec t.2
+
+@[simp] theorem OccupiedChild.child_vertex
+    {B : OrientedBranch T} {C : Configuration V}
+    (t : B.OccupiedChild C) :
+    t.child.vertex = t.1 := rfl
+
+/-- Recursive integer gain attached to an occupied child task. -/
+noncomputable def OccupiedChild.gain
+    {B : OrientedBranch T} {C : Configuration V}
+    (t : B.OccupiedChild C) : ℤ :=
+  messageContribution (branchMessage C (B.childBranch t.child))
+
+theorem OccupiedChild.gain_eq_F
+    {B : OrientedBranch T} {C : Configuration V}
+    (t : B.OccupiedChild C) :
+    t.gain = F (effectiveInput C (B.childBranch t.child)) := by
+  rw [OccupiedChild.gain,
+    branchMessage_eq_some_of_occupied C (B.childBranch t.child) t.occupied]
+  rfl
+
+/-- The unscheduled child-task list contains every occupied genuine child once
+and contains no empty branch. -/
+noncomputable def occupiedChildTasks
+    (B : OrientedBranch T) (C : Configuration V) :
+    List (B.OccupiedChild C) := by
+  classical
+  exact (Finset.univ : Finset (B.OccupiedChild C)).toList
+
+theorem occupiedChildTasks_nodup
+    (B : OrientedBranch T) (C : Configuration V) :
+    (B.occupiedChildTasks C).Nodup := by
+  classical
+  simp [occupiedChildTasks]
+
+@[simp] theorem mem_occupiedChildTasks
+    (B : OrientedBranch T) (C : Configuration V)
+    (t : B.OccupiedChild C) :
+    t ∈ B.occupiedChildTasks C := by
+  classical
+  simp [occupiedChildTasks]
 
 /-- A final configuration obtained by a legal branch-local sequence which
 clears the entire branch. -/
