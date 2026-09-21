@@ -260,11 +260,9 @@ estimator-maximizing root, has every score zero and has size
 =\operatorname{estim}(T)-1}. \tag{17}
 \]
 
-This proves the zero-score generalized-flow subproblem completely.  It does
-**not** prove the full stacking conjecture: one still has to show that an
-arbitrary maximum-mass configuration with all scores nonpositive can be
-replaced by a zero-score configuration without losing mass, or bypass that
-normalization by another global argument.
+This proves the zero-score generalized-flow subproblem completely.  The later
+arbitrary-defect argument in `defect-flow.md` proves that every configuration
+with all scores nonpositive satisfies the same estimator bound.
 
 ## 6. Computational regression checks
 
