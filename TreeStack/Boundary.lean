@@ -83,6 +83,211 @@ theorem outgoing_extend [DecidableEq V]
 
 end MoveSignature
 
+section TaskScheduling
+
+variable {α : Type*}
+
+/-- Sum of the integer gains of a finite list of executable tasks. -/
+def taskGainSum (gain : α → ℤ) : List α → ℤ
+  | [] => 0
+  | t :: ts => gain t + taskGainSum gain ts
+
+/-- A task order is safe from an initial pile `a` if every successive task
+leaves a strictly positive pile.  This is exactly the precondition needed to
+apply the occupied-child boundary invariant task by task. -/
+def TaskScheduleSafe (gain : α → ℤ) : ℤ → List α → Prop
+  | _, [] => True
+  | a, t :: ts =>
+      0 < a + gain t ∧
+        TaskScheduleSafe gain (a + gain t) ts
+
+def positiveTasks (gain : α → ℤ) (tasks : List α) : List α :=
+  tasks.filter fun t => 0 < gain t
+
+def zeroTasks (gain : α → ℤ) (tasks : List α) : List α :=
+  tasks.filter fun t => gain t = 0
+
+def negativeTasks (gain : α → ℤ) (tasks : List α) : List α :=
+  tasks.filter fun t => gain t < 0
+
+/-- Audited scheduling order: positive gains first, then zero gains, then
+negative gains.  Empty branches are not represented by tasks at all. -/
+def orderedTasks (gain : α → ℤ) (tasks : List α) : List α :=
+  positiveTasks gain tasks ++
+    (zeroTasks gain tasks ++ negativeTasks gain tasks)
+
+theorem taskGainSum_append (gain : α → ℤ) (xs ys : List α) :
+    taskGainSum gain (xs ++ ys) =
+      taskGainSum gain xs + taskGainSum gain ys := by
+  induction xs with
+  | nil => simp [taskGainSum]
+  | cons x xs ih =>
+      simp [taskGainSum, ih]
+      ring
+
+theorem taskScheduleSafe_append (gain : α → ℤ) (a : ℤ)
+    (xs ys : List α) :
+    TaskScheduleSafe gain a (xs ++ ys) ↔
+      TaskScheduleSafe gain a xs ∧
+        TaskScheduleSafe gain (a + taskGainSum gain xs) ys := by
+  induction xs generalizing a with
+  | nil => simp [TaskScheduleSafe, taskGainSum]
+  | cons x xs ih =>
+      simp [TaskScheduleSafe, taskGainSum, ih, add_assoc]
+
+theorem taskGainSum_nonpos (gain : α → ℤ) :
+    ∀ tasks : List α,
+      (∀ t ∈ tasks, gain t ≤ 0) →
+      taskGainSum gain tasks ≤ 0
+  | [], _ => by simp [taskGainSum]
+  | t :: ts, h => by
+      have ht : gain t ≤ 0 := h t (by simp)
+      have hts : ∀ u ∈ ts, gain u ≤ 0 := by
+        intro u hu
+        exact h u (by simp [hu])
+      have ih := taskGainSum_nonpos gain ts hts
+      simp only [taskGainSum]
+      linarith
+
+theorem taskScheduleSafe_of_all_pos (gain : α → ℤ) :
+    ∀ {a : ℤ} {tasks : List α},
+      0 ≤ a →
+      (∀ t ∈ tasks, 0 < gain t) →
+      TaskScheduleSafe gain a tasks
+  | _, [], _, _ => by simp [TaskScheduleSafe]
+  | a, t :: ts, ha, hpos => by
+      have ht : 0 < gain t := hpos t (by simp)
+      have hts : ∀ u ∈ ts, 0 < gain u := by
+        intro u hu
+        exact hpos u (by simp [hu])
+      change 0 < a + gain t ∧
+        TaskScheduleSafe gain (a + gain t) ts
+      constructor
+      · linarith
+      · exact taskScheduleSafe_of_all_pos gain (by linarith) hts
+
+theorem taskScheduleSafe_of_all_zero (gain : α → ℤ) :
+    ∀ {a : ℤ} {tasks : List α},
+      0 < a →
+      (∀ t ∈ tasks, gain t = 0) →
+      TaskScheduleSafe gain a tasks
+  | _, [], _, _ => by simp [TaskScheduleSafe]
+  | a, t :: ts, ha, hzero => by
+      have ht : gain t = 0 := hzero t (by simp)
+      have hts : ∀ u ∈ ts, gain u = 0 := by
+        intro u hu
+        exact hzero u (by simp [hu])
+      change 0 < a + gain t ∧
+        TaskScheduleSafe gain (a + gain t) ts
+      constructor
+      · simpa [ht] using ha
+      · simpa [ht] using
+          (taskScheduleSafe_of_all_zero gain ha hts)
+
+theorem taskScheduleSafe_of_all_nonpos_of_final_pos
+    (gain : α → ℤ) :
+    ∀ {a : ℤ} {tasks : List α},
+      0 < a + taskGainSum gain tasks →
+      (∀ t ∈ tasks, gain t ≤ 0) →
+      TaskScheduleSafe gain a tasks
+  | _, [], _, _ => by simp [TaskScheduleSafe]
+  | a, t :: ts, hfinal, hnonpos => by
+      have ht : gain t ≤ 0 := hnonpos t (by simp)
+      have hts : ∀ u ∈ ts, gain u ≤ 0 := by
+        intro u hu
+        exact hnonpos u (by simp [hu])
+      have htail := taskGainSum_nonpos gain ts hts
+      have hfirst : 0 < a + gain t := by
+        simp only [taskGainSum] at hfinal
+        linarith
+      change 0 < a + gain t ∧
+        TaskScheduleSafe gain (a + gain t) ts
+      refine ⟨hfirst, ?_⟩
+      apply taskScheduleSafe_of_all_nonpos_of_final_pos gain
+      · simp only [taskGainSum] at hfinal
+        linarith
+      · exact hts
+
+/-- Positive, zero, and negative filtering preserves the total task gain. -/
+theorem taskGainSum_partition (gain : α → ℤ) (tasks : List α) :
+    taskGainSum gain (positiveTasks gain tasks) +
+        taskGainSum gain (zeroTasks gain tasks) +
+        taskGainSum gain (negativeTasks gain tasks) =
+      taskGainSum gain tasks := by
+  induction tasks with
+  | nil =>
+      simp [taskGainSum, positiveTasks, zeroTasks, negativeTasks]
+  | cons t ts ih =>
+      by_cases hp : 0 < gain t
+      · have hz : gain t ≠ 0 := by linarith
+        have hn : ¬ gain t < 0 := by linarith
+        simp [taskGainSum, positiveTasks, zeroTasks, negativeTasks,
+          hp, hz, hn, ih]
+        ring
+      · by_cases hz : gain t = 0
+        · have hn : ¬ gain t < 0 := by linarith
+          simp [taskGainSum, positiveTasks, zeroTasks, negativeTasks,
+            hp, hz, hn, ih]
+          ring
+        · have hn : gain t < 0 := by omega
+          simp [taskGainSum, positiveTasks, zeroTasks, negativeTasks,
+            hp, hz, hn, ih]
+          ring
+
+theorem taskGainSum_orderedTasks (gain : α → ℤ) (tasks : List α) :
+    taskGainSum gain (orderedTasks gain tasks) =
+      taskGainSum gain tasks := by
+  rw [orderedTasks, taskGainSum_append, taskGainSum_append]
+  linarith [taskGainSum_partition gain tasks]
+
+/-- Positive/zero/negative scheduling lemma from the audited construction.
+If the starting pile is nonnegative and the final total is positive, placing
+positive tasks first, zero tasks next, and negative tasks last makes every
+individual task executable. -/
+theorem orderedTasks_safe (gain : α → ℤ) (tasks : List α) (a : ℤ)
+    (ha : 0 ≤ a)
+    (hfinal : 0 < a + taskGainSum gain tasks) :
+    TaskScheduleSafe gain a (orderedTasks gain tasks) := by
+  let ps := positiveTasks gain tasks
+  let zs := zeroTasks gain tasks
+  let ns := negativeTasks gain tasks
+  have hpos : ∀ t ∈ ps, 0 < gain t := by
+    intro t ht
+    have ht' : t ∈ tasks ∧ 0 < gain t := by
+      simpa [ps, positiveTasks] using ht
+    exact ht'.2
+  have hnonpos : ∀ t ∈ zs ++ ns, gain t ≤ 0 := by
+    intro t ht
+    have ht' :
+        (t ∈ tasks ∧ gain t = 0) ∨
+          (t ∈ tasks ∧ gain t < 0) := by
+      simpa [zs, ns, zeroTasks, negativeTasks] using ht
+    rcases ht' with ht' | ht' <;> linarith [ht'.2]
+  have hsafePos :
+      TaskScheduleSafe gain a ps :=
+    taskScheduleSafe_of_all_pos gain ha hpos
+  have horderedFinal :
+      0 < a + taskGainSum gain (orderedTasks gain tasks) := by
+    rw [taskGainSum_orderedTasks]
+    exact hfinal
+  have hrestFinal :
+      0 < (a + taskGainSum gain ps) +
+        taskGainSum gain (zs ++ ns) := by
+    rw [orderedTasks, taskGainSum_append] at horderedFinal
+    change
+      0 < (a + taskGainSum gain ps) +
+        taskGainSum gain (zs ++ ns)
+    simpa [ps, zs, ns, add_assoc] using horderedFinal
+  have hsafeRest :
+      TaskScheduleSafe gain
+        (a + taskGainSum gain ps) (zs ++ ns) :=
+    taskScheduleSafe_of_all_nonpos_of_final_pos gain
+      hrestFinal hnonpos
+  rw [orderedTasks, taskScheduleSafe_append]
+  simpa [ps, zs, ns] using And.intro hsafePos hsafeRest
+
+end TaskScheduling
+
 namespace OrientedBranch
 
 variable {V : Type*} [Fintype V] {T : FiniteTree V}
