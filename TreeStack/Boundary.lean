@@ -428,6 +428,97 @@ termination_by B.card
 decreasing_by
   exact B.childBranch_card_lt c
 
+/-- A genuine child carrier lies entirely inside the parent branch carrier. -/
+theorem childBranch_carrier_subset
+    (B : OrientedBranch T) (c : B.Child) :
+    (B.childBranch c).carrier ⊆ B.carrier := by
+  classical
+  intro v hv
+  have hvCases :
+      v = (B.childBranch c).parent ∨
+        v ∈ (B.childBranch c).vertices := by
+    simpa [carrier] using hv
+  rcases hvCases with hp | hvChild
+  · subst v
+    simpa [childBranch] using B.root_mem_carrier
+  · have hvB := B.childBranch_vertices_subset c hvChild
+    simpa [carrier] using hvB
+
+/-- Distinct genuine child branches of the same oriented branch have disjoint
+vertex sets.  A common vertex would give a path in one child component that
+crosses the other's unique boundary edge and hence reaches the deleted parent
+edge endpoint, contradicting the bridge separation. -/
+theorem childBranch_vertices_disjoint
+    (B : OrientedBranch T) (c d : B.Child)
+    (hcd : c.vertex ≠ d.vertex) :
+    Disjoint (B.childBranch c).vertices (B.childBranch d).vertices := by
+  classical
+  rw [Finset.disjoint_left]
+  intro x hxc hxd
+  have hdOutside : d.vertex ∉ (B.childBranch c).vertices := by
+    intro hd
+    have heq :=
+      (B.childBranch c).eq_root_of_mem_vertices_adj_parent
+        hd d.adj.symm
+    exact hcd heq.symm
+  have hdComp :
+      d.vertex ∈ (B.childBranch d).component.supp :=
+    SimpleGraph.ConnectedComponent.connectedComponentMk_mem
+  have hxComp :
+      x ∈ (B.childBranch d).component.supp := by
+    simpa [vertices] using hxd
+  have hreach :
+      (B.childBranch d).deletedGraph.Reachable d.vertex x :=
+    (B.childBranch d).component.reachable_of_mem_supp hdComp hxComp
+  have hreach' :
+      (T.graph.deleteEdges {s(d.vertex, B.root)}).Reachable d.vertex x := by
+    simpa [deletedGraph, childBranch] using hreach
+  rcases SimpleGraph.reachable_deleteEdges_iff_exists_walk.mp hreach' with
+    ⟨p, havoidD⟩
+  have hxcSet :
+      x ∈ ((B.childBranch c).vertices : Set V) := by
+    simpa using hxc
+  have hdOutsideSet :
+      d.vertex ∉ ((B.childBranch c).vertices : Set V) := by
+    simpa using hdOutside
+  rcases p.reverse.exists_boundary_dart
+      ((B.childBranch c).vertices : Set V)
+      hxcSet hdOutsideSet with
+    ⟨⟨⟨u, v⟩, huv⟩, hdart, huSet, hvSet⟩
+  have huFin : u ∈ (B.childBranch c).vertices := by
+    simpa using huSet
+  have hvFin : v ∉ (B.childBranch c).vertices := by
+    simpa using hvSet
+  have hedge :=
+    (B.childBranch c).edge_leaving_vertices_eq_boundary
+      huFin hvFin huv
+  have hvRoot : v = B.root := by
+    rw [Sym2.eq_iff] at hedge
+    rcases hedge with h | h
+    · simpa [childBranch] using h.2
+    · have huParent : u = (B.childBranch c).parent := h.1
+      subst u
+      exact ((B.childBranch c).parent_not_mem_vertices huFin).elim
+  have hrootRev : B.root ∈ p.reverse.support := by
+    rw [← hvRoot]
+    exact p.reverse.dart_snd_mem_support_of_mem_darts hdart
+  have hroot : B.root ∈ p.support := by
+    simpa using hrootRev
+  let q : T.graph.Walk d.vertex B.root :=
+    p.takeUntil B.root hroot
+  have hqAvoid : s(d.vertex, B.root) ∉ q.edges := by
+    intro hq
+    exact havoidD (p.edges_takeUntil_subset_edges hroot hq)
+  have hreachRoot :
+      (T.graph.deleteEdges {s(d.vertex, B.root)}).Reachable
+        d.vertex B.root :=
+    SimpleGraph.reachable_deleteEdges_iff_exists_walk.mpr
+      ⟨q, hqAvoid⟩
+  have hbridge : T.graph.IsBridge s(d.vertex, B.root) :=
+    (SimpleGraph.isAcyclic_iff_forall_adj_isBridge.mp
+      T.isTree.isAcyclic) d.adj.symm
+  exact (SimpleGraph.isBridge_iff.mp hbridge) hreachRoot
+
 section LegalSequences
 
 variable [DecidableEq V]
