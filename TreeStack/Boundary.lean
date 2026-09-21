@@ -520,6 +520,27 @@ theorem childBranch_vertices_disjoint
       T.isTree.isAcyclic) d.adj.symm
   exact (SimpleGraph.isBridge_iff.mp hbridge) hreachRoot
 
+
+/-- A vertex in one child branch is outside the full carrier of every
+distinct sibling.  The only extra carrier vertex of a child is the common
+parent root, which lies in no child vertex set. -/
+theorem mem_childBranch_vertices_not_mem_sibling_carrier
+    (B : OrientedBranch T) (c d : B.Child)
+    (hcd : c.vertex ≠ d.vertex) {w : V}
+    (hw : w ∈ (B.childBranch c).vertices) :
+    w ∉ (B.childBranch d).carrier := by
+  classical
+  intro hwCarrier
+  have hwCases :
+      w = B.root ∨ w ∈ (B.childBranch d).vertices := by
+    simpa [carrier, childBranch] using hwCarrier
+  rcases hwCases with hroot | hwd
+  · subst w
+    exact (B.childBranch c).parent_not_mem_vertices hw
+  · exact
+      (Finset.disjoint_left.mp
+        (B.childBranch_vertices_disjoint c d hcd)) hw hwd
+
 section LegalSequences
 
 variable [DecidableEq V]
@@ -559,6 +580,24 @@ theorem BranchReach.eq_of_not_mem_carrier
         subst w
         exact hw hv
       simp [move, hwu, hwv, ih]
+
+/-- A legal sequence inside a genuine child carrier is also a legal sequence
+inside the parent branch carrier. -/
+theorem BranchReach.of_child
+    (B : OrientedBranch T) (c : B.Child)
+    {C D : Configuration V}
+    (hreach : (B.childBranch c).BranchReach C D) :
+    B.BranchReach C D := by
+  induction hreach with
+  | refl =>
+      exact Relation.ReflTransGen.refl
+  | tail hCE hED ih =>
+      apply Relation.ReflTransGen.tail ih
+      rcases hED with ⟨u, v, huv, hlegal, hu, hv, rfl⟩
+      exact
+        ⟨u, v, huv, hlegal,
+          B.childBranch_carrier_subset c hu,
+          B.childBranch_carrier_subset c hv, rfl⟩
 
 /-- All vertices of the branch have been cleared. -/
 def Cleared (B : OrientedBranch T) (D : Configuration V) : Prop :=
