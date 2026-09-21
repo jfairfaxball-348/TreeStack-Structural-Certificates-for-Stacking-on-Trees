@@ -105,7 +105,7 @@ theorem taskGainSum_toList [DecidableEq α]
     (gain : α → ℤ) (s : Finset α) :
     taskGainSum gain s.toList = Finset.sum s gain := by
   rw [taskGainSum_eq_list_sum]
-  exact Finset.sum_to_list s gain
+  exact Finset.sum_map_toList s gain
 
 /-- A task order is safe from an initial pile `a` if every successive task
 leaves a strictly positive pile.  This is exactly the precondition needed to
@@ -713,7 +713,12 @@ noncomputable def childMessageTerm
 theorem childMessageSum_eq_sum_term
     (B : OrientedBranch T) (C : Configuration V) :
     childMessageSum C B = ∑ v : V, B.childMessageTerm C v := by
-  rfl
+  rw [childMessageSum]
+  apply Finset.sum_congr rfl
+  intro v _
+  by_cases h : T.graph.Adj B.root v ∧ v ≠ B.parent
+  · simp [childMessageTerm, IsChildVertex, childOfVertex, h]
+  · simp [childMessageTerm, IsChildVertex, h]
 
 theorem childMessageTerm_eq_zero_of_not_occupiedChild
     (B : OrientedBranch T) (C : Configuration V) {v : V}
@@ -798,18 +803,12 @@ theorem taskGainSum_occupiedChildTasks
             B.IsOccupiedChildVertex C v),
           B.childMessageTerm C v := by
           symm
-          change
-            (∑ v ∈
+          simpa [OccupiedChild] using
+            (Finset.sum_subtype
               (Finset.univ.filter fun v : V =>
-                B.IsOccupiedChildVertex C v),
-              B.childMessageTerm C v) =
-            ∑ t : {v : V // B.IsOccupiedChildVertex C v},
-              B.childMessageTerm C t.1
-          exact Finset.sum_subtype
-            (Finset.univ.filter fun v : V =>
-              B.IsOccupiedChildVertex C v)
-            (fun v => by simp)
-            (fun v => B.childMessageTerm C v)
+                B.IsOccupiedChildVertex C v)
+              (fun v => by simp)
+              (fun v => B.childMessageTerm C v))
     _ = ∑ v : V, B.childMessageTerm C v := by
           apply Finset.sum_subset (Finset.filter_subset _ _)
           intro v hvUniv hvNot
