@@ -1016,7 +1016,10 @@ theorem signature_branchFlux_bounds
         rw [Finset.sum_sub_distrib, ← Finset.mul_sum]
       _ = childMessageSum C B - 3 * (K : ℤ) := by
         rw [childMessageSum, hK]
-        rfl
+        congr 1
+        apply Finset.sum_congr rfl
+        intro v _
+        by_cases h : T.graph.Adj B.root v ∧ v ≠ B.parent <;> simp [h]
   have hRoot :=
     MoveSignature.root_balance_with_child_flux m C B
       (hClears B.root B.root_mem_vertices)
