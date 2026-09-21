@@ -1,103 +1,90 @@
 # Main estimator inequality: current attack
 
-Status: open.  This note records reductions and falsified stronger claims.
+Status: open in full.  The zero-score case is now proved exactly; the remaining
+bottleneck is normalization from arbitrary nonpositive scores.
 
 The target is
 
 \[
 S_v(C)\le0\ (v\in V(T))\quad\Longrightarrow\quad
-|C|\le\operatorname{estim}(T)-1.
+|C|\le\operatorname{estim}(T)-1. \tag{G}
 \]
 
-## A useful reparameterization
+## What is now proved
 
-Root the tree temporarily.  For every non-root (v), let
+The branch-message theorem reduces non-stackability to the simultaneous score
+inequalities `S_v(C)<=0`.  The explicit estimator obstruction proves
+`stack(T)>=estim(T)` for every nontrivial tree.
+
+The new zero-score theorem, proved in `zero-score-flow.md`, is
+
+\[
+\boxed{S_v(C)=0\ \forall v
+\quad\Longrightarrow\quad
+|C|\le\operatorname{estim}(T)-1.} \tag{Z}
+\]
+
+Moreover the bound in (Z) is sharp: the explicit estimator obstruction at an
+estimator-maximizing root has all scores zero and size `estim(T)-1`.
+
+The proof of (Z) has four ingredients:
+
+1. a nonzero genuine zero-score configuration has no empty side of any edge;
+2. the integer edge states are exactly neutral `(-1,-1)` or oriented
+   `(k,-2k-3)` states;
+3. longest directed-path heights give a dual exponential weighting that bounds
+   mass by a multi-root degree potential;
+4. a connected-partition merge lemma consolidates that potential to one root,
+   where it is exactly the estimator minus one.
+
+An earlier version of this note described the integer edge-state model as an
+unqualified equivalence.  That was too strong because an empty branch is not an
+integer message zero.  The no-empty-side lemma in `zero-score-flow.md` repairs
+the equivalence for every nonzero genuine zero-score configuration.
+
+## Useful reparameterization for the remaining problem
+
+Root the tree temporarily.  For every non-root `v`, let
 
 \[
 x_v=C(v)+\sum_{u\text{ child of }v}d_{u\to v},
 \qquad d_{v\to p}=F(x_v),
 \]
 
-and put (x_r=S_r(C)).  Telescoping gives the exact identity
+and put `x_r=S_r(C)`.  Telescoping gives
 
 \[
 |C|=x_r+\sum_{v\ne r}\bigl(x_v-F(x_v)\bigr). \tag{1}
 \]
 
-If (s_v=S_v(C)) and (v) has parent (p), the message from the parent side
-and the score satisfy
+If `s_v=S_v(C)` and `v` has parent `p`, then
 
 \[
-d_{p\to v}=F(s_p-d_{v\to p}),
+d_{p\to v}=F(s_p-F(x_v)),
 \qquad
 s_v=x_v+F(s_p-F(x_v)). \tag{2}
 \]
 
-Equations (1)--(2) turn the problem into an integer optimization on a tree,
-but (F) is not monotone at every adjacent pair, so a naive convexity argument
-does not suffice.
+The transfer map is not monotone at every adjacent pair, so simply increasing a
+negative score toward zero is not automatically safe.
 
-## Complete description when all scores are zero
+## Remaining normalization problem
 
-Suppose (S_v(C)=0) for every vertex.  For an edge (uv), write
-(a=d_{u\to v}) and (b=d_{v\to u}).  Then
+It would now suffice to prove:
 
-\[
-a=F(-b),\qquad b=F(-a).
-\]
+> For every maximum-total-size configuration `C` with `S_v(C)<=0` for all
+> vertices, there exists a configuration `C'` with `|C'|>=|C|` and
+> `S_v(C')=0` for every vertex.
 
-The integer solutions are exactly
+This statement is still open in the project.  Coordinatewise saturation is not
+valid: bounded searches already contain coordinatewise-maximal non-stackable
+configurations with negative scores.  Also maximum obstructions are not unique;
+on the three-leaf star, `(0,3,3,3)` is a tight zero-score obstruction but is not
+one of the explicit root configurations.
 
-\[
-(a,b)=(-1,-1),
-\quad (k,-2k-3),
-\quad (-2k-3,k)
-\qquad(k\ge0). \tag{3}
-\]
+Therefore a proof of (G) still needs a genuinely global argument, for example a
+mass-preserving normalization, induction deleting negative-score defects, or a
+dual certificate that works directly for all nonpositive scores.
 
-Indeed, a nonnegative entry (k) forces the other entry to be
-(F(-k)=-2k-3), and (F(2k+3)=k); the only solution with neither entry
-nonnegative is ((-1,-1)).
-
-Moreover,
-
-\[
-C(v)=-\sum_{u\sim v}d_{u\to v}. \tag{4}
-\]
-
-Thus zero-score configurations are equivalent to the following edge-state
-model:
-
-- a neutral edge contributes message (-1) at each endpoint and total mass 2;
-- an oriented edge with parameter (k\ge0) contributes (-2k-3) at its tail,
-  (k) at its head, and total mass (k+3);
-- at each vertex the sum of incoming endpoint contributions is nonpositive.
-
-This is an exact generalized-flow formulation on the tree.  Proving that its
-maximum is
-
-\[
-\max_r\bigl(\sigma_T(r)+\operatorname{leaf}(r)-1\bigr)
-\]
-
-is a concrete subproblem.  A second required step is to show that an arbitrary
-maximum-mass non-stackable configuration can be replaced, without losing mass,
-by a zero-score one.
-
-## Stronger statements already falsified
-
-The maximum obstruction need not be unique and need not equal one of the
-explicit (C_r).  On the three-leaf star, the configuration with zero at the
-center and three pebbles at every leaf has total mass 9, all scores zero, and is
-extremal; it is not any (C_r).  Similar extra extremizers occur already on
-(P_3) and the four-vertex star.
-
-Nor is every coordinatewise-maximal non-stackable configuration zero-score.
-Small exhaustive searches find maximal configurations with some score (-3).
-The more plausible statement, consistent with all current tests, is only that a
-*maximum-total-mass* obstruction can be chosen with every score zero.
-
-These examples rule out a proof based on uniqueness of the (C_r), while
-leaving open a mass-preserving normalization to an explicit or zero-score
-extremizer.
-
+Do not claim the tree conjecture is solved until this remaining step is proved
+for arbitrary configurations.

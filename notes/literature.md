@@ -1,6 +1,7 @@
 # Literature and novelty audit
 
-Status: preliminary, not sufficient for an originality claim.
+Status: preliminary, not sufficient for an originality claim.  Last updated
+2026-09-21.
 
 ## Direct source
 
@@ -8,8 +9,8 @@ Csernák and Soukup, *Stacking and clearing in graph pebbling*,
 arXiv:2604.22341v1, introduces the stacking parameter, proves general results,
 and states the tree estimator as Conjecture 10.3.  Section 10 gives an
 almost-stacked sufficient condition and obtains the upper bound only under the
-Almost Stacked Hypothesis.  It does not state the branch recursion in this
-repository.  As of 2026-09-21 arXiv lists only v1 (24 April 2026).
+Almost Stacked Hypothesis.  The arXiv record still describes the tree formula
+as conjectural and computationally motivated.
 
 The associated public repository `lajossoukup/pebbling` uses a reverse-state
 enumeration over whole configurations.  Inspection at commit
@@ -21,24 +22,38 @@ linear-time characterization.
 ## Closest recent work
 
 Adauto, Bardenova, Bidav, and Hurlbert, *Target Pebbling in Trees*,
-arXiv:2504.10460v2 (later published in *Discrete Mathematics*), gives polynomial
-algorithms and extremal descriptions for satisfying a fixed demand (D) on a
-tree.  Its main machinery is path partitions, greedy minimal solutions, and
-superstack extremal configurations.  A source-level search of v2 found no
-piecewise recurrence matching (F), no signed branch surplus, and no exact
-branch-clearing invariant.
+arXiv:2504.10460, gives polynomial algorithms and extremal descriptions for
+satisfying a fixed demand `D` on a tree.  Its main machinery is path partitions,
+greedy minimal solutions, and superstack extremal configurations.
 
 The distinction is substantive: target pebbling asks that the final
-configuration dominate (D) and allows arbitrary leftovers.  Stackability at
-(r) requires every non-(r) vertex to be empty.  Odd residues therefore force
-non-greedy cleanup moves (p\to v\to p), which standard target reachability can
-discard.  Thus the new theorem is not an immediate instance of their target
-algorithm, although their extremal-configuration transformations may be useful
-for the global estimator inequality.
+configuration dominate `D` and allows arbitrary leftovers.  Stackability at a
+vertex requires every other vertex to be empty.  Odd residues can therefore
+force non-greedy cleanup moves such as `p->v->p`, which ordinary target
+reachability may discard.  The branch theorem and zero-score flow argument are
+not immediate instances of the target-pebbling algorithm.
+
+A September 2026 search also finds the later Csernák–Soukup paper *Stacking and
+Clearing in Directed Graph Pebbling* (arXiv:2606.04659).  Its advertised main
+results concern directed graphs and directed cycles; the search did not locate
+a resolution of the undirected tree estimator conjecture there.
+
+## Relation of the new zero-score proof to searched machinery
+
+The project now proves the zero-score optimization by an oriented integer
+edge-state model, longest-directed-path exponential weights, and a
+connected-partition consolidation lemma.  No inspected source has yet been
+identified as stating this exact combination.  That observation is **not** a
+novelty claim: a full citation-index and terminology audit is still required.
+
+The empty-branch correction is also specific to exact clearing.  An empty
+branch is a separate state from integer message zero; replacing it by zero can
+create spurious algebraic edge states.  This issue is not automatically visible
+in target-reachability formulations that allow leftovers.
 
 ## Classical mechanisms checked so far
 
-- Chung's rooted-tree path partitions and (t)-fold pebbling formulas optimize
+- Chung's rooted-tree path partitions and `t`-fold pebbling formulas optimize
   delivery to a fixed target, not exact clearing of all other vertices.
 - The cover pebbling/stacking theorem (Sjöstrand; independently Vuong and
   Wyckoff) concerns positive target demands and extremal initial stacks.
@@ -57,10 +72,11 @@ for the global estimator inequality.
   metadata.
 - Full-text inspection of the tree/outerplanar reachability algorithms and
   weighted-graph pebbling algorithms, not only abstracts and keyword searches.
-- Broader GitHub and arXiv formula searches using equivalent normalizations of
-  (F), especially a threshold/cost rather than signed-gain convention.
+- Broader formula searches using equivalent normalizations of `F`, especially
+  threshold/cost rather than signed-gain conventions.
 - Direct comparison with demand-pebbling and exact-transformation variants in
   which unwanted leftover pebbles must be eliminated.
+- Search for generalized-flow or exponential-potential consolidation lemmas
+  equivalent to the new zero-score proof.
 
 No novelty claim should be made until these items are complete.
-
