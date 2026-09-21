@@ -221,7 +221,7 @@ theorem exists_childBranch_mem_of_mem_vertices_ne_root
   have hreach : B.deletedGraph.Reachable B.root x :=
     B.component.reachable_of_mem_supp hrComp hxComp
   rcases hreach.exists_isPath with ⟨p, hp⟩
-  rcases SimpleGraph.Walk.exists_eq_cons_of_ne hxr p with
+  rcases SimpleGraph.Walk.exists_eq_cons_of_ne hxr.symm p with
     ⟨v, hrv, p', hpEq⟩
   rw [hpEq] at hp
   have hpData :=
