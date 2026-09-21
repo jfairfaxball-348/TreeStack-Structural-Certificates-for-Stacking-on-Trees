@@ -424,26 +424,38 @@ theorem carrierMass_withBoundary_eq_of_not_occupied
     (hEmpty : ¬ B.Occupied C) :
     B.carrierMass (B.withBoundary C q) = q := by
   classical
-  rw [carrierMass, carrier, Finset.sum_insert B.parent_not_mem_vertices]
-  rw [B.withBoundary_parent C q]
+  have hp : B.parent ∈ B.carrier := by
+    simp [carrier]
+  have herase : B.carrier.erase B.parent = B.vertices := by
+    ext v
+    simp [carrier, B.parent_not_mem_vertices]
   have hz := (B.not_occupied_iff_zero_on_vertices C).1 hEmpty
   have hsum : ∑ v ∈ B.vertices, B.withBoundary C q v = 0 := by
     apply Finset.sum_eq_zero
     intro v hv
     rw [B.withBoundary_of_mem_vertices C q hv, hz v hv]
-  rw [hsum]
+  have hdecomp :=
+    Finset.sum_erase_add B.carrier (B.withBoundary C q) hp
+  rw [herase, hsum, B.withBoundary_parent C q] at hdecomp
+  rw [carrierMass]
   omega
 
 theorem carrierMass_eq_parent_of_cleared
     (B : OrientedBranch T) (D : Configuration V) (hClear : B.Cleared D) :
     B.carrierMass D = D B.parent := by
   classical
-  rw [carrierMass, carrier, Finset.sum_insert B.parent_not_mem_vertices]
+  have hp : B.parent ∈ B.carrier := by
+    simp [carrier]
+  have herase : B.carrier.erase B.parent = B.vertices := by
+    ext v
+    simp [carrier, B.parent_not_mem_vertices]
   have hsum : ∑ v ∈ B.vertices, D v = 0 := by
     apply Finset.sum_eq_zero
     intro v hv
     exact hClear v hv
-  rw [hsum]
+  have hdecomp := Finset.sum_erase_add B.carrier D hp
+  rw [herase, hsum] at hdecomp
+  rw [carrierMass]
   omega
 
 /-- A legal initially empty excursion cannot increase the boundary pile. -/
@@ -520,7 +532,7 @@ theorem signedCarrierMass_move (B : OrientedBranch T)
         (∑ w ∈ B.carrier, B.boundaryParityWeight w * (C w : ℤ)) +
           B.boundaryParityWeight v - 2 * B.boundaryParityWeight u := by
       simp [Finset.sum_add_distrib, Finset.sum_sub_distrib,
-        mul_add, mul_sub, huB, hvB]
+        mul_add, mul_sub, huB, hvB] <;> ring
     _ = B.signedCarrierMass C - 3 * B.boundaryParityWeight u := by
       rw [B.boundaryParityWeight_adj_neg huv, signedCarrierMass]
       ring
@@ -548,8 +560,11 @@ theorem signedCarrierMass_withBoundary_eq_of_not_occupied
     (hEmpty : ¬ B.Occupied C) :
     B.signedCarrierMass (B.withBoundary C q) = q := by
   classical
-  rw [signedCarrierMass, carrier, Finset.sum_insert B.parent_not_mem_vertices]
-  rw [B.withBoundary_parent C q, B.boundaryParityWeight_parent]
+  have hp : B.parent ∈ B.carrier := by
+    simp [carrier]
+  have herase : B.carrier.erase B.parent = B.vertices := by
+    ext v
+    simp [carrier, B.parent_not_mem_vertices]
   have hz := (B.not_occupied_iff_zero_on_vertices C).1 hEmpty
   have hsum :
       ∑ v ∈ B.vertices,
@@ -558,23 +573,37 @@ theorem signedCarrierMass_withBoundary_eq_of_not_occupied
     intro v hv
     rw [B.withBoundary_of_mem_vertices C q hv, hz v hv]
     simp
-  rw [hsum]
-  norm_num
+  have hdecomp :=
+    Finset.sum_erase_add B.carrier
+      (fun v => B.boundaryParityWeight v * (B.withBoundary C q v : ℤ)) hp
+  rw [herase, hsum, B.withBoundary_parent C q,
+    B.boundaryParityWeight_parent] at hdecomp
+  rw [signedCarrierMass]
+  norm_num at hdecomp ⊢
+  linarith
 
 theorem signedCarrierMass_eq_parent_of_cleared
     (B : OrientedBranch T) (D : Configuration V) (hClear : B.Cleared D) :
     B.signedCarrierMass D = D B.parent := by
   classical
-  rw [signedCarrierMass, carrier, Finset.sum_insert B.parent_not_mem_vertices]
-  rw [B.boundaryParityWeight_parent]
+  have hp : B.parent ∈ B.carrier := by
+    simp [carrier]
+  have herase : B.carrier.erase B.parent = B.vertices := by
+    ext v
+    simp [carrier, B.parent_not_mem_vertices]
   have hsum :
       ∑ v ∈ B.vertices, B.boundaryParityWeight v * (D v : ℤ) = 0 := by
     apply Finset.sum_eq_zero
     intro v hv
     rw [hClear v hv]
     simp
-  rw [hsum]
-  norm_num
+  have hdecomp :=
+    Finset.sum_erase_add B.carrier
+      (fun v => B.boundaryParityWeight v * (D v : ℤ)) hp
+  rw [herase, hsum, B.boundaryParityWeight_parent] at hdecomp
+  rw [signedCarrierMass]
+  norm_num at hdecomp ⊢
+  linarith
 
 /-- An initially and finally empty legal branch excursion preserves the
 boundary pile modulo three. -/
