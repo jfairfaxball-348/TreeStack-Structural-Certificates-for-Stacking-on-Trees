@@ -252,8 +252,9 @@ theorem move_balance_int (C : Configuration V) {u v : V}
     · simp [move, hwu, hwv]
 
 /-- A branch-local reachability proof has an exact oriented move-count
-signature.  The final clause is causal: if no root-to-parent move occurred,
-an initially occupied branch is still occupied. -/
+signature.  The final clause is causal on every oriented subbranch contained
+in the ambient branch: if no outward boundary move of that subbranch occurs,
+initial occupancy of the subbranch persists. -/
 theorem BranchReach.exists_moveSignature
     (B : OrientedBranch T) {C D : Configuration V}
     (hreach : B.BranchReach C D) :
@@ -263,15 +264,17 @@ theorem BranchReach.exists_moveSignature
         (D w : ℤ) =
           (C w : ℤ) + (m.incoming w : ℤ) -
             2 * (m.outgoing w : ℤ)) ∧
-      (B.Occupied C →
-        m.count B.root B.parent = 0 →
-        B.Occupied D) := by
+      (∀ A : OrientedBranch T,
+        A.vertices ⊆ B.vertices →
+        A.Occupied C →
+        m.count A.root A.parent = 0 →
+        A.Occupied D) := by
   induction hreach with
   | refl =>
       refine ⟨MoveSignature.zero T, MoveSignature.zero_supportedOn B, ?_, ?_⟩
       · intro w
         simp
-      · intro hOcc _
+      · intro A _ hOcc _
         exact hOcc
   | tail hCE hED ih =>
       rcases hED with ⟨u, v, huv, hlegal, huCarrier, hvCarrier, rfl⟩
@@ -283,32 +286,41 @@ theorem BranchReach.exists_moveSignature
         rw [move_balance_int _ huv.ne hlegal w, hmBal w]
         simp [m', MoveSignature.incoming_extend, MoveSignature.outgoing_extend]
         by_cases hwu : w = u <;> simp [hwu] <;> ring
-      · intro hOcc hzero
-        have hmzero : m.count B.root B.parent = 0 := by
+      · intro A hAB hOcc hzero
+        have hmzero : m.count A.root A.parent = 0 := by
           have hle :
-              m.count B.root B.parent ≤ m'.count B.root B.parent := by
+              m.count A.root A.parent ≤ m'.count A.root A.parent := by
             dsimp [m', MoveSignature.extend]
             omega
           omega
-        have hnotBoundary : ¬ (u = B.root ∧ v = B.parent) := by
-          rintro ⟨rfl, rfl⟩
-          dsimp [m', MoveSignature.extend] at hzero
-          simp at hzero
-        have hvBranch : v ∈ B.vertices := by
-          have hvCases : v = B.parent ∨ v ∈ B.vertices := by
-            simpa [carrier] using hvCarrier
-          rcases hvCases with hvp | hvb
-          · subst v
-            have huCases : u = B.parent ∨ u ∈ B.vertices := by
-              simpa [carrier] using huCarrier
-            rcases huCases with hup | hub
-            · subst u
-              exact (huv.ne rfl).elim
-            · have huroot := B.eq_root_of_mem_vertices_adj_parent hub huv
-              exact (hnotBoundary ⟨huroot, rfl⟩).elim
-          · exact hvb
-        refine ⟨v, hvBranch, ?_⟩
-        simp [move]
+        rcases hmPersist A hAB hOcc hmzero with ⟨w, hwA, hwpos⟩
+        by_cases hvA : v ∈ A.vertices
+        · refine ⟨v, hvA, ?_⟩
+          simp [move, huv.ne]
+        · have huA : u ∉ A.vertices := by
+            intro huA
+            have hEdge :=
+              A.edge_leaving_vertices_eq_boundary huA hvA huv
+            rw [Sym2.eq_iff] at hEdge
+            rcases hEdge with h | h
+            · rcases h with ⟨huRoot, hvParent⟩
+              subst u
+              subst v
+              dsimp [m', MoveSignature.extend] at hzero
+              simp at hzero
+            · rcases h with ⟨huParent, hvRoot⟩
+              subst u
+              exact A.parent_not_mem_vertices huA
+          have hwu : w ≠ u := by
+            intro h
+            subst w
+            exact huA hwA
+          have hwv : w ≠ v := by
+            intro h
+            subst w
+            exact hvA hwA
+          refine ⟨w, hwA, ?_⟩
+          simpa [move, hwu, hwv] using hwpos
 
 theorem MoveSignature.incoming_parent_eq_boundary
     (B : OrientedBranch T) (m : MoveSignature T)
@@ -373,7 +385,8 @@ theorem ClearOutcome.exists_feasibleClearing_signature
     intro hzero
     have hInitialOcc : B.Occupied (B.withBoundary C q) := by
       exact (B.occupied_withBoundary_iff C q).2 hOcc
-    have hFinalOcc := hmPersist hInitialOcc hzero
+    have hFinalOcc :=
+      hmPersist B (by intro v hv; exact hv) hInitialOcc hzero
     rcases hFinalOcc with ⟨v, hv, hpos⟩
     rw [hClear.2 v hv] at hpos
     omega
