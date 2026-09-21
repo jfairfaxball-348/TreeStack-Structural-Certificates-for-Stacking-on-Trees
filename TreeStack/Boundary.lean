@@ -371,6 +371,63 @@ def MoveSignature.EmptyExcursion (m : MoveSignature T)
     ∀ v ∈ B.vertices,
       (m.incoming v : ℤ) - 2 * (m.outgoing v : ℤ) = 0
 
+theorem occupied_congr_vertices
+    (B : OrientedBranch T) (C D : Configuration V)
+    (hCD : ∀ v ∈ B.vertices, C v = D v) :
+    B.Occupied C ↔ B.Occupied D := by
+  constructor
+  · rintro ⟨v, hv, hpos⟩
+    refine ⟨v, hv, ?_⟩
+    rw [← hCD v hv]
+    exact hpos
+  · rintro ⟨v, hv, hpos⟩
+    refine ⟨v, hv, ?_⟩
+    rw [hCD v hv]
+    exact hpos
+
+/-- Recursive branch messages are insensitive to configuration values outside
+the branch.  In particular, changing a child's external boundary pile does not
+change that child's message. -/
+theorem branchMessage_congr_vertices
+    (C D : Configuration V) (B : OrientedBranch T)
+    (hCD : ∀ v ∈ B.vertices, C v = D v) :
+    branchMessage C B = branchMessage D B := by
+  have hOcc := B.occupied_congr_vertices C D hCD
+  by_cases hC : B.Occupied C
+  · have hD : B.Occupied D := hOcc.mp hC
+    have hRoot : (C B.root : ℤ) = (D B.root : ℤ) := by
+      exact_mod_cast hCD B.root B.root_mem_vertices
+    have hChild :
+        childMessageSum C B = childMessageSum D B := by
+      rw [childMessageSum, childMessageSum]
+      apply Finset.sum_congr rfl
+      intro v _
+      by_cases h : T.graph.Adj B.root v ∧ v ≠ B.parent
+      · let c : B.Child :=
+          { vertex := v
+            adj := h.1
+            ne_parent := h.2 }
+        have hSub :
+            ∀ w ∈ (B.childBranch c).vertices, C w = D w := by
+          intro w hw
+          exact hCD w (B.childBranch_vertices_subset c hw)
+        have hRec :=
+          branchMessage_congr_vertices C D (B.childBranch c) hSub
+        simp [h, c, hRec]
+      · simp [h]
+    rw [branchMessage_eq_some_of_occupied C B hC,
+      branchMessage_eq_some_of_occupied D B hD]
+    congr 2
+    rw [effectiveInput, effectiveInput, hRoot, hChild]
+  · have hD : ¬ B.Occupied D := by
+      intro hD
+      exact hC (hOcc.mpr hD)
+    rw [branchMessage_eq_empty_of_not_occupied C B hC,
+      branchMessage_eq_empty_of_not_occupied D B hD]
+termination_by B.card
+decreasing_by
+  exact B.childBranch_card_lt c
+
 section LegalSequences
 
 variable [DecidableEq V]
@@ -391,6 +448,26 @@ def BranchReach (B : OrientedBranch T)
     (C D : Configuration V) : Prop :=
   Relation.ReflTransGen B.BranchPebbleStep C D
 
+/-- A branch-local legal sequence cannot alter a vertex outside its carrier. -/
+theorem BranchReach.eq_of_not_mem_carrier
+    (B : OrientedBranch T) {C D : Configuration V}
+    (hreach : B.BranchReach C D) {w : V}
+    (hw : w ∉ B.carrier) :
+    D w = C w := by
+  induction hreach with
+  | refl => rfl
+  | tail hCE hED ih =>
+      rcases hED with ⟨u, v, huv, hlegal, hu, hv, rfl⟩
+      have hwu : w ≠ u := by
+        intro h
+        subst w
+        exact hw hu
+      have hwv : w ≠ v := by
+        intro h
+        subst w
+        exact hw hv
+      simp [move, hwu, hwv, ih]
+
 /-- All vertices of the branch have been cleared. -/
 def Cleared (B : OrientedBranch T) (D : Configuration V) : Prop :=
   ∀ v ∈ B.vertices, D v = 0
@@ -405,6 +482,12 @@ def withBoundary (B : OrientedBranch T) (C : Configuration V) (q : ℕ) :
     (C : Configuration V) (q : ℕ) :
     B.withBoundary C q B.parent = q := by
   simp [withBoundary]
+
+@[simp] theorem withBoundary_self (B : OrientedBranch T)
+    (C : Configuration V) :
+    B.withBoundary C (C B.parent) = C := by
+  funext v
+  by_cases h : v = B.parent <;> simp [withBoundary, h]
 
 @[simp] theorem withBoundary_of_mem_vertices (B : OrientedBranch T)
     (C : Configuration V) (q : ℕ) {v : V} (hv : v ∈ B.vertices) :
