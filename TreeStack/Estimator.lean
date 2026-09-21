@@ -33,7 +33,7 @@ noncomputable def leafCount {V : Type*} [Fintype V]
 /-- The source quantity sigma_T(r), including its leading one. -/
 noncomputable def sigma {V : Type*} [Fintype V]
     (T : FiniteTree V) (r : V) : ℕ :=
-  1 + ∑ v in sigmaVertices T r,
+  1 + ∑ v ∈ sigmaVertices T r,
     T.graph.degree v * 2 ^ T.graph.dist r v
 
 /-- The source rooted estimator sigma_T(r) + leaf_T(r). -/
@@ -61,7 +61,7 @@ theorem sigma_corrected_expansion {V : Type*} [Fintype V]
     (T : FiniteTree V) (r : V) :
     sigma T r =
       1 + T.graph.degree r +
-        ∑ v in nonRootInternalVertices T r,
+        ∑ v ∈ nonRootInternalVertices T r,
           T.graph.degree v * 2 ^ T.graph.dist r v := by
   rw [sigma, sigmaVertices_eq_insert]
   have hnot : r ∉ nonRootInternalVertices T r := by
@@ -75,7 +75,7 @@ theorem rootEstimate_corrected_expansion {V : Type*} [Fintype V]
     (T : FiniteTree V) (r : V) :
     rootEstimate T r =
       1 + leafCount T r + T.graph.degree r +
-        ∑ v in nonRootInternalVertices T r,
+        ∑ v ∈ nonRootInternalVertices T r,
           T.graph.degree v * 2 ^ T.graph.dist r v := by
   rw [rootEstimate, sigma_corrected_expansion]
   omega
@@ -116,12 +116,12 @@ theorem card_erase_root_eq_leafCount_add_internal {V : Type*} [Fintype V]
 theorem card_internal_le_weighted_sum {V : Type*} [Fintype V]
     (T : FiniteTree V) (r : V) :
     (nonRootInternalVertices T r).card ≤
-      ∑ v in nonRootInternalVertices T r,
+      ∑ v ∈ nonRootInternalVertices T r,
         T.graph.degree v * 2 ^ T.graph.dist r v := by
   calc
     (nonRootInternalVertices T r).card =
-        ∑ _v in nonRootInternalVertices T r, 1 := by simp
-    _ ≤ ∑ v in nonRootInternalVertices T r,
+        ∑ _v ∈ nonRootInternalVertices T r, 1 := by simp
+    _ ≤ ∑ v ∈ nonRootInternalVertices T r,
         T.graph.degree v * 2 ^ T.graph.dist r v := by
       exact Finset.sum_le_sum fun v hv => by
         have hv' : v ≠ r ∧ 1 < T.graph.degree v := by
