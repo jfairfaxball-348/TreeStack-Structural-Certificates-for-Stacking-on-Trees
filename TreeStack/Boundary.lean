@@ -95,7 +95,7 @@ def taskGainSum (gain : α → ℤ) : List α → ℤ
 /-- The list sum agrees with the corresponding finite-set sum. -/
 theorem taskGainSum_toList [DecidableEq α]
     (gain : α → ℤ) (s : Finset α) :
-    taskGainSum gain s.toList = ∑ t in s, gain t := by
+    taskGainSum gain s.toList = ∑ t ∈ s, gain t := by
   induction s using Finset.induction_on with
   | empty =>
       simp [taskGainSum]
@@ -666,6 +666,13 @@ def OccupiedChild (B : OrientedBranch T) (C : Configuration V) :=
   {v : V //
     ∃ h : B.IsChildVertex v,
       (B.childBranch (B.childOfVertex v h)).Occupied C}
+
+noncomputable instance OccupiedChild.instFintype
+    (B : OrientedBranch T) (C : Configuration V) :
+    Fintype (B.OccupiedChild C) :=
+  Fintype.ofInjective
+    (fun t : B.OccupiedChild C => (t.1 : V))
+    Subtype.val_injective
 
 /-- The genuine child carried by an occupied-child task. -/
 noncomputable def OccupiedChild.child
