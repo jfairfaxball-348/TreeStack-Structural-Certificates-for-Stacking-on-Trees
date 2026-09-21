@@ -10,3 +10,5 @@ import TreeStack
 #print axioms TreeStack.rootEstimate_corrected_expansion
 #print axioms TreeStack.card_add_one_le_rootEstimate
 #print axioms TreeStack.card_add_one_le_estim
+#print axioms TreeStack.OrientedBranch.parent_not_mem_vertices
+#print axioms TreeStack.OrientedBranch.card_lt_total
