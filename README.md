@@ -71,3 +71,27 @@ Proof notes:
 The reproduced published atlas baseline through order 7 is in
 `data/published_baseline_through_7.csv`.  No order-11 census is part of this
 project stage.
+
+
+## Lean formalization
+
+Lean Phase 1 is underway. The current formal development has machine-checked
+the exact-size stacking semantics, the audit repair proving upward closure of
+universal exact sizes, and the arithmetic core of the branch transfer
+function. The exact branch boundary invariant and root-score theorem are the
+next major formal targets.
+
+The Lean environment is pinned by `lean-toolchain` and
+`lake-manifest.json`. To reproduce the full CI path:
+
+```bash
+python3 -m pip install -e '.[test]'
+python3 -m pytest -q
+python3 -m treestack.src.verify --max-order 6 --max-total 8
+python3 -m compileall -q treestack
+lake build
+lake env lean Audit.lean
+```
+
+See `notes/lean-progress.md` for the exact proved theorem list, dependency
+boundary, trust statement, and remaining obligations.
