@@ -12,3 +12,18 @@ import TreeStack
 #print axioms TreeStack.card_add_one_le_estim
 #print axioms TreeStack.OrientedBranch.parent_not_mem_vertices
 #print axioms TreeStack.OrientedBranch.card_lt_total
+#print axioms TreeStack.OrientedBranch.childBranch_vertices_subset
+#print axioms TreeStack.OrientedBranch.childBranch_vertices_ssubset
+#print axioms TreeStack.OrientedBranch.childBranch_card_lt
+#print axioms TreeStack.OrientedBranch.edge_leaving_vertices_eq_boundary
+#print axioms TreeStack.OrientedBranch.eq_root_of_mem_vertices_adj_parent
+#print axioms TreeStack.OrientedBranch.branchMessage_eq_some_of_occupied
+#print axioms TreeStack.OrientedBranch.branchMessage_eq_empty_iff
+#print axioms TreeStack.OrientedBranch.branchMessage_ne_empty_of_occupied
+
+#check TreeStack.MoveSignature
+#check TreeStack.OrientedBranch.MoveSignature.boundaryFlux
+#check TreeStack.OrientedBranch.MoveSignature.FeasibleClearing
+#check TreeStack.OrientedBranch.MoveSignature.EmptyExcursion
+#check TreeStack.OrientedBranch.BranchReach
+#check TreeStack.OrientedBranch.ExactBoundaryInvariant
