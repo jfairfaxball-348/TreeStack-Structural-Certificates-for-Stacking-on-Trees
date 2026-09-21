@@ -3,27 +3,26 @@ import TreeStack.Basic
 
 namespace TreeStack
 
+open scoped BigOperators Classical
+
 /-- Degree-one vertices other than the chosen root. -/
 noncomputable def leafVertices {V : Type*} [Fintype V]
-    (T : FiniteTree V) (r : V) : Finset V := by
-  classical
-  exact (Finset.univ : Finset V).filter fun v =>
+    (T : FiniteTree V) (r : V) : Finset V :=
+  (Finset.univ : Finset V).filter fun v =>
     v ≠ r ∧ T.graph.degree v = 1
 
 /-- Vertices that contribute to the source definition of sigma:
 the root, together with every vertex of degree greater than one. -/
 noncomputable def sigmaVertices {V : Type*} [Fintype V]
-    (T : FiniteTree V) (r : V) : Finset V := by
-  classical
-  exact (Finset.univ : Finset V).filter fun v =>
+    (T : FiniteTree V) (r : V) : Finset V :=
+  (Finset.univ : Finset V).filter fun v =>
     v = r ∨ 1 < T.graph.degree v
 
 /-- Internal vertices different from the root.  This is the part of
 `sigmaVertices` left after splitting off the root contribution. -/
 noncomputable def nonRootInternalVertices {V : Type*} [Fintype V]
-    (T : FiniteTree V) (r : V) : Finset V := by
-  classical
-  exact (Finset.univ : Finset V).filter fun v =>
+    (T : FiniteTree V) (r : V) : Finset V :=
+  (Finset.univ : Finset V).filter fun v =>
     v ≠ r ∧ 1 < T.graph.degree v
 
 /-- The source leaf count: degree-one vertices other than the root. -/
@@ -51,7 +50,6 @@ noncomputable def estim {V : Type*} [Fintype V]
 theorem sigmaVertices_eq_insert {V : Type*} [Fintype V]
     (T : FiniteTree V) (r : V) :
     sigmaVertices T r = insert r (nonRootInternalVertices T r) := by
-  classical
   ext v
   by_cases hvr : v = r
   · simp [sigmaVertices, nonRootInternalVertices, hvr]
@@ -65,12 +63,11 @@ theorem sigma_corrected_expansion {V : Type*} [Fintype V]
       1 + T.graph.degree r +
         ∑ v in nonRootInternalVertices T r,
           T.graph.degree v * 2 ^ T.graph.dist r v := by
-  classical
   rw [sigma, sigmaVertices_eq_insert]
   have hnot : r ∉ nonRootInternalVertices T r := by
     simp [nonRootInternalVertices]
   rw [Finset.sum_insert hnot]
-  simp
+  simp [Nat.add_assoc]
 
 /-- Correct root-sensitive expansion of the rooted estimator.
 This replaces the false helper identity that drops a degree-one root. -/
@@ -90,7 +87,6 @@ theorem erase_root_eq_leaf_union_internal {V : Type*} [Fintype V]
     (hdeg : ∀ v, 0 < T.graph.degree v) :
     (Finset.univ : Finset V).erase r =
       leafVertices T r ∪ nonRootInternalVertices T r := by
-  classical
   ext v
   by_cases hvr : v = r
   · simp [leafVertices, nonRootInternalVertices, hvr]
@@ -101,8 +97,11 @@ theorem erase_root_eq_leaf_union_internal {V : Type*} [Fintype V]
 theorem leafVertices_disjoint_internal {V : Type*} [Fintype V]
     (T : FiniteTree V) (r : V) :
     Disjoint (leafVertices T r) (nonRootInternalVertices T r) := by
-  classical
-  simp [Finset.disjoint_left, leafVertices, nonRootInternalVertices]
+  rw [Finset.disjoint_left]
+  intro v hleaf hint
+  simp only [leafVertices, Finset.mem_filter, Finset.mem_univ, true_and] at hleaf
+  simp only [nonRootInternalVertices, Finset.mem_filter, Finset.mem_univ, true_and] at hint
+  omega
 
 theorem card_erase_root_eq_leafCount_add_internal {V : Type*} [Fintype V]
     (T : FiniteTree V) (r : V)
@@ -119,7 +118,6 @@ theorem card_internal_le_weighted_sum {V : Type*} [Fintype V]
     (nonRootInternalVertices T r).card ≤
       ∑ v in nonRootInternalVertices T r,
         T.graph.degree v * 2 ^ T.graph.dist r v := by
-  classical
   calc
     (nonRootInternalVertices T r).card =
         ∑ _v in nonRootInternalVertices T r, 1 := by simp
@@ -139,7 +137,6 @@ theorem card_add_one_le_rootEstimate_of_degree_pos
     {V : Type*} [Fintype V] (T : FiniteTree V) (r : V)
     (hdeg : ∀ v, 0 < T.graph.degree v) :
     Fintype.card V + 1 ≤ rootEstimate T r := by
-  classical
   have hpart := card_erase_root_eq_leafCount_add_internal T r hdeg
   have herase :=
     Finset.card_erase_add_one (s := (Finset.univ : Finset V))
@@ -155,7 +152,6 @@ tree.  The root may itself have degree one. -/
 theorem card_add_one_le_rootEstimate {V : Type*} [Fintype V] [Nontrivial V]
     (T : FiniteTree V) (r : V) :
     Fintype.card V + 1 ≤ rootEstimate T r := by
-  classical
   apply card_add_one_le_rootEstimate_of_degree_pos T r
   intro v
   exact T.isTree.connected.preconnected.degree_pos_of_nontrivial v
@@ -164,7 +160,6 @@ theorem card_add_one_le_rootEstimate {V : Type*} [Fintype V] [Nontrivial V]
 theorem rootEstimate_le_estim {V : Type*} [Fintype V]
     (T : FiniteTree V) (r : V) :
     rootEstimate T r ≤ estim T := by
-  classical
   simpa [estim] using
     (Finset.le_sup (f := rootEstimate T) (Finset.mem_univ r))
 
@@ -173,7 +168,6 @@ nontrivial finite tree. -/
 theorem card_add_one_le_estim {V : Type*} [Fintype V] [Nontrivial V]
     (T : FiniteTree V) :
     Fintype.card V + 1 ≤ estim T := by
-  classical
   let r : V := T.isTree.connected.nonempty.some
   exact (card_add_one_le_rootEstimate T r).trans (rootEstimate_le_estim T r)
 
