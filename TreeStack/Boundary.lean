@@ -203,15 +203,15 @@ def ClearOutcome (B : OrientedBranch T) (C : Configuration V)
   B.BranchReach (B.withBoundary C q) D ∧ B.Cleared D
 
 theorem MoveSignature.zero_supportedOn (B : OrientedBranch T) :
-    (MoveSignature.zero T).SupportedOn B := by
+    MoveSignature.SupportedOn (MoveSignature.zero T) B := by
   intro u v h
   simp at h
 
 theorem MoveSignature.extend_supportedOn
     (B : OrientedBranch T) (m : MoveSignature T)
     {u v : V} (huv : T.graph.Adj u v)
-    (hm : m.SupportedOn B) (hu : u ∈ B.carrier) (hv : v ∈ B.carrier) :
-    (m.extend u v huv).SupportedOn B := by
+    (hm : MoveSignature.SupportedOn m B) (hu : u ∈ B.carrier) (hv : v ∈ B.carrier) :
+    MoveSignature.SupportedOn (m.extend u v huv) B := by
   intro a b hpos
   by_cases hnew : a = u ∧ b = v
   · rcases hnew with ⟨rfl, rfl⟩
@@ -241,7 +241,7 @@ theorem BranchReach.exists_moveSignature
     (B : OrientedBranch T) {C D : Configuration V}
     (hreach : B.BranchReach C D) :
     ∃ m : MoveSignature T,
-      m.SupportedOn B ∧
+      MoveSignature.SupportedOn m B ∧
       (∀ w : V,
         (D w : ℤ) =
           (C w : ℤ) + (m.incoming w : ℤ) -
@@ -265,7 +265,7 @@ theorem BranchReach.exists_moveSignature
       · intro w
         rw [move_balance_int _ huv.ne hlegal w, hmBal w]
         simp [m', MoveSignature.incoming_extend, MoveSignature.outgoing_extend]
-        ring
+        ring_nf
       · intro hOcc hzero
         have hmzero : m.count B.root B.parent = 0 := by
           have hle :
@@ -295,7 +295,7 @@ theorem BranchReach.exists_moveSignature
 
 theorem MoveSignature.incoming_parent_eq_boundary
     (B : OrientedBranch T) (m : MoveSignature T)
-    (hm : m.SupportedOn B) :
+    (hm : MoveSignature.SupportedOn m B) :
     m.incoming B.parent = m.count B.root B.parent := by
   classical
   rw [MoveSignature.incoming]
@@ -315,7 +315,7 @@ theorem MoveSignature.incoming_parent_eq_boundary
 
 theorem MoveSignature.outgoing_parent_eq_boundary
     (B : OrientedBranch T) (m : MoveSignature T)
-    (hm : m.SupportedOn B) :
+    (hm : MoveSignature.SupportedOn m B) :
     m.outgoing B.parent = m.count B.parent B.root := by
   classical
   rw [MoveSignature.outgoing]
@@ -341,17 +341,17 @@ theorem ClearOutcome.exists_feasibleClearing_signature
     {D : Configuration V} (hOcc : B.Occupied C)
     (hClear : B.ClearOutcome C q D) :
     ∃ m : MoveSignature T,
-      m.FeasibleClearing C B ∧
+      MoveSignature.FeasibleClearing m C B ∧
       (D B.parent : ℤ) =
-        (q : ℤ) + m.boundaryFlux B := by
-  rcases B.BranchReach.exists_moveSignature hClear.1 with
+        (q : ℤ) + MoveSignature.boundaryFlux m B := by
+  rcases BranchReach.exists_moveSignature B hClear.1 with
     ⟨m, hmSupp, hmBal, hmPersist⟩
-  have hClears : m.Clears C B := by
+  have hClears : MoveSignature.Clears m C B := by
     intro v hv
     have h := hmBal v
     rw [hClear.2 v hv, B.withBoundary_of_mem_vertices C q hv] at h
     simpa [MoveSignature.BalancesAt] using h.symm
-  have hCausal : m.CausalOutward B := by
+  have hCausal : MoveSignature.CausalOutward m B := by
     apply Nat.pos_of_ne_zero
     intro hzero
     have hInitialOcc : B.Occupied (B.withBoundary C q) := by
