@@ -1091,6 +1091,83 @@ termination_by B.card
 decreasing_by
   exact B.childBranch_card_lt c
 
+
+/-- Necessity half of the exact boundary invariant.  Any legal clearing of an
+occupied branch leaves no more than its recursive message gain at the external
+boundary. -/
+theorem ClearOutcome.boundary_le_message
+    (B : OrientedBranch T) (C : Configuration V) (q : ℕ)
+    {D : Configuration V} {d : ℤ}
+    (hOcc : B.Occupied C)
+    (hMsg : branchMessage C B = some d)
+    (hClear : B.ClearOutcome C q D) :
+    (D B.parent : ℤ) ≤ (q : ℤ) + d := by
+  rcases BranchReach.exists_moveSignature B hClear.1 with
+    ⟨m, hmSupp, hmBal, hmPersist⟩
+  have hClears : MoveSignature.Clears m C B := by
+    intro v hv
+    have h := hmBal v
+    rw [hClear.2 v hv, B.withBoundary_of_mem_vertices C q hv] at h
+    simpa [MoveSignature.BalancesAt] using h.symm
+  have hCausal :
+      ∀ A : OrientedBranch T,
+        A.vertices ⊆ B.vertices →
+        A.Occupied C →
+        MoveSignature.CausalOutward m A := by
+    intro A hAB hAOcc
+    apply Nat.pos_of_ne_zero
+    intro hzero
+    have hAOcc' : A.Occupied (B.withBoundary C q) := by
+      rcases hAOcc with ⟨v, hvA, hvpos⟩
+      have hvB : v ∈ B.vertices := hAB hvA
+      refine ⟨v, hvA, ?_⟩
+      simpa [B.withBoundary_of_mem_vertices C q hvB] using hvpos
+    have hFinalOcc := hmPersist A hAB hAOcc' hzero
+    rcases hFinalOcc with ⟨v, hvA, hvpos⟩
+    have hvB : v ∈ B.vertices := hAB hvA
+    rw [hClear.2 v hvB] at hvpos
+    omega
+  have hBound :=
+    (signature_branchFlux_bounds m C B hClears hCausal).1 hOcc
+  have hMsgCanonical :=
+    branchMessage_eq_some_of_occupied C B hOcc
+  have hd : d = F (effectiveInput C B) := by
+    rw [hMsgCanonical] at hMsg
+    exact Option.some.inj hMsg
+  have hParent := hmBal B.parent
+  rw [B.withBoundary_parent C q,
+    MoveSignature.incoming_parent_eq_boundary B m hmSupp,
+    MoveSignature.outgoing_parent_eq_boundary B m hmSupp] at hParent
+  have hFlux :
+      (D B.parent : ℤ) =
+        (q : ℤ) + MoveSignature.boundaryFlux m B := by
+    calc
+      (D B.parent : ℤ) =
+          (q : ℤ) + (m.count B.root B.parent : ℤ) -
+            2 * (m.count B.parent B.root : ℤ) := hParent
+      _ = (q : ℤ) + MoveSignature.boundaryFlux m B := by
+        rw [MoveSignature.boundaryFlux]
+        ring
+  rw [hFlux, hd]
+  exact add_le_add_left hBound.1 _
+
+/-- If the boundary plus recursive message is nonpositive, no legal clearing
+can leave a positive boundary pile. -/
+theorem ClearOutcome.no_positive_boundary_of_message_nonpos
+    (B : OrientedBranch T) (C : Configuration V) (q : ℕ)
+    {d : ℤ}
+    (hOcc : B.Occupied C)
+    (hMsg : branchMessage C B = some d)
+    (hNonpos : (q : ℤ) + d ≤ 0) :
+    ¬ ∃ D : Configuration V,
+      B.ClearOutcome C q D ∧ 0 < D B.parent := by
+  rintro ⟨D, hClear, hPos⟩
+  have hle :=
+    ClearOutcome.boundary_le_message B C q hOcc hMsg hClear
+  have hPosInt : 0 < (D B.parent : ℤ) := by
+    exact_mod_cast hPos
+  omega
+
 /-- The exact boundary theorem in the form targeted by the Phase 1 induction.
 This is a proposition/target definition; later proofs must establish it from
 legal move sequences and the recursive message.
