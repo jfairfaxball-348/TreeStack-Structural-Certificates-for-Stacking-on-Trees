@@ -265,7 +265,7 @@ theorem BranchReach.exists_moveSignature
       · intro w
         rw [move_balance_int _ huv.ne hlegal w, hmBal w]
         simp [m', MoveSignature.incoming_extend, MoveSignature.outgoing_extend]
-        ring_nf
+        by_cases hwu : w = u <;> simp [hwu]
       · intro hOcc hzero
         have hmzero : m.count B.root B.parent = 0 := by
           have hle :
@@ -363,8 +363,8 @@ theorem ClearOutcome.exists_feasibleClearing_signature
   refine ⟨m, ⟨hmSupp, hClears, hCausal⟩, ?_⟩
   have hParent := hmBal B.parent
   rw [B.withBoundary_parent C q,
-    m.incoming_parent_eq_boundary B hmSupp,
-    m.outgoing_parent_eq_boundary B hmSupp] at hParent
+    MoveSignature.incoming_parent_eq_boundary B m hmSupp,
+    MoveSignature.outgoing_parent_eq_boundary B m hmSupp] at hParent
   simpa [MoveSignature.boundaryFlux] using hParent
 
 /-- The exact boundary theorem in the form targeted by the Phase 1 induction.
