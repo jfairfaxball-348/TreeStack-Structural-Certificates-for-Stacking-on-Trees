@@ -442,7 +442,8 @@ theorem childBranch_carrier_subset
   · subst v
     simpa [childBranch] using B.root_mem_carrier
   · have hvB := B.childBranch_vertices_subset c hvChild
-    simpa [carrier] using hvB
+    rw [carrier]
+    exact Finset.mem_insert.mpr (Or.inr hvB)
 
 /-- Distinct genuine child branches of the same oriented branch have disjoint
 vertex sets.  A common vertex would give a path in one child component that
