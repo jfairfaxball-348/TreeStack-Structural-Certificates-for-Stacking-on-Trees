@@ -16,7 +16,7 @@ nonemptiness: every `OrientedBranch` has at least its root as a vertex. -/
 def Occupied (C : Configuration V) (B : OrientedBranch T) : Prop :=
   ∃ v ∈ B.vertices, 0 < C v
 
-instance (C : Configuration V) (B : OrientedBranch T) :
+noncomputable instance (C : Configuration V) (B : OrientedBranch T) :
     Decidable (B.Occupied C) := Classical.dec _
 
 /-- Integer contribution of a message to a parent sum.  `EMPTY` contributes
