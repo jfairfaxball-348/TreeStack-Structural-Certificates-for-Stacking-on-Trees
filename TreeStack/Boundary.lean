@@ -108,11 +108,11 @@ noncomputable def carrier (B : OrientedBranch T) : Finset V :=
   ext v
   constructor
   · intro hv
-    have hv' : v ∈ B.carrier ∧ v ≠ B.parent := by
+    have hv' : v ≠ B.parent ∧ v ∈ B.carrier := by
       simpa using hv
     have hcases : v = B.parent ∨ v ∈ B.vertices := by
-      simpa [carrier] using hv'.1
-    exact hcases.resolve_left hv'.2
+      simpa [carrier] using hv'.2
+    exact hcases.resolve_left hv'.1
   · intro hv
     have hne : v ≠ B.parent := by
       intro h
@@ -452,7 +452,7 @@ theorem carrierMass_withBoundary_eq_of_not_occupied
     rw [B.withBoundary_of_mem_vertices C q hv, hz v hv]
   have hdecomp :=
     Finset.sum_erase_add B.carrier (B.withBoundary C q) hp
-  rw [herase, hsum, B.withBoundary_parent C q] at hdecomp
+  simp only [herase, hsum, B.withBoundary_parent] at hdecomp
   rw [carrierMass]
   omega
 
@@ -468,7 +468,7 @@ theorem carrierMass_eq_parent_of_cleared
     intro v hv
     exact hClear v hv
   have hdecomp := Finset.sum_erase_add B.carrier D hp
-  rw [herase, hsum] at hdecomp
+  simp only [herase, hsum] at hdecomp
   rw [carrierMass]
   omega
 
@@ -588,8 +588,8 @@ theorem signedCarrierMass_withBoundary_eq_of_not_occupied
   have hdecomp :=
     Finset.sum_erase_add B.carrier
       (fun v => B.boundaryParityWeight v * (B.withBoundary C q v : ℤ)) hp
-  rw [herase, hsum, B.withBoundary_parent C q,
-    B.boundaryParityWeight_parent] at hdecomp
+  simp only [herase, hsum, B.withBoundary_parent,
+    B.boundaryParityWeight_parent, zero_add, one_mul] at hdecomp
   rw [signedCarrierMass]
   norm_num at hdecomp ⊢
   linarith
@@ -610,7 +610,8 @@ theorem signedCarrierMass_eq_parent_of_cleared
   have hdecomp :=
     Finset.sum_erase_add B.carrier
       (fun v => B.boundaryParityWeight v * (D v : ℤ)) hp
-  rw [herase, hsum, B.boundaryParityWeight_parent] at hdecomp
+  simp only [herase, hsum, B.boundaryParityWeight_parent,
+    zero_add, one_mul] at hdecomp
   rw [signedCarrierMass]
   norm_num at hdecomp ⊢
   linarith
