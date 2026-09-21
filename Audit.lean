@@ -21,6 +21,20 @@ import TreeStack
 #print axioms TreeStack.OrientedBranch.branchMessage_eq_empty_iff
 #print axioms TreeStack.OrientedBranch.branchMessage_ne_empty_of_occupied
 
+
+#print axioms TreeStack.orderedTasks_safe
+#print axioms TreeStack.OrientedBranch.branchMessage_congr_vertices
+#print axioms TreeStack.OrientedBranch.childBranch_carrier_subset
+#print axioms TreeStack.OrientedBranch.childBranch_vertices_disjoint
+#print axioms TreeStack.OrientedBranch.BranchReach.eq_of_not_mem_carrier
+#print axioms TreeStack.OrientedBranch.BranchReach.exists_moveSignature
+#print axioms TreeStack.OrientedBranch.BranchReach.empty_boundary_nonincrease
+#print axioms TreeStack.OrientedBranch.BranchReach.empty_boundary_mod_three
+#print axioms TreeStack.OrientedBranch.ClearOutcome.exists_emptyExcursion_signature
+#print axioms TreeStack.OrientedBranch.signature_branchFlux_bounds
+#print axioms TreeStack.OrientedBranch.ClearOutcome.boundary_le_message
+#print axioms TreeStack.OrientedBranch.ClearOutcome.no_positive_boundary_of_message_nonpos
+
 #check TreeStack.MoveSignature
 #check TreeStack.OrientedBranch.MoveSignature.boundaryFlux
 #check TreeStack.OrientedBranch.MoveSignature.FeasibleClearing
