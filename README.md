@@ -7,7 +7,7 @@ Csernák–Soukup conjecture
 |V(T)|\ge2\implies \operatorname{stack}(T)=\operatorname{estim}(T).
 \]
 
-The project currently has two structural results, both pending external review
+The project currently has three structural results, all pending external review
 and a complete prior-art audit:
 
 1. an exact rooted branch-message theorem characterizing stackability at a
@@ -20,10 +20,23 @@ and a complete prior-art audit:
    =\operatorname{estim}(T)-1.
    \]
 
-The full conjecture is **not yet proved**.  The remaining gap is global
-normalization: configurations with all scores nonpositive but some scores
-strictly negative still have to be bounded by the same estimator, or reduced to
-zero-score configurations without losing mass.
+3. an arbitrary-defect generalized-flow certificate proving
+
+   \[
+   S_v(C)\le0\text{ for every }v
+   \implies |C|\le\operatorname{estim}(T)-1.
+   \]
+
+Together with the explicit zero-score obstruction, these results prove within
+the project that
+
+\[
+\operatorname{stack}(T)=\operatorname{estim}(T)
+\]
+
+for every finite tree with at least two vertices.  The proof has not yet
+received external mathematical review, and the originality audit is still
+preliminary.  The repository therefore does not claim a new theorem of record.
 
 ## Reproduce the bounded checks
 
@@ -35,22 +48,24 @@ python -m pytest -q
 python -m treestack.src.verify --max-order 6 --max-total 8
 ```
 
-At the current revision, the pytest suite contains 17 tests.  The verifier
+At the current revision, the pytest suite contains 22 tests.  The verifier
 command above checks 131,958 rooted cases from 23,079 configurations on 13
 unlabeled trees and stops at the first message/reachability disagreement.
 
 The direct legal-move solver is in `treestack/src/reachability.py`.  The
 independent branch-message implementation is in `treestack/src/messages.py`.
 The zero-score certificate and consolidation implementation is in
-`treestack/src/generalized_flow.py`.
+`treestack/src/generalized_flow.py`; the arbitrary-defect certificate is in
+`treestack/src/defect_flow.py`.
 
 Proof notes:
 
 - `notes/message-lemma.md` — exact branch theorem;
 - `notes/estimator.md` — explicit estimator obstruction and lower bound;
 - `notes/zero-score-flow.md` — zero-score generalized-flow theorem;
-- `notes/main-inequality.md` — the remaining global inequality and
-  normalization gap;
+- `notes/defect-flow.md` — arbitrary-defect generalized-flow theorem;
+- `notes/main-inequality.md` — summary of the now-proved global inequality and
+  failed stronger local normalization statements;
 - `notes/literature.md` — preliminary prior-art audit.
 
 The reproduced published atlas baseline through order 7 is in

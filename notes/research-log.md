@@ -15,6 +15,31 @@
   See `zero-score-flow.md`.
 - Connected-partition exponential-potential consolidation lemma used in the
   zero-score proof.
+- Arbitrary-defect generalized-flow theorem:
+
+  \[
+  S_v(C)\le0\ \forall v
+  \quad\Longrightarrow\quad
+  |C|\le\operatorname{estim}(T)-1.
+  \]
+
+  The proof prunes empty exterior branches, classifies every genuine defect
+  edge, injectively assigns defective edges to endpoint owners, cancels every
+  edge excess with its owner's defect budget under exponential height weights,
+  uses occupied-leaf slack, and applies the existing consolidation lemma.  See
+  `defect-flow.md`.
+- Global normalization, in the stronger form that every configuration with all
+  scores nonpositive can be replaced without mass loss by the fixed explicit
+  zero-score obstruction at an estimator-maximizing root.
+- Combining the global inequality with the exact branch theorem and explicit
+  obstruction proves within the project
+
+  \[
+  \operatorname{stack}(T)=\operatorname{estim}(T)
+  \]
+
+  for every finite tree with at least two vertices.  This conclusion is
+  pending external mathematical review and a complete prior-art audit.
 
 ## Correction made during the zero-score audit
 
@@ -43,10 +68,15 @@ empty side.  The repaired edge-state equivalence is now stated with this lemma.
 - Current regression command
   `python -m treestack.src.verify --max-order 6 --max-total 8` verifies 131,958
   rooted cases from 23,079 configurations on 13 trees.
-- The current pytest suite has 17 tests.  It includes bounded exhaustive
-  zero-score certificate checks, explicit obstruction checks through order 10,
-  and the parameter-free height/consolidation inequality for every
-  neutral/oriented edge pattern on every unlabeled tree through order 8.
+- The arbitrary-defect certificate was checked during development on 31,389
+  nonzero configurations with all scores nonpositive, over every unlabeled
+  tree of orders 2 through 6 and total size at most 12.  The permanent bounded
+  regression covers the analogous 2,917 configurations through order 5.
+- The current pytest suite has 22 tests.  It includes the earlier zero-score
+  checks plus the exact defect-edge classification on defects 0 through 12 and
+  messages -50 through 20, support pruning, the minimized
+  coordinatewise-saturation counterexample, and the failed naive edgewise
+  zero-state replacement.
 - For every root of every unlabeled tree of orders 2 through 10, the proposed
   explicit obstruction has the claimed size and all message scores zero.
 - The authors' 40 tests passed in the earlier source audit, and their
@@ -54,13 +84,11 @@ empty side.  The repaired edge-state equivalence is now stated with this lemma.
   through order 7.  A Python 3.9 compatibility shim for `typing.TypeAlias` was
   needed; their source was not modified.
 
-## Conjectural / not yet completed
+## Pending review / not yet completed
 
-- Zero-score normalization for arbitrary maximum-mass non-stackable
-  configurations.
-- The full global estimator inequality for arbitrary configurations with all
-  scores nonpositive.
-- Originality of the branch theorem and zero-score proof.
+- External mathematical review of the branch theorem, zero-score proof, and
+  arbitrary-defect proof.
+- Originality of the branch theorem and the two generalized-flow arguments.
 - Lean formalization.
 - Independent reproduction in this repository of the pilot census rows for
   orders 8 through 10.
@@ -75,7 +103,13 @@ empty side.  The repaired edge-state equivalence is now stated with this lemma.
   require both directions of the same edge, for example the final
   `p->v->p` cleanup.
 - Coordinatewise saturation cannot prove normalization: coordinatewise-maximal
-  non-stackable configurations can have negative scores.
+  non-stackable configurations can have negative scores.  A minimized example
+  is `(1,3,0,1)` on the four-vertex path with edges `1-0, 1-2, 0-3`; its scores
+  are `(0,0,-3,0)`, yet adding one pebble at any vertex makes it stackable.
+- Naively replacing each defect edge by its corresponding zero-score edge
+  state need not produce nonnegative vertex counts.  On the same path,
+  `(0,0,1,2)` has scores `(-4,-2,-4,-11)`, while the formal edgewise
+  replacement produces counts `(-4,2,1,13)`.
 - Uniqueness of the explicit obstruction is false.  The three-leaf star has the
   distinct tight zero-score obstruction `(0,3,3,3)`.
 - Treating an empty branch as message zero creates spurious edge states.  The
