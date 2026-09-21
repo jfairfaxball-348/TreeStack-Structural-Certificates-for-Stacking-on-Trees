@@ -1,9 +1,10 @@
 # Lean formalization progress
 
-Status: **Phase 1 partial, sound and compiling through strict child-branch
-decrease, the well-founded recursive branch message, and the formal statement
-layer for the exact branch boundary invariant.**  The exact boundary theorem
-itself and the rooted score characterization remain unproved in Lean.
+Status: **Phase 1 partial, sound and compiling through the recursive
+move-signature upper bound, the necessity half of the exact boundary
+invariant, audited child-task scheduling, configuration locality, and sibling
+child-branch separation.**  The equality-attainment construction in the exact
+boundary theorem and the rooted score characterization remain unproved in Lean.
 
 ## Session baseline and pinned environment
 
@@ -170,7 +171,19 @@ OrientedBranch.childBranch_card_lt :
 together with the corresponding strict finite-set containment.  This removes
 the previous well-founded-recursion blocker.
 
-The strongest new message theorem is
+The strongest new boundary theorem on the current branch is
+
+```text
+OrientedBranch.ClearOutcome.boundary_le_message :
+  B.Occupied C →
+  branchMessage C B = some d →
+  B.ClearOutcome C q D →
+  (D B.parent : ℤ) ≤ (q : ℤ) + d
+```
+
+derived from the recursive signature theorem
+`OrientedBranch.signature_branchFlux_bounds`.  The recursive message theorem
+remains
 
 ```text
 OrientedBranch.branchMessage_eq_some_of_occupied :
@@ -191,27 +204,50 @@ claimed as proved.
 
 ## Exact remaining Phase 1 frontier
 
-The next proof should stay at the exact boundary theorem until it is solid:
+Dependencies 1–5 from the earlier boundary plan are now substantially
+machine-checked:
 
-1. Extract a `MoveSignature` from branch-local legal reachability and prove
-   the per-vertex balance equations and boundary-pile accounting.
-2. Prove the causal outward-crossing lemma: clearing an initially occupied
-   branch forces at least one `root → parent` crossing.
-3. Prove that an initially and finally empty branch excursion has boundary
-   flux `-3k` for some `k ≥ 0`, combining nonpositive total gain with the
-   modulo-three invariant.
-4. Restrict a parent signature to child branches and prove the inductive upper
-   bound using the child invariant, `F(z-3) ≤ F(z)`, the one-vertex flux
-   inequality, and the mod-three congruence.
-5. Formalize the positive/zero/negative child-task scheduling lemma, omitting
-   empty branches rather than treating them as executable zero tasks.
-6. Prove `ExactBoundaryInvariant C B`, including equality attainment in the
-   `x ≥ 2` and `x ≤ 1` construction cases.
-7. Only then define the rooted score and prove
+- `BranchReach.exists_moveSignature` extracts exact move counts and
+  per-vertex balances from a legal branch-local sequence.
+- Occupied clearings force causal outward boundary crossing.
+- Empty excursions have nonpositive boundary gain and exact gain `-3k`.
+- `signature_branchFlux_bounds` proves the recursive occupied-branch upper
+  bound together with the modulo-three residue statement, while empty children
+  contribute only nonnegative three-step losses.
+- `ClearOutcome.boundary_le_message` and
+  `ClearOutcome.no_positive_boundary_of_message_nonpos` establish the
+  necessity half of the target boundary theorem.
+- `orderedTasks_safe` proves the audited positive/zero/negative task order.
+  Empty branches are omitted rather than converted into executable zero tasks.
+- Message locality, branch-local outside-state preservation, child-carrier
+  containment, and sibling child-branch disjointness are available for the
+  constructive induction.
+
+The immediate blocker is now **sufficiency / exact attainment**:
+
+1. Instantiate the generic task scheduler with the occupied genuine child
+   branches and their recursive message gains.
+2. Compose the inductively supplied child clearing sequences while proving
+   earlier child clearings do not alter later child interiors or messages.
+3. After the child tasks, prove the root/boundary one-vertex construction
+   attains exactly `q + F (effectiveInput C B)`; keep the audited
+   `x ≥ 2` and `x ≤ 1` cases explicit.
+4. Package this construction with the already-proved upper and nonpositive
+   halves to prove `ExactBoundaryInvariant C B`.
+5. Only then define the rooted score and prove
    `StackableAt T.graph C r ↔ 0 < score T C r`.
 
-The exact branch boundary theorem, rather than recursion, is now the immediate
-blocker.
+The exact branch boundary theorem remains the Phase 1 blocker, but its
+necessity half and scheduling arithmetic are no longer open obligations.
+
+## Current branch checkpoint
+
+PR #7 (`chatgpt/exact-boundary-invariant`) contains the first full
+move-signature/necessity layer for the exact boundary theorem.  The latest
+substantive code also proves configuration locality and geometric separation
+needed by the constructive half.  Before merge, the draft PR must be marked
+ready so that the repository's **full** workflow runs the Python regression
+suite, verifier, complete Lean build, and `Audit.lean`.
 
 ## Small-case and regression coverage
 
