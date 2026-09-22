@@ -95,6 +95,100 @@ def SupportEdge (C : Configuration V) (B : OrientedBranch T) : Prop :=
   simp [SupportEdge, and_comm]
 
 
+/-- The occupied exterior side of a retained edge lies on the reverse side of
+every genuine child edge.  This is the one-step separation fact that makes the
+retained support core path-closed without changing the ambient vertex type. -/
+theorem reverse_child_occupied_of_supportEdge
+    (C : Configuration V) (B : OrientedBranch T)
+    (hEdge : B.SupportEdge C) (c : B.Child) :
+    (B.childBranch c).reverseBranch.Occupied C := by
+  rcases hEdge.2 with ⟨y, hyReverseB, hyPos⟩
+  have hyNotChild : y ∉ (B.childBranch c).vertices := by
+    intro hyChild
+    have hyB : y ∈ B.vertices :=
+      B.childBranch_vertices_subset c hyChild
+    exact
+      (Finset.disjoint_left.mp B.vertices_disjoint_reverseBranch)
+        hyB hyReverseB
+  rcases (B.childBranch c).mem_vertices_or_mem_reverseBranch y with
+    hyChild | hyReverseChild
+  · exact (hyNotChild hyChild).elim
+  · exact ⟨y, hyReverseChild, hyPos⟩
+
+/-- Below a retained support edge, a genuine child edge is retained exactly
+when its child branch contains positive support.  The occupied reverse side is
+supplied by the exterior witness of the parent retained edge. -/
+theorem child_supportEdge_iff_occupied_of_supportEdge
+    (C : Configuration V) (B : OrientedBranch T)
+    (hEdge : B.SupportEdge C) (c : B.Child) :
+    (B.childBranch c).SupportEdge C ↔
+      (B.childBranch c).Occupied C := by
+  constructor
+  · intro hChild
+    exact hChild.1
+  · intro hChildOcc
+    exact
+      ⟨hChildOcc,
+        B.reverse_child_occupied_of_supportEdge C hEdge c⟩
+
+/-- A rooted certificate that a vertex is reached from an oriented-branch root
+by descending only through retained support edges.  It is an in-place path
+object for the minimal support core. -/
+inductive SupportDescent (C : Configuration V) :
+    (B : OrientedBranch T) → V → Prop
+  | root (B : OrientedBranch T) :
+      SupportDescent C B B.root
+  | child (B : OrientedBranch T) (c : B.Child) {x : V}
+      (hEdge : (B.childBranch c).SupportEdge C)
+      (hTail : SupportDescent C (B.childBranch c) x) :
+      SupportDescent C B x
+
+/-- Every positive-support vertex on the root side of a retained edge is joined
+to the edge root by a descent consisting entirely of retained support edges.
+This is the rooted path-closure form of connectedness of the minimal support
+subtree. -/
+theorem supportDescent_of_mem_pos
+    (C : Configuration V) (B : OrientedBranch T)
+    (hEdge : B.SupportEdge C) {x : V}
+    (hx : x ∈ B.vertices) (hxPos : 0 < C x) :
+    SupportDescent C B x := by
+  classical
+  by_cases hxr : x = B.root
+  · subst x
+    exact SupportDescent.root B
+  · rcases B.exists_childBranch_mem_of_mem_vertices_ne_root hx hxr with
+      ⟨c, hxChild⟩
+    have hChildOcc : (B.childBranch c).Occupied C :=
+      ⟨x, hxChild, hxPos⟩
+    have hChildEdge : (B.childBranch c).SupportEdge C :=
+      (B.child_supportEdge_iff_occupied_of_supportEdge C hEdge c).2 hChildOcc
+    exact
+      SupportDescent.child B c hChildEdge
+        (supportDescent_of_mem_pos
+          C (B.childBranch c) hChildEdge hxChild hxPos)
+termination_by B.card
+decreasing_by
+  exact B.childBranch_card_lt _
+
+/-- If the root of a retained edge is not itself occupied, some retained child
+edge continues the support core. -/
+theorem exists_child_supportEdge_of_supportEdge_of_root_not_pos
+    (C : Configuration V) (B : OrientedBranch T)
+    (hEdge : B.SupportEdge C) (hRoot : ¬ 0 < C B.root) :
+    ∃ c : B.Child, (B.childBranch c).SupportEdge C := by
+  rcases hEdge.1 with ⟨x, hxB, hxPos⟩
+  have hxNe : x ≠ B.root := by
+    intro hxr
+    subst x
+    exact hRoot hxPos
+  rcases B.exists_childBranch_mem_of_mem_vertices_ne_root hxB hxNe with
+    ⟨c, hxChild⟩
+  refine ⟨c, ?_⟩
+  exact
+    (B.child_supportEdge_iff_occupied_of_supportEdge C hEdge c).2
+      ⟨x, hxChild, hxPos⟩
+
+
 /-- If an edge is retained by the support core and there is no retained child
 edge at its root, then that root is occupied.  This is the in-place form of
 the statement that every leaf of the minimal connected support subtree is
@@ -154,6 +248,111 @@ theorem defectEdgeState_of_supportEdge
       (scoreDefect T C B.parent) := by
   exact B.defectEdgeState_of_scores_nonpos C
     hEdge.1 hEdge.2 (hScores B.root) (hScores B.parent)
+
+
+/-- A forced oriented-type support edge: the message in the displayed
+orientation is nonnegative.  Under all-nonpositive scores the reverse message
+is then forced negative, so the orientation is unique. -/
+def DefectArrow (C : Configuration V) (B : OrientedBranch T) : Prop :=
+  B.SupportEdge C ∧
+    0 ≤ messageContribution (branchMessage C B)
+
+/-- A forced defect arrow has a strictly negative reverse message under
+all-nonpositive rooted scores. -/
+theorem reverse_message_neg_of_defectArrow
+    (C : Configuration V) (B : OrientedBranch T)
+    (hArrow : B.DefectArrow C)
+    (hScores : ∀ v, score T C v ≤ 0) :
+    messageContribution (branchMessage C B.reverseBranch) < 0 := by
+  have hEq :=
+    B.defect_equations_of_both_occupied C hArrow.1.1 hArrow.1.2
+  have hNotBoth :=
+    defect_not_both_nonneg
+      ((scoreDefect_nonneg_iff T C B.root).2 (hScores B.root))
+      ((scoreDefect_nonneg_iff T C B.parent).2 (hScores B.parent))
+      hEq.1 hEq.2
+  apply lt_of_not_ge
+  intro hReverse
+  exact hNotBoth ⟨hArrow.2, hReverse⟩
+
+/-- Forced orientations on retained support edges are antisymmetric. -/
+theorem not_defectArrow_reverse
+    (C : Configuration V) (B : OrientedBranch T)
+    (hArrow : B.DefectArrow C)
+    (hScores : ∀ v, score T C v ≤ 0) :
+    ¬ B.reverseBranch.DefectArrow C := by
+  intro hReverse
+  exact
+    (not_lt_of_ge hReverse.2)
+      (B.reverse_message_neg_of_defectArrow C hArrow hScores)
+
+/-- The tail of a forced defect arrow has enough endpoint-defect budget to pay
+twice the head defect.  This is the concrete support-core form of the local
+oriented-edge budget inequality. -/
+theorem defectArrow_tail_budget
+    (C : Configuration V) (B : OrientedBranch T)
+    (hArrow : B.DefectArrow C)
+    (hScores : ∀ v, score T C v ≤ 0) :
+    2 * scoreDefect T C B.parent ≤ scoreDefect T C B.root := by
+  have hEq :=
+    B.defect_equations_of_both_occupied C hArrow.1.1 hArrow.1.2
+  exact
+    defect_left_budget
+      ((scoreDefect_nonneg_iff T C B.root).2 (hScores B.root))
+      ((scoreDefect_nonneg_iff T C B.parent).2 (hScores B.parent))
+      hEq.1 hEq.2 hArrow.2
+
+/-- Every retained support edge has either a nonnegative message in one
+orientation or two negative messages.  Together with
+`not_defectArrow_reverse`, all-nonpositive scores make the nonnegative
+orientation unique when it exists. -/
+theorem supportEdge_defectArrow_or_reverse_or_both_neg
+    (C : Configuration V) (B : OrientedBranch T)
+    (hEdge : B.SupportEdge C) :
+    B.DefectArrow C ∨
+      B.reverseBranch.DefectArrow C ∨
+        (messageContribution (branchMessage C B) < 0 ∧
+          messageContribution (branchMessage C B.reverseBranch) < 0) := by
+  by_cases hForward :
+      0 ≤ messageContribution (branchMessage C B)
+  · exact Or.inl ⟨hEdge, hForward⟩
+  · have hForwardNeg :
+        messageContribution (branchMessage C B) < 0 :=
+      lt_of_not_ge hForward
+    by_cases hReverse :
+        0 ≤ messageContribution (branchMessage C B.reverseBranch)
+    · right
+      left
+      exact
+        ⟨(B.supportEdge_reverse_iff C).2 hEdge, hReverse⟩
+    · right
+      right
+      exact ⟨hForwardNeg, lt_of_not_ge hReverse⟩
+
+
+/-- Retained edges whose later weighted edge estimate has a genuine defect
+excess.  Oriented-type edges are defective exactly when the head defect is
+positive; a two-negative edge is defective exactly when at least one endpoint
+defect is positive (equivalently, it is not the neutral (-1,-1) state under the
+defect equations).  The definition is symmetric in the underlying edge. -/
+def DefectiveSupportEdge (C : Configuration V) (B : OrientedBranch T) : Prop :=
+  B.SupportEdge C ∧
+    ((0 ≤ messageContribution (branchMessage C B) ∧
+        0 < scoreDefect T C B.parent) ∨
+      (0 ≤ messageContribution (branchMessage C B.reverseBranch) ∧
+        0 < scoreDefect T C B.root) ∨
+      ((messageContribution (branchMessage C B) < 0 ∧
+          messageContribution (branchMessage C B.reverseBranch) < 0) ∧
+        (0 < scoreDefect T C B.root ∨
+          0 < scoreDefect T C B.parent)))
+
+@[simp] theorem defectiveSupportEdge_reverse_iff
+    (C : Configuration V) (B : OrientedBranch T) :
+    B.reverseBranch.DefectiveSupportEdge C ↔
+      B.DefectiveSupportEdge C := by
+  simp only [DefectiveSupportEdge, supportEdge_reverse_iff,
+    reverseBranch_reverse, reverseBranch_root, reverseBranch_parent]
+  aesop
 
 end OrientedBranch
 
