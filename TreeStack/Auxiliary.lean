@@ -150,6 +150,122 @@ theorem not_auxArrow_reverse
         (B.not_twoNegativeOwnerArrow_reverse C ambientRoot hForward)
           hReverse
 
+/-- Once an auxiliary arrow crosses an ambient tree edge, there is no directed
+return path across that edge.  The proof uses the deleted-edge branch cut:
+every path from the parent side back to the root side must cross the same
+unique tree edge in the forbidden reverse direction. -/
+theorem auxArrow_no_reflTransGen_reverse
+    (C : Configuration V) (ambientRoot : V)
+    (hScores : ∀ v, score T C v ≤ 0)
+    {u v : V}
+    (hArrow : AuxArrow (T := T) C ambientRoot u v) :
+    ¬ Relation.ReflTransGen
+        (AuxArrow (T := T) C ambientRoot) v u := by
+  intro hReturn
+  let B : OrientedBranch T :=
+    incidentBranch T v u (auxArrow_adj C ambientRoot hArrow)
+  have hOutside :
+      ∀ {x : V},
+        Relation.ReflTransGen
+            (AuxArrow (T := T) C ambientRoot) v x →
+          x ∉ B.vertices := by
+    intro x hx
+    induction hx with
+    | refl =>
+        simpa [B] using B.parent_not_mem_vertices
+    | tail hReach hStep ih =>
+        intro hxIn
+        have hAdj :
+            T.graph.Adj x _ :=
+          (auxArrow_adj C ambientRoot hStep).symm
+        have hEdge :=
+          B.edge_leaving_vertices_eq_boundary hxIn ih hAdj
+        rw [Sym2.eq_iff] at hEdge
+        rcases hEdge with hEdge | hEdge
+        · have hReverse :
+              AuxArrow (T := T) C ambientRoot v u := by
+            subst x
+            rename_i y
+            subst y
+            simpa [B] using hStep
+          exact
+            (not_auxArrow_reverse C ambientRoot hScores hArrow)
+              hReverse
+        · have : B.parent ∈ B.vertices := by
+            rw [← hEdge.1]
+            exact hxIn
+          exact B.parent_not_mem_vertices this
+  have huOutside := hOutside hReturn
+  exact huOutside (by simpa [B] using B.root_mem_vertices)
+
+/-- The directed auxiliary relation is acyclic: its transitive closure is
+irreflexive.  This is derived directly from the ambient tree cut argument,
+without rooting defective-forest components. -/
+theorem auxArrow_transGen_irrefl
+    (C : Configuration V) (ambientRoot : V)
+    (hScores : ∀ v, score T C v ≤ 0)
+    (v : V) :
+    ¬ Relation.TransGen
+        (AuxArrow (T := T) C ambientRoot) v v := by
+  intro hCycle
+  rcases Relation.TransGen.head'_iff.mp hCycle with
+    ⟨u, hFirst, hReturn⟩
+  exact
+    (auxArrow_no_reflTransGen_reverse
+      C ambientRoot hScores hFirst) hReturn
+
+/-- Strict directed predecessors of a vertex in the auxiliary DAG. -/
+noncomputable def auxPred
+    (C : Configuration V) (ambientRoot : V) (v : V) : Finset V :=
+  (Finset.univ : Finset V).filter fun u =>
+    Relation.TransGen (AuxArrow (T := T) C ambientRoot) u v
+
+@[simp] theorem mem_auxPred
+    (C : Configuration V) (ambientRoot : V) (u v : V) :
+    u ∈ auxPred (T := T) C ambientRoot v ↔
+      Relation.TransGen (AuxArrow (T := T) C ambientRoot) u v := by
+  simp [auxPred]
+
+/-- A directed edge strictly enlarges the finite set of strict directed
+predecessors. -/
+theorem auxPred_ssubset_of_auxArrow
+    (C : Configuration V) (ambientRoot : V)
+    (hScores : ∀ v, score T C v ≤ 0)
+    {u v : V}
+    (hArrow : AuxArrow (T := T) C ambientRoot u v) :
+    auxPred (T := T) C ambientRoot u ⊂
+      auxPred (T := T) C ambientRoot v := by
+  have hSubset :
+      auxPred (T := T) C ambientRoot u ⊆
+        auxPred (T := T) C ambientRoot v := by
+    intro x hx
+    rw [mem_auxPred] at hx ⊢
+    exact Relation.TransGen.tail hx hArrow
+  rw [Finset.ssubset_iff_of_subset hSubset]
+  refine ⟨u, ?_, ?_⟩
+  · rw [mem_auxPred]
+    exact Relation.TransGen.single hArrow
+  · rw [mem_auxPred]
+    exact auxArrow_transGen_irrefl C ambientRoot hScores u
+
+/-- A finite topological rank for the auxiliary DAG, used as the recursion
+measure for the genuine longest-directed-path height below. -/
+noncomputable def auxRank
+    (C : Configuration V) (ambientRoot : V) (v : V) : ℕ :=
+  (auxPred (T := T) C ambientRoot v).card
+
+/-- Auxiliary rank strictly increases along every directed edge. -/
+theorem auxRank_lt_of_auxArrow
+    (C : Configuration V) (ambientRoot : V)
+    (hScores : ∀ v, score T C v ≤ 0)
+    {u v : V}
+    (hArrow : AuxArrow (T := T) C ambientRoot u v) :
+    auxRank (T := T) C ambientRoot u <
+      auxRank (T := T) C ambientRoot v := by
+  exact Finset.card_lt_card
+    (auxPred_ssubset_of_auxArrow
+      C ambientRoot hScores hArrow)
+
 end OrientedBranch
 
 end TreeStack
