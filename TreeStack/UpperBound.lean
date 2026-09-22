@@ -86,7 +86,8 @@ theorem exists_pos_of_mass_pos
   push Not at hNone
   have hZero : ∀ v : V, C v = 0 := by
     intro v
-    exact Nat.eq_zero_of_not_pos (hNone v)
+    have hv := hNone v
+    omega
   have hm : mass C = 0 := by
     simp [mass, hZero]
   omega
