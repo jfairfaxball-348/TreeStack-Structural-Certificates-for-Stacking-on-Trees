@@ -243,9 +243,9 @@ theorem treePathConnected_union_of_adj
       have hzw : z ∈ w.support :=
         w.support_toPath_subset_support hz
       have hzCases :
-          z ∈ p.support ∨ z = b ∨ z ∈ q.support := by
+          (z ∈ p.support ∨ z = b) ∨ z ∈ q.support := by
         simpa [w] using hzw
-      rcases hzCases with hzp | hzb | hzq
+      rcases hzCases with (hzp | hzb) | hzq
       · exact Finset.mem_union_left _ (hpSupp z hzp)
       · subst z
         exact Finset.mem_union_right _ hb
@@ -259,9 +259,9 @@ theorem treePathConnected_union_of_adj
       have hzw : z ∈ w.support :=
         w.support_toPath_subset_support hz
       have hzCases :
-          z ∈ p.support ∨ z = a ∨ z ∈ q.support := by
+          (z ∈ p.support ∨ z = a) ∨ z ∈ q.support := by
         simpa [w] using hzw
-      rcases hzCases with hzp | hza | hzq
+      rcases hzCases with (hzp | hza) | hzq
       · exact Finset.mem_union_right _ (hpSupp z hzp)
       · subst z
         exact Finset.mem_union_left _ ha
@@ -335,8 +335,12 @@ theorem exists_adj_mem_not_mem_of_nonempty_ne_univ
   classical
   rcases hNonempty with ⟨x, hx⟩
   have hOutside : ∃ y : V, y ∉ S := by
-    rw [Finset.eq_univ_iff_forall, not_forall] at hProper
-    exact hProper
+    by_contra hOutside
+    apply hProper
+    rw [Finset.eq_univ_iff_forall]
+    intro y
+    by_contra hy
+    exact hOutside ⟨y, hy⟩
   rcases hOutside with ⟨y, hy⟩
   rcases T.isTree.connected x y with ⟨p⟩
   have hCross :
