@@ -31,8 +31,8 @@ theorem rootedOther_adj_rootedOwner
   classical
   simp only [rootedOther, rootedOwner]
   split
-  · exact B.adj
   · exact B.adj.symm
+  · exact B.adj
 
 /-- The owner is exactly one level farther from the fixed root than the other
 endpoint. -/
@@ -129,7 +129,10 @@ theorem rootedOwner_reverse
   classical
   simp only [rootedOwner, reverseBranch_root, reverseBranch_parent]
   rcases T.isTree.dist_eq_dist_add_one_of_adj r B.adj with hForward | hReverse
-  · simp [hForward]
+  · have hNotReverse :
+        T.graph.dist r B.parent ≠ T.graph.dist r B.root + 1 := by
+      omega
+    simp [hForward, hNotReverse]
   · have hNotForward :
         T.graph.dist r B.root ≠ T.graph.dist r B.parent + 1 := by
       omega
