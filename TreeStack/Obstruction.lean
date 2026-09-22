@@ -1248,4 +1248,100 @@ theorem obstruction_score_selected_root
   rw [score, obstruction_root, hTerms]
   ring
 
+
+namespace OrientedBranch
+
+/-- Once the parent score is zero, zero score propagates recursively through
+every vertex of a descendant obstruction branch. -/
+theorem obstruction_scores_zero_on_vertices
+    (r : V) (B : OrientedBranch T)
+    (hAway : r ∉ B.vertices)
+    (hParent :
+      score T (obstruction T r) B.parent = 0) :
+    ∀ x ∈ B.vertices,
+      score T (obstruction T r) x = 0 := by
+  classical
+  have hRoot :
+      score T (obstruction T r) B.root = 0 :=
+    B.obstruction_score_root_of_parent_score_zero r hAway hParent
+  intro x hx
+  by_cases hxr : x = B.root
+  · subst x
+    exact hRoot
+  · rcases
+      B.exists_childBranch_mem_of_mem_vertices_ne_root hx hxr with
+      ⟨c, hxc⟩
+    have hAwayChild :
+        r ∉ (B.childBranch c).vertices := by
+      intro hr
+      exact hAway (B.childBranch_vertices_subset c hr)
+    exact
+      obstruction_scores_zero_on_vertices
+        r (B.childBranch c) hAwayChild hRoot x hxc
+termination_by B.card
+decreasing_by
+  exact B.childBranch_card_lt _
+
+end OrientedBranch
+
+/-- Every rooted score of the explicit estimator obstruction is exactly zero. -/
+theorem obstruction_score_eq_zero
+    (T : FiniteTree V) (r v : V) :
+    score T (obstruction T r) v = 0 := by
+  classical
+  by_cases hvr : v = r
+  · subst v
+    exact obstruction_score_selected_root T r
+  · rcases
+      exists_incidentBranch_mem_of_ne_root (T := T) r hvr with
+      ⟨u, h, hv⟩
+    let B : OrientedBranch T := incidentBranch T r u h
+    have hAway : r ∉ B.vertices := by
+      simpa [B, incidentBranch] using B.parent_not_mem_vertices
+    have hRoot :
+        score T (obstruction T r) r = 0 :=
+      obstruction_score_selected_root T r
+    exact
+      B.obstruction_scores_zero_on_vertices r hAway hRoot v
+        (by simpa [B] using hv)
+
+/-- The explicit obstruction is globally non-stackable. -/
+theorem obstruction_not_stackable
+    (T : FiniteTree V) (r : V) :
+    ¬ Stackable T.graph (obstruction T r) := by
+  classical
+  apply
+    (not_stackable_iff_all_scores_nonpos
+      T (obstruction T r)).2
+  intro v
+  rw [obstruction_score_eq_zero T r v]
+
+/-- The finite maximum defining the estimator is attained by some root. -/
+theorem exists_rootEstimate_eq_estim
+    (T : FiniteTree V) :
+    ∃ r : V, rootEstimate T r = estim T := by
+  classical
+  have hnon :
+      (Finset.univ : Finset V).Nonempty :=
+    ⟨T.isTree.connected.nonempty.some, Finset.mem_univ _⟩
+  have hmem :=
+    Finset.sup_mem_of_nonempty
+      (s := (Finset.univ : Finset V))
+      (f := rootEstimate T) hnon
+  rcases hmem with ⟨r, hr, hEq⟩
+  refine ⟨r, ?_⟩
+  simpa [estim] using hEq
+
+/-- At an estimator-maximizing root there is a non-stackable configuration of
+exactly \`estim T - 1\` pebbles. -/
+theorem exists_nonstackable_mass_estim_sub_one
+    [Nontrivial V] (T : FiniteTree V) :
+    ∃ C : Configuration V,
+      mass C = estim T - 1 ∧
+        ¬ Stackable T.graph C := by
+  classical
+  rcases exists_rootEstimate_eq_estim T with ⟨r, hr⟩
+  refine ⟨obstruction T r, ?_, obstruction_not_stackable T r⟩
+  rw [mass_obstruction T r, hr]
+
 end TreeStack
