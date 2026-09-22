@@ -116,9 +116,67 @@ theorem sum_edgeOwner_charge_le_auxDefectBudget
     _ = auxDefectBudget C ambientRoot hScores := by
       rfl
 
+/-- The two distinct edge-level cancellation mechanisms, packaged on the
+finite undirected-edge index. -/
+noncomputable def edgeSeparatedCharge
+    (C : Configuration V) (ambientRoot : V)
+    (hScores : ∀ v, score T C v ≤ 0)
+    (e : T.graph.edgeFinset) : ℤ :=
+  retainedDefectCharge C ambientRoot hScores (edgeBranch e) +
+    emptyBoundaryCharge C ambientRoot hScores (edgeBranch e)
+
+/-- A separated edge charge never exceeds the single rooted-owner defect
+budget assigned to that ambient edge. -/
+theorem edgeSeparatedCharge_le_owner_charge
+    (C : Configuration V) (ambientRoot : V)
+    (hScores : ∀ v, score T C v ≤ 0)
+    (e : T.graph.edgeFinset) :
+    edgeSeparatedCharge C ambientRoot hScores e ≤
+      auxWeightInt C ambientRoot hScores (edgeOwner ambientRoot e) *
+        scoreDefect T C (edgeOwner ambientRoot e) := by
+  let B := edgeBranch (T := T) e
+  have hBudget :
+      0 ≤ auxWeightInt C ambientRoot hScores (B.rootedOwner ambientRoot) *
+        scoreDefect T C (B.rootedOwner ambientRoot) :=
+    mul_nonneg
+      (auxWeightInt_nonneg C ambientRoot hScores _)
+      ((scoreDefect_nonneg_iff T C _).2 (hScores _))
+  by_cases hEdge : B.SupportEdge C
+  · by_cases hDef : B.DefectiveSupportEdge C
+    · simp [edgeSeparatedCharge, retainedDefectCharge, emptyBoundaryCharge,
+        edgeOwner, B, hEdge, hDef]
+    · simpa [edgeSeparatedCharge, retainedDefectCharge, emptyBoundaryCharge,
+        edgeOwner, B, hEdge, hDef] using hBudget
+  · have hDef : ¬ B.DefectiveSupportEdge C := by
+      intro h
+      exact hEdge h.1
+    simp [edgeSeparatedCharge, retainedDefectCharge, emptyBoundaryCharge,
+      edgeOwner, B, hEdge, hDef]
+
+/-- The total separated charge is bounded by the available weighted vertex
+defect budget.  Injectivity is used only after retained-defect and
+nonretained-`EMPTY` charges have been distinguished. -/
+theorem sum_edgeSeparatedCharge_le_auxDefectBudget
+    (C : Configuration V) (ambientRoot : V)
+    (hScores : ∀ v, score T C v ≤ 0) :
+    (∑ e : T.graph.edgeFinset,
+      edgeSeparatedCharge C ambientRoot hScores e) ≤
+      auxDefectBudget C ambientRoot hScores := by
+  calc
+    (∑ e : T.graph.edgeFinset,
+        edgeSeparatedCharge C ambientRoot hScores e) ≤
+        ∑ e : T.graph.edgeFinset,
+          auxWeightInt C ambientRoot hScores (edgeOwner ambientRoot e) *
+            scoreDefect T C (edgeOwner ambientRoot e) := by
+      exact Finset.sum_le_sum fun e _ =>
+        edgeSeparatedCharge_le_owner_charge C ambientRoot hScores e
+    _ ≤ auxDefectBudget C ambientRoot hScores :=
+      sum_edgeOwner_charge_le_auxDefectBudget C ambientRoot hScores
+
 /-- The uniform local edge inequality, packaged on the fixed finite edge
-index. -/
-theorem edgeContribution_le_endpoint_add_owner_charge
+index while preserving the separation between retained defect charging and
+literal-`EMPTY` boundary cancellation. -/
+theorem edgeContribution_le_endpoint_add_separated_charge
     (C : Configuration V) (ambientRoot : V)
     (hRootPos : 0 < C ambientRoot)
     (hScores : ∀ v, score T C v ≤ 0)
@@ -126,10 +184,10 @@ theorem edgeContribution_le_endpoint_add_owner_charge
     auxEdgeContribution C ambientRoot hScores (edgeBranch e) ≤
       auxWeightInt C ambientRoot hScores (edgeBranch e).root +
         auxWeightInt C ambientRoot hScores (edgeBranch e).parent +
-        auxWeightInt C ambientRoot hScores (edgeOwner ambientRoot e) *
-          scoreDefect T C (edgeOwner ambientRoot e) := by
-  exact auxEdgeContribution_le_endpoint_add_owner_charge
-    C ambientRoot hRootPos hScores (edgeBranch e)
+        edgeSeparatedCharge C ambientRoot hScores e := by
+  simpa [edgeSeparatedCharge, add_assoc] using
+    auxEdgeContribution_le_endpoint_add_separated_charges
+      C ambientRoot hRootPos hScores (edgeBranch e)
 
 /-- The two darts belonging to a chosen undirected edge presentation. -/
 noncomputable def dartOfEdgeBool
@@ -374,7 +432,8 @@ theorem sum_edgeEndpointWeight_eq_auxDegreePotential
 
 set_option maxHeartbeats 800000
 
-/-- Global sum of the local owner-paid edge inequalities. -/
+/-- Global sum of the local edge inequalities with retained-defect and
+literal-`EMPTY` cancellation kept distinct until after summation. -/
 theorem sum_auxEdgeContribution_le_degree_add_defect
     (C : Configuration V) (ambientRoot : V)
     (hRootPos : 0 < C ambientRoot)
@@ -389,15 +448,15 @@ theorem sum_auxEdgeContribution_le_degree_add_defect
         ∑ e : T.graph.edgeFinset,
           ((auxWeightInt C ambientRoot hScores (edgeBranch e).root +
               auxWeightInt C ambientRoot hScores (edgeBranch e).parent) +
-            auxWeightInt C ambientRoot hScores (edgeOwner ambientRoot e) *
-              scoreDefect T C (edgeOwner ambientRoot e)) := by
+            edgeSeparatedCharge C ambientRoot hScores e) := by
     exact Finset.sum_le_sum fun e _ =>
-      edgeContribution_le_endpoint_add_owner_charge
+      edgeContribution_le_endpoint_add_separated_charge
         C ambientRoot hRootPos hScores e
   rw [Finset.sum_add_distrib,
     sum_edgeEndpointWeight_eq_auxDegreePotential] at hLocal
   exact hLocal.trans (add_le_add (le_refl _)
-    (sum_edgeOwner_charge_le_auxDefectBudget C ambientRoot hScores))
+    (sum_edgeSeparatedCharge_le_auxDefectBudget
+      C ambientRoot hScores))
 
 set_option maxHeartbeats 200000
 
