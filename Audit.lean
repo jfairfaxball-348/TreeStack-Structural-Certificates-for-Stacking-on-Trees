@@ -100,3 +100,10 @@ import TreeStack
 #print axioms TreeStack.defect_right_budget
 
 #check TreeStack.defect_edge_classification
+
+#print axioms TreeStack.scoreDefect
+#print axioms TreeStack.defectEdgeState_of_equations
+#print axioms TreeStack.OrientedBranch.defect_equations_of_both_occupied
+#print axioms TreeStack.OrientedBranch.defectEdgeState_of_scores_nonpos
+
+#check TreeStack.OrientedBranch.defectEdgeState_of_scores_nonpos
