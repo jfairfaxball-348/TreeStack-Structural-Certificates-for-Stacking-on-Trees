@@ -195,6 +195,50 @@ theorem vertices_eq_singleton_of_degree_one (B : OrientedBranch T)
     simpa using hx
 
 
+
+/-- Every vertex of an oriented branch is one edge farther from the external
+parent than from the branch root. -/
+theorem dist_parent_eq_root_dist_add_one
+    (B : OrientedBranch T) {x : V} (hx : x ∈ B.vertices) :
+    T.graph.dist B.parent x =
+      T.graph.dist B.root x + 1 := by
+  classical
+  have hrComp :
+      B.root ∈ B.component.supp :=
+    SimpleGraph.ConnectedComponent.connectedComponentMk_mem
+  have hxComp :
+      x ∈ B.component.supp := by
+    simpa [vertices] using hx
+  have hreach :
+      B.deletedGraph.Reachable B.root x :=
+    B.component.reachable_of_mem_supp hrComp hxComp
+  obtain ⟨p₀, hp₀⟩ := hreach.exists_isPath
+  have hle : B.deletedGraph ≤ T.graph := by
+    intro a b hab
+    rw [deletedGraph, SimpleGraph.deleteEdges_adj] at hab
+    exact hab.1
+  let p : T.graph.Walk B.root x := p₀.mapLe hle
+  have hp : p.IsPath := hp₀.mapLe hle
+  have hparentNot : B.parent ∉ p.support := by
+    intro hparent
+    have hparent₀ : B.parent ∈ p₀.support := by
+      simpa [p, SimpleGraph.Walk.support_mapLe_eq_support] using hparent
+    let q₀ := p₀.takeUntil B.parent hparent₀
+    have hparentMem : B.parent ∈ B.vertices := by
+      rw [vertices, Set.mem_toFinset,
+        SimpleGraph.ConnectedComponent.mem_supp_iff, component]
+      exact
+        (SimpleGraph.ConnectedComponent.sound q₀.reachable).symm
+    exact B.parent_not_mem_vertices hparentMem
+  let q : T.graph.Walk B.parent x := p.cons B.adj.symm
+  have hq : q.IsPath := by
+    rw [SimpleGraph.Walk.cons_isPath_iff]
+    exact ⟨hp, hparentNot⟩
+  have hpdist := tree_path_length_eq_dist (T := T) p hp
+  have hqdist := tree_path_length_eq_dist (T := T) q hq
+  simpa [q, p, SimpleGraph.Walk.length_cons,
+    SimpleGraph.Walk.length_mapLe, hpdist] using hqdist
+
 /-- Distances into a genuine child branch increase by exactly one when
 measured from the parent-branch root. -/
 theorem dist_root_eq_child_dist_add_one
@@ -202,48 +246,8 @@ theorem dist_root_eq_child_dist_add_one
     (hx : x ∈ (B.childBranch c).vertices) :
     T.graph.dist B.root x =
       T.graph.dist c.vertex x + 1 := by
-  classical
-  have hcComp :
-      c.vertex ∈ (B.childBranch c).component.supp :=
-    SimpleGraph.ConnectedComponent.connectedComponentMk_mem
-  have hxComp :
-      x ∈ (B.childBranch c).component.supp := by
-    simpa [vertices] using hx
-  have hreach :
-      (B.childBranch c).deletedGraph.Reachable c.vertex x :=
-    (B.childBranch c).component.reachable_of_mem_supp hcComp hxComp
-  obtain ⟨p₀, hp₀⟩ := hreach.exists_isPath
-  have hle :
-      (B.childBranch c).deletedGraph ≤ T.graph := by
-    intro a b hab
-    rw [deletedGraph, SimpleGraph.deleteEdges_adj] at hab
-    exact hab.1
-  let p : T.graph.Walk c.vertex x := p₀.mapLe hle
-  have hp : p.IsPath := hp₀.mapLe hle
-  have hrootNot : B.root ∉ p.support := by
-    intro hroot
-    have hroot₀ : B.root ∈ p₀.support := by
-      simpa [p, SimpleGraph.Walk.support_mapLe_eq_support] using hroot
-    let q₀ :=
-      p₀.takeUntil B.root hroot₀
-    have hrootMem :
-        B.root ∈ (B.childBranch c).vertices := by
-      rw [vertices, Set.mem_toFinset,
-        SimpleGraph.ConnectedComponent.mem_supp_iff, component]
-      exact
-        (SimpleGraph.ConnectedComponent.sound q₀.reachable).symm
-    exact
-      (B.childBranch c).parent_not_mem_vertices
-        (by simpa [childBranch] using hrootMem)
-  let q : T.graph.Walk B.root x := p.cons c.adj
-  have hq : q.IsPath := by
-    rw [SimpleGraph.Walk.cons_isPath_iff]
-    exact ⟨hp, hrootNot⟩
-  have hpdist := tree_path_length_eq_dist (T := T) p hp
-  have hqdist := tree_path_length_eq_dist (T := T) q hq
-  simpa [q, p, SimpleGraph.Walk.length_cons,
-    SimpleGraph.Walk.length_mapLe, hpdist] using hqdist
-
+  simpa [childBranch] using
+    (B.childBranch c).dist_parent_eq_root_dist_add_one hx
 
 /-- Child choices form a finite type because a child is determined by its
 underlying vertex. -/
