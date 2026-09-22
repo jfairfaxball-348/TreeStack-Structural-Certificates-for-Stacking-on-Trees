@@ -89,12 +89,12 @@ noncomputable def auxSourceWalk
     let hPos : 0 < auxHeight C ambientRoot hScores v :=
       Nat.pos_of_ne_zero hZero
     let u := auxParent C ambientRoot hScores v
-    let rec := auxSourceWalk C ambientRoot hScores u
-    ⟨rec.1,
+    let tailCert := auxSourceWalk C ambientRoot hScores u
+    ⟨tailCert.1,
       SimpleGraph.Walk.cons
         (auxArrow_adj C ambientRoot
           (auxParent_arrow_of_pos C ambientRoot hScores v hPos)).symm
-        rec.2⟩
+        tailCert.2⟩
 termination_by auxHeight C ambientRoot hScores v
 decreasing_by
   have hEq :=
@@ -171,13 +171,13 @@ theorem auxSourceWalk_isPath
     let hPos : 0 < auxHeight C ambientRoot hScores v :=
       Nat.pos_of_ne_zero hZero
     let u := auxParent C ambientRoot hScores v
-    let rec := auxSourceWalk C ambientRoot hScores u
+    let tailCert := auxSourceWalk C ambientRoot hScores u
     have hEq :
         auxHeight C ambientRoot hScores u + 1 =
           auxHeight C ambientRoot hScores v := by
       simpa [u] using
         auxParent_height_add_one C ambientRoot hScores v hPos
-    have hTail : rec.2.IsPath := by
+    have hTail : tailCert.2.IsPath := by
       exact auxSourceWalk_isPath C ambientRoot hScores u
     apply (SimpleGraph.Walk.cons_isPath_iff _ _).2
     refine ⟨hTail, ?_⟩
@@ -240,8 +240,12 @@ theorem auxHeight_eq_dist_auxSource
   change
     auxHeight C ambientRoot hScores v =
       T.graph.dist (auxSource C ambientRoot hScores v) v
-  rw [← T.graph.dist_comm]
-  omega
+  calc
+    auxHeight C ambientRoot hScores v =
+        (auxSourceWalk C ambientRoot hScores v).2.length := hLen.symm
+    _ = T.graph.dist v (auxSource C ambientRoot hScores v) := hDist
+    _ = T.graph.dist (auxSource C ambientRoot hScores v) v :=
+      T.graph.dist_comm
 
 /-- A zero-height vertex is its own canonical source. -/
 theorem auxSource_eq_self_of_height_zero
