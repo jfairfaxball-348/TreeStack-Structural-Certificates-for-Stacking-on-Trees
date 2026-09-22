@@ -1,154 +1,142 @@
 # Lean formalization progress
 
-Status: **Phase 1 exact branch-boundary invariant proved in Lean on PR #8.**
-The recursive message necessity layer, occupied-child scheduling, constructive
-attainment, universal boundary upper bound, and nonpositive impossibility are
-all machine-checked.  The next unproved layer is the rooted score
-characterization
-`StackableAt T.graph C r ↔ 0 < score T C r`.
+Status: **the exact branch-boundary invariant is merged on `main`, and the
+rooted score characterization is machine-checked on draft PR #9.**  The rooted
+slice still requires the complete PR workflow, merge, and post-merge `main`
+validation before it is treated as the next authoritative baseline.
 
-## Pinned environment and baseline
-
-This slice started from `main` at merge commit
-`04e6bd9653ed35e320e99e2d104ca659845ab11a`, the merge of PR #7,
-“Lean: exact boundary necessity, scheduling, and child separation.”
+## Pinned environment
 
 - Lean: `v4.34.0`
 - Mathlib: `5ed2965256430c3649e86755f9576b54eca72435`
 - Namespace: `TreeStack`
 
-The source semantics are unchanged.  In particular,
-`UniversalStackable G t` still means exact-size universality, and
+The source semantics remain unchanged.  In particular,
+`UniversalStackable G t` means exact-size universality and
 `EMPTY = none` remains categorically different from `some 0`.
+Python computations are regression/falsification evidence only.
 
-## Exact boundary theorem
+## Merged exact-boundary milestone
 
-`TreeStack/Boundary.lean` retains the target proposition
+PR #8, “Lean: exact boundary attainment,” merged as
+
+`2d7911c28e31eef1e1e35f4221bd6c342ef93834`.
+
+The complete PR workflow passed before merge, and the post-merge `main` push
+workflow also passed completely.
+
+`TreeStack/Boundary.lean` now proves
 
 ```text
-ExactBoundaryInvariant C B
-```
-
-and now proves it as
-
-```text
+OrientedBranch.boundary_attainment
 OrientedBranch.exactBoundaryInvariant :
   ExactBoundaryInvariant C B
 ```
 
 for every finite-tree configuration and oriented branch.
 
-For an occupied branch with recursive message `some d`, this theorem
-machine-checks all three audited clauses:
+For an occupied branch with recursive message `some d`, the checked theorem
+contains all three audited clauses:
 
-1. if `0 < q + d`, a legal branch-local clearing exists whose final external
-   boundary pile is exactly `q + d`;
-2. every legal clearing has final boundary pile at most `q + d`;
+1. if `0 < q + d`, there is a legal branch-local clearing whose final
+   external boundary pile is exactly `q + d`;
+2. every legal clearing leaves at most `q + d` at the boundary;
 3. if `q + d ≤ 0`, no legal clearing can leave a positive boundary pile.
 
-The upper-bound and nonpositive clauses continue to come from the previously
-proved move-signature necessity layer:
+The construction enumerates only occupied genuine child branches.  Empty
+children are omitted from the executable task list; they are never represented
+as zero-gain tasks.  Supporting checked declarations include
 
 ```text
-ClearOutcome.boundary_le_message
-ClearOutcome.no_positive_boundary_of_message_nonpos
-```
-
-The new constructive half is
-
-```text
-OrientedBranch.boundary_attainment
-```
-
-and is well-founded by the existing strict child-cardinality theorem
-`childBranch_card_lt`.
-
-## Constructive child scheduler
-
-The construction enumerates only occupied genuine child branches.  The task
-type itself contains an occupancy proof, so a configuration-empty child cannot
-be represented as an executable zero-gain task.
-
-New supporting declarations include:
-
-```text
-OccupiedChild
-occupiedChildTasks
+exists_childBranch_mem_of_mem_vertices_ne_root
+parent_not_mem_childBranch_carrier
+BranchReach.repeat_move
 taskGainSum_occupiedChildTasks
 executeOccupiedTaskSchedule
 executeAllOccupiedChildren
-```
-
-The sum of executable task gains is proved equal to `childMessageSum`.
-The existing `orderedTasks_safe` theorem is then applied to the occupied
-task list.
-
-Sibling independence is formal rather than implicit.  The construction uses
-and extends the checked locality/separation layer, including:
-
-```text
-branchMessage_congr_vertices
-BranchReach.eq_of_not_mem_carrier
-childBranch_carrier_subset
-childBranch_vertices_disjoint
-exists_childBranch_mem_of_mem_vertices_ne_root
-parent_not_mem_childBranch_carrier
-BranchReach.of_child
-```
-
-Thus clearing an earlier sibling cannot change a later sibling's interior or
-recursive message.
-
-## Explicit root/boundary attainment
-
-After all occupied children have been cleared, every non-root branch vertex is
-zero and the construction reduces to the branch root and its external
-boundary.
-
-`BranchReach.repeat_move` supplies exact legal repeated moves along one
-oriented edge.  The endpoint construction is split into explicit audited
-cases:
-
-```text
 attainRootTransfer_even
 attainRootTransfer_odd
 attainRootTransfer_ge_two
 ```
 
-For effective input at least two, the proof performs the exact outward/inward
-sequence realizing `F`.  The odd case explicitly handles whether the
-external boundary initially has a pebble.
+together with the earlier locality, separation, signature, and necessity
+lemmas.  The low-input construction explicitly preloads the root from the
+external boundary; the high-input construction uses explicit legal repeated
+moves.  No balance-only phantom sequence is used.
 
-For effective input at most one, `boundary_attainment` first preloads
+## Rooted score layer on PR #9
+
+The focused branch is
+
+`chatgpt/root-score-characterization`
+
+and draft PR #9 is “Lean: rooted score characterization.”
+
+A new file `TreeStack/RootScore.lean` defines the exact rooted score from
+incident oriented branch messages:
 
 ```text
-b = 2 - effectiveInput C B
+incidentBranch
+rootMessageTerm
+rootMessageSum
+score
 ```
 
-pebbles at the root using exactly `b` inward boundary moves.  Positivity of
-the requested final boundary value proves that these moves are affordable.
-The occupied children are then executed in the audited task order, leaving
-exactly two pebbles at the root; one final outward move realizes
+with configuration-empty incident branches contributing no integer summand
+while remaining message-level `EMPTY`.
+
+Occupied incident branches are represented by a task subtype, so an empty
+branch cannot become an executable zero-gain task:
 
 ```text
-F x = 2*x - 3.
+RootTask
+rootTasks
+taskGainSum_rootTasks
 ```
 
-No balance-only or phantom sequence is used.
+The constructive direction is checked through
 
-## Trust and validation status
+```text
+executeRootTaskSchedule
+executeAllRootTasks
+stackableAt_of_score_pos
+```
 
-There are no `sorry`, `admit`, or project-specific axioms in the project
-Lean source.  The draft PR workflow rejects proof-hole tokens.
+using the same audited positive/zero/negative scheduler and the merged exact
+branch-boundary attainment theorem.  Incident branch disjointness/locality
+proves that clearing one branch does not alter a later branch's message.
 
-Draft Lean CI is green for commit
-`0f9e5f7aeddd58a61b18a85fab70334a2822a2b1`, which includes the complete
-constructive proof and `OrientedBranch.exactBoundaryInvariant`.
-`Audit.lean` now prints axiom dependencies for the new construction and
-checks the final theorem.
+For necessity, `Reach.exists_moveSignature` extracts a global oriented
+move-count signature from an arbitrary legal reach.  The proof applies
+`OrientedBranch.signature_branchFlux_bounds` independently to every incident
+branch.  Occupied branch flux is bounded by its recursive integer message;
+an initially empty incident branch has nonpositive flux `-3k`.  Summing these
+bounds at the target root gives the rooted upper bound without projecting an
+interleaved global move sequence into separate branch sequences.
 
-Before this slice is considered merged and complete, PR #8 must pass the full
-repository validation path and the post-merge `main` workflow:
+The main checked rooted statements are
+
+```text
+score_pos_of_stackableAt
+stackableAt_iff_score_pos :
+  StackableAt T.graph C r ↔ 0 < score T C r
+
+not_stackable_iff_all_scores_nonpos :
+  ¬ Stackable T.graph C ↔ ∀ r, score T C r ≤ 0
+```
+
+Draft Lean CI passed for commit
+`016bbba3c002cb60f567f7e8392bd8aebb62f289`, containing the complete rooted
+proof.  `Audit.lean` is being extended to print axiom dependencies for this
+layer before the PR is promoted to the complete workflow.
+
+## Validation and trust
+
+There are no permitted `sorry`, `admit`, project axioms, weakened
+definitions, or hidden computational assumptions.  The development workflow
+rejects proof-hole tokens.
+
+The authoritative complete validation path remains:
 
 ```bash
 python3 -m pip install -e '.[test]'
@@ -159,18 +147,15 @@ lake build
 lake env lean Audit.lean
 ```
 
-Python computation remains regression/falsification evidence only and is not
-used to discharge Lean obligations.
+PR #9 is not considered complete until that full workflow is green, it is
+merged into `main`, and the post-merge `main` workflow is also green.
 
 ## Next formal frontier
 
-Only after the exact-boundary PR is fully validated and merged should Phase 1
-continue with the rooted score layer:
-
-```text
-StackableAt T.graph C r ↔ 0 < score T C r
-```
+After PR #9 is fully validated and merged, the next proof layer from the
+roadmap is the explicit estimator obstruction, followed by support pruning and
+the arbitrary-defect estimator bound.
 
 The Csernák–Soukup tree-stacking conjecture is **not yet formally proved**.
-The machine-checked milestone reached here is the complete recursive exact
-boundary invariant on oriented branches.
+The strongest merged milestone at present is the complete exact branch-boundary
+invariant; the rooted score theorem is the current integration milestone.
