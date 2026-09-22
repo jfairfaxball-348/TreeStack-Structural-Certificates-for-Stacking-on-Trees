@@ -307,19 +307,23 @@ noncomputable def childVertexEquivProper (B : OrientedBranch T) :
       left_inv := ?_
       right_inv := ?_ }
   · intro z
-    apply Sigma.ext
-    · apply Child.eq_of_vertex_eq
+    let x : B.ProperVertex :=
+      ⟨z.2.1,
+        Finset.mem_erase.mpr
+          ⟨hnotRoot z.1 z.2.2,
+            B.childBranch_vertices_subset z.1 z.2.2⟩⟩
+    have hc : chosen x = z.1 := by
+      apply Child.eq_of_vertex_eq
       by_contra hne
-      let x : B.ProperVertex :=
-        ⟨z.2.1,
-          Finset.mem_erase.mpr
-            ⟨hnotRoot z.1 z.2.2,
-              B.childBranch_vertices_subset z.1 z.2.2⟩⟩
+      have hne' : z.1.vertex ≠ (chosen x).vertex := by
+        intro h
+        exact hne h.symm
       have hdisj :=
-        B.childBranch_vertices_disjoint z.1 (chosen x) hne.symm
+        B.childBranch_vertices_disjoint z.1 (chosen x) hne'
       exact
         (Finset.disjoint_left.mp hdisj) z.2.2 (hchosen x)
-    · simp
+    cases hc
+    rfl
   · intro x
     apply Subtype.ext
     rfl
@@ -1014,20 +1018,24 @@ noncomputable def rootBranchVertexEquivProper
       left_inv := ?_
       right_inv := ?_ }
   · intro z
-    apply Sigma.ext
-    · apply Subtype.ext
+    let x : RootProperVertex r :=
+      ⟨z.2.1,
+        Finset.mem_erase.mpr
+          ⟨hnotRoot z.1 z.2.2, Finset.mem_univ _⟩⟩
+    have hn : chosen x = z.1 := by
+      apply Subtype.ext
       by_contra hne
-      let x : RootProperVertex r :=
-        ⟨z.2.1,
-          Finset.mem_erase.mpr
-            ⟨hnotRoot z.1 z.2.2, Finset.mem_univ _⟩⟩
+      have hne' : z.1.1 ≠ (chosen x).1 := by
+        intro h
+        exact hne h.symm
       have hdisj :=
         incidentBranch_vertices_disjoint
-          (T := T) r z.1.2 (chosen x).2 hne.symm
+          (T := T) r z.1.2 (chosen x).2 hne'
       exact
         (Finset.disjoint_left.mp hdisj)
           z.2.2 (hchosen x)
-    · simp
+    cases hn
+    rfl
   · intro x
     apply Subtype.ext
     rfl
