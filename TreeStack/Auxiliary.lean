@@ -100,6 +100,14 @@ returns the same branch. -/
   cases B
   rfl
 
+/-- Rebuilding the reverse orientation from the swapped endpoints gives the
+stored reverse branch. -/
+@[simp] theorem incidentBranch_reverse_self
+    (B : OrientedBranch T) :
+    incidentBranch T B.root B.parent B.adj.symm = B.reverseBranch := by
+  cases B
+  rfl
+
 /-- Every defective retained support edge receives an auxiliary direction.
 Oriented-type edges use their forced message direction; two-negative edges
 point toward the fixed rooted owner. -/
@@ -125,7 +133,7 @@ theorem auxArrow_or_reverse_of_defectiveSupportEdge
     have hInc :
         incidentBranch T B.root B.parent B.adj.symm =
           B.reverseBranch := by
-      simpa only [incidentBranch_reverse, incidentBranch_self]
+      exact incidentBranch_reverse_self B
     change
       ((incidentBranch T B.root B.parent B.adj.symm).DefectiveSupportEdge C ∧
           (incidentBranch T B.root B.parent B.adj.symm).DefectArrow C) ∨
@@ -151,7 +159,7 @@ theorem auxArrow_or_reverse_of_defectiveSupportEdge
       have hInc :
           incidentBranch T B.root B.parent B.adj.symm =
             B.reverseBranch := by
-        simpa only [incidentBranch_reverse, incidentBranch_self]
+        exact incidentBranch_reverse_self B
       change
         ((incidentBranch T B.root B.parent B.adj.symm).DefectiveSupportEdge C ∧
             (incidentBranch T B.root B.parent B.adj.symm).DefectArrow C) ∨
