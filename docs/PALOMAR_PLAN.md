@@ -1,9 +1,9 @@
 # Palomar packaging plan
 
-This repository is being prepared for Palomar, but this document does not
-perform or authorize registration. Registration remains a separate maintainer
-action against one immutable 40-character commit after all mechanical gates
-pass.
+This repository has completed Palomar packaging and mechanical preflight. This
+document does not perform or authorize registration. Registration remains a
+separate maintainer action against one immutable 40-character commit whose own
+post-merge validation is green.
 
 ## Advertised result
 
@@ -84,17 +84,28 @@ inventing those details.
 The repository uses Apache-2.0. The packaging branch contains exactly one root
 `LICENSE` file and `formalization.yaml` records
 `project.license: "Apache-2.0"`. The licence gate is therefore resolved; the
-remaining acceptance criterion is a green full Palomar preflight at the exact
-candidate commit.
+licence gate is resolved.
+
+## Completed preflight milestone
+
+Packaging PR #18 passed ordinary TreeStack CI, the protected statement-surface
+workflow, and the official full Palomar preflight before merge. It merged as
+`d941280ae5923a3dcb2f47703f49812bd3afeff1`. The corresponding post-merge
+`main` Lean workflow #251 and Palomar full preflight #20 also passed.
+
+The Palomar mechanical report records status `pass`, no errors or warnings, a
+Mathlib-only Challenge dependency boundary, matched Apache-2.0 licence metadata,
+and successful verification by both Lean's default kernel and NanoDa.
 
 ## Final freeze checklist
 
-1. ordinary TreeStack CI green;
-2. statement-surface workflow green;
-3. Apache-2.0 root licence and metadata remain synchronized;
-4. official Palomar full preflight green, including Comparator, protected
+1. ordinary TreeStack CI is green;
+2. the protected statement-surface workflow is green;
+3. Apache-2.0 root licence and metadata are synchronized;
+4. official Palomar full preflight is green, including Comparator, protected
    Challenge compilation, Lean kernel export, and NanoDa replay;
-5. packaging PR merged;
-6. post-merge `main` validation and Palomar preflight green;
-7. record the final immutable `main` SHA and only then use the Palomar
-   submission form.
+5. packaging PR #18 is merged;
+6. post-merge `main` validation and Palomar preflight are green;
+7. use only the final immutable `main` SHA reported after the documentation
+   freeze itself revalidates;
+8. Palomar registration remains a separate maintainer action.

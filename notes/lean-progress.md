@@ -6,8 +6,10 @@ exact stacking equality,” merged as
 `2bffb748a3d56147e2561a6a026b497c99e15686`. The complete ready-PR workflow
 passed as run #232 and the post-merge `main` workflow passed as run #233.
 External human mathematical review of the completed result has also been
-reported complete by the maintainer. The remaining project stages are Palomar
-packaging/verification and publication preparation, not Lean proof repair.
+reported complete by the maintainer. Palomar packaging and full mechanical
+preflight are now complete; the remaining project stages are the separate
+registration decision and research-paper/publication preparation, not Lean
+proof repair.
 
 ## Pinned environment
 
@@ -619,9 +621,9 @@ No mathematical Lean proof obligation remains. PR #17 and its post-merge
 `main` validation are complete, and external human mathematical review has
 been reported complete by the maintainer.
 
-The active stage is Palomar packaging and mechanical verification. The
-statement surface and preflight workflow are being prepared without changing
-the mathematical source. The repository licence has been set to Apache-2.0 with matching Palomar
-metadata. After a preflight-green immutable commit is frozen, the remaining stages
-are the separate Palomar registration decision and research-paper/publication
-work. No unsupported priority claim is made by the Lean development itself.
+Palomar packaging and mechanical verification are complete. The protected
+statement surface is Mathlib-only, the repository licence is Apache-2.0 with
+matching metadata, and the full Palomar preflight has passed through Comparator,
+Lean kernel export, and NanoDa replay. The remaining stages are the separate
+Palomar registration decision and research-paper/publication work. No
+unsupported priority claim is made by the Lean development itself.
