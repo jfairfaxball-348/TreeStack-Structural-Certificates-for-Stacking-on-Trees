@@ -1418,6 +1418,36 @@ theorem attainRootTransfer_odd
     rw [hF]
     exact hParentZ
 
+/-- Root/boundary attainment for every effective root pile at least two. -/
+theorem attainRootTransfer_ge_two
+    (B : OrientedBranch T) (E : Configuration V)
+    (hRootTwo : 2 ≤ E B.root)
+    (hNonroot :
+      ∀ v ∈ B.vertices, v ≠ B.root → E v = 0)
+    (hPos :
+      0 < (E B.parent : ℤ) + F (E B.root : ℤ)) :
+    ∃ D : Configuration V,
+      B.BranchReach E D ∧
+      B.Cleared D ∧
+      (D B.parent : ℤ) =
+        (E B.parent : ℤ) + F (E B.root : ℤ) := by
+  classical
+  by_cases hEven : Even (E B.root)
+  · rcases hEven with ⟨k, hkEq⟩
+    have hRoot : E B.root = 2 * k := by
+      omega
+    have hk : 1 ≤ k := by
+      omega
+    exact B.attainRootTransfer_even E k hk hRoot hNonroot
+  · have hOdd : Odd (E B.root) :=
+      Nat.not_even_iff_odd.mp hEven
+    rcases hOdd with ⟨k, hkEq⟩
+    have hRoot : E B.root = 2 * k + 1 := by
+      omega
+    have hk : 1 ≤ k := by
+      omega
+    exact B.attainRootTransfer_odd E k hk hRoot hNonroot hPos
+
 theorem MoveSignature.zero_supportedOn (B : OrientedBranch T) :
     MoveSignature.SupportedOn (MoveSignature.zero T) B := by
   intro u v h
