@@ -199,6 +199,15 @@ theorem RootTask.occupied
     t.branch.Occupied C := by
   exact Classical.choose_spec t.2
 
+theorem RootTask.branch_eq_incident
+    {T : FiniteTree V} {C : Configuration V} {r : V}
+    (t : RootTask T C r) (h : T.graph.Adj t.1 r) :
+    t.branch = incidentBranch T r t.1 h := by
+  have hp :
+      Classical.choose t.2 = h :=
+    Subsingleton.elim _ _
+  simp [RootTask.branch, hp]
+
 @[simp] theorem RootTask.branch_root
     {T : FiniteTree V} {C : Configuration V} {r : V}
     (t : RootTask T C r) :
@@ -305,6 +314,285 @@ theorem taskGainSum_rootTasks
           exact rootMessageTerm_eq_zero_of_not_occupied T C r huNotOcc
     _ = rootMessageSum T C r := rfl
 
+
+
+/-- Execute a safe list of occupied incident branches toward one target root.
+Every task attains its exact branch message gain; distinct incident interiors
+are preserved by locality. -/
+theorem executeRootTaskSchedule
+    [DecidableEq V]
+    (T : FiniteTree V) (C : Configuration V) (r : V) :
+    ∀ (tasks : List (RootTask T C r)) (E : Configuration V),
+      tasks.Nodup →
+      (∀ t ∈ tasks, ∀ v ∈ t.branch.vertices, E v = C v) →
+      TaskScheduleSafe
+        (fun t : RootTask T C r => t.gain)
+        (E r : ℤ) tasks →
+      ∃ D : Configuration V,
+        Reach T.graph E D ∧
+        (D r : ℤ) =
+          (E r : ℤ) +
+            taskGainSum (fun t : RootTask T C r => t.gain) tasks ∧
+        (∀ t ∈ tasks, t.branch.Cleared D) ∧
+        (∀ (u : V) (h : T.graph.Adj u r),
+          (∀ t ∈ tasks, t.1 ≠ u) →
+          ∀ v ∈ (incidentBranch T r u h).vertices, D v = E v) := by
+  classical
+  intro tasks
+  induction tasks with
+  | nil =>
+      intro E hNodup hSame hSafe
+      refine ⟨E, Relation.ReflTransGen.refl, ?_, ?_, ?_⟩
+      · simp [taskGainSum]
+      · intro t ht
+        simp at ht
+      · intro u h hnot v hv
+        rfl
+  | cons t ts ih =>
+      intro E hNodup hSame hSafe
+      have hNodupData := List.nodup_cons.mp hNodup
+      have htNot : t ∉ ts := hNodupData.1
+      have hNodupTail : ts.Nodup := hNodupData.2
+      change
+        0 < (E r : ℤ) + t.gain ∧
+          TaskScheduleSafe
+            (fun s : RootTask T C r => s.gain)
+            ((E r : ℤ) + t.gain) ts at hSafe
+      have hSameHead :
+          ∀ v ∈ t.branch.vertices, E v = C v :=
+        hSame t (by simp)
+      have hCE :
+          ∀ v ∈ t.branch.vertices, C v = E v := by
+        intro v hv
+        exact (hSameHead v hv).symm
+      have hOccE : t.branch.Occupied E :=
+        (t.branch.occupied_congr_vertices C E hCE).mp t.occupied
+      have hMsgC :
+          OrientedBranch.branchMessage C t.branch = some t.gain := by
+        rw [OrientedBranch.branchMessage_eq_some_of_occupied
+          C t.branch t.occupied, t.gain_eq_F]
+      have hMsgE :
+          OrientedBranch.branchMessage E t.branch = some t.gain := by
+        calc
+          OrientedBranch.branchMessage E t.branch =
+              OrientedBranch.branchMessage C t.branch :=
+            (t.branchMessage_congr_vertices C E hCE).symm
+          _ = some t.gain := hMsgC
+      rcases OrientedBranch.boundary_attainment
+          E t.branch hOccE t.gain hMsgE (E r) hSafe.1 with
+        ⟨E₁, hClear₁, hRoot₁⟩
+      rcases hClear₁ with ⟨hReachRaw, hCleared₁⟩
+      have hStart : t.branch.withBoundary E (E r) = E := by
+        have hSelf := t.branch.withBoundary_self E
+        simpa using hSelf
+      have hReachBranch : t.branch.BranchReach E E₁ := by
+        rw [hStart] at hReachRaw
+        exact hReachRaw
+      have hReachGlobal : Reach T.graph E E₁ :=
+        hReachBranch.toReach t.branch
+      have hRoot₁' :
+          (E₁ r : ℤ) = (E r : ℤ) + t.gain := by
+        simpa using hRoot₁
+      have hSameTail :
+          ∀ s ∈ ts, ∀ v ∈ s.branch.vertices, E₁ v = C v := by
+        intro s hs v hv
+        have hst : s.1 ≠ t.1 := by
+          intro hEq
+          have hObj : s = t := Subtype.ext hEq
+          subst s
+          exact htNot hs
+        have hOutside : v ∉ t.branch.carrier := by
+          have h :=
+            mem_incidentBranch_vertices_not_mem_sibling_carrier
+              (T := T) r s.branch.adj t.branch.adj hst hv
+          simpa [s.branch_eq_incident s.branch.adj,
+            t.branch_eq_incident t.branch.adj] using h
+        have hEqStep :=
+          OrientedBranch.BranchReach.eq_of_not_mem_carrier
+            t.branch hReachBranch hOutside
+        calc
+          E₁ v = E v := hEqStep
+          _ = C v := hSame s (by simp [hs]) v hv
+      have hSafeTail :
+          TaskScheduleSafe
+            (fun s : RootTask T C r => s.gain)
+            (E₁ r : ℤ) ts := by
+        rw [hRoot₁']
+        exact hSafe.2
+      rcases ih E₁ hNodupTail hSameTail hSafeTail with
+        ⟨D, hReachTail, hRootTail, hClearedTail, hUntouchedTail⟩
+      have hReachAll : Reach T.graph E D :=
+        Relation.ReflTransGen.trans hReachGlobal hReachTail
+      have hRootAll :
+          (D r : ℤ) =
+            (E r : ℤ) +
+              taskGainSum
+                (fun s : RootTask T C r => s.gain) (t :: ts) := by
+        rw [hRootTail, hRoot₁']
+        simp only [taskGainSum]
+        ring
+      have hHeadNotTail :
+          ∀ s ∈ ts, s.1 ≠ t.1 := by
+        intro s hs hEq
+        have hObj : s = t := Subtype.ext hEq
+        subst s
+        exact htNot hs
+      have hHeadPres :
+          ∀ v ∈ t.branch.vertices, D v = E₁ v := by
+        intro v hv
+        have h :=
+          hUntouchedTail t.1 t.branch.adj hHeadNotTail v
+        simpa [t.branch_eq_incident t.branch.adj] using h
+      have hClearedHead : t.branch.Cleared D := by
+        intro v hv
+        rw [hHeadPres v hv]
+        exact hCleared₁ v hv
+      have hClearedAll :
+          ∀ s ∈ t :: ts, s.branch.Cleared D := by
+        intro s hs
+        rcases List.mem_cons.mp hs with rfl | hs
+        · exact hClearedHead
+        · exact hClearedTail s hs
+      have hUntouchedAll :
+          ∀ (u : V) (h : T.graph.Adj u r),
+            (∀ s ∈ t :: ts, s.1 ≠ u) →
+            ∀ v ∈ (incidentBranch T r u h).vertices, D v = E v := by
+        intro u h hnot v hv
+        have hnotHead : t.1 ≠ u :=
+          hnot t (by simp)
+        have hnotTail : ∀ s ∈ ts, s.1 ≠ u := by
+          intro s hs
+          exact hnot s (by simp [hs])
+        have hOutside : v ∉ t.branch.carrier := by
+          have hOut :=
+            mem_incidentBranch_vertices_not_mem_sibling_carrier
+              (T := T) r h t.branch.adj hnotHead.symm hv
+          simpa [t.branch_eq_incident t.branch.adj] using hOut
+        have hStep :=
+          OrientedBranch.BranchReach.eq_of_not_mem_carrier
+            t.branch hReachBranch hOutside
+        calc
+          D v = E₁ v := hUntouchedTail u h hnotTail v hv
+          _ = E v := hStep
+      exact ⟨D, hReachAll, hRootAll, hClearedAll, hUntouchedAll⟩
+
+/-- Execute every occupied incident branch in the audited order.  The result
+clears every non-root vertex and leaves exactly the rooted score at r. -/
+theorem executeAllRootTasks
+    [DecidableEq V]
+    (T : FiniteTree V) (C : Configuration V) (r : V)
+    (hSafe :
+      TaskScheduleSafe
+        (fun t : RootTask T C r => t.gain)
+        (C r : ℤ)
+        (orderedTasks
+          (fun t : RootTask T C r => t.gain)
+          (rootTasks T C r))) :
+    ∃ D : Configuration V,
+      Reach T.graph C D ∧
+      (D r : ℤ) = score T C r ∧
+      (∀ v : V, v ≠ r → D v = 0) := by
+  classical
+  let gain : RootTask T C r → ℤ := fun t => t.gain
+  let baseTasks : List (RootTask T C r) := rootTasks T C r
+  let scheduled : List (RootTask T C r) :=
+    orderedTasks gain baseTasks
+  have hNodupBase : baseTasks.Nodup := by
+    simpa [baseTasks] using rootTasks_nodup T C r
+  have hNodupScheduled : scheduled.Nodup :=
+    orderedTasks_nodup gain hNodupBase
+  have hSame :
+      ∀ t ∈ scheduled, ∀ v ∈ t.branch.vertices, C v = C v := by
+    intro t ht v hv
+    rfl
+  have hSafe' :
+      TaskScheduleSafe gain (C r : ℤ) scheduled := by
+    simpa [gain, baseTasks, scheduled] using hSafe
+  rcases executeRootTaskSchedule T C r
+      scheduled C hNodupScheduled hSame hSafe' with
+    ⟨D, hReach, hRoot, hCleared, hUntouched⟩
+  have hRootScore : (D r : ℤ) = score T C r := by
+    calc
+      (D r : ℤ) =
+          (C r : ℤ) + taskGainSum gain scheduled := hRoot
+      _ = (C r : ℤ) + taskGainSum gain baseTasks := by
+            change
+              (C r : ℤ) +
+                  taskGainSum gain (orderedTasks gain baseTasks) =
+                (C r : ℤ) + taskGainSum gain baseTasks
+            rw [taskGainSum_orderedTasks]
+      _ = (C r : ℤ) + rootMessageSum T C r := by
+            change
+              (C r : ℤ) +
+                  taskGainSum
+                    (fun t : RootTask T C r => t.gain)
+                    (rootTasks T C r) =
+                (C r : ℤ) + rootMessageSum T C r
+            rw [taskGainSum_rootTasks]
+      _ = score T C r := rfl
+  have hOffRoot : ∀ v : V, v ≠ r → D v = 0 := by
+    intro v hvr
+    rcases exists_incidentBranch_mem_of_ne_root (T := T) r hvr with
+      ⟨u, h, hv⟩
+    by_cases hOcc : (incidentBranch T r u h).Occupied C
+    · let t : RootTask T C r := ⟨u, ⟨h, hOcc⟩⟩
+      have htBase : t ∈ baseTasks := by
+        simpa [baseTasks] using mem_rootTasks T C r t
+      have htScheduled : t ∈ scheduled := by
+        change t ∈ orderedTasks gain baseTasks
+        exact (mem_orderedTasks_iff gain baseTasks t).2 htBase
+      have htBranch :
+          t.branch = incidentBranch T r u h := by
+        exact t.branch_eq_incident h
+      have htClear := hCleared t htScheduled
+      rw [htBranch] at htClear
+      exact htClear v hv
+    · have hNoTask :
+          ∀ t ∈ scheduled, t.1 ≠ u := by
+        intro t ht hEq
+        have htOcc := t.occupied
+        have htBranch :
+            t.branch = incidentBranch T r u h := by
+          subst u
+          exact t.branch_eq_incident h
+        rw [htBranch] at htOcc
+        exact hOcc htOcc
+      have hPres : D v = C v :=
+        hUntouched u h hNoTask v hv
+      have hC0 : C v = 0 := by
+        exact
+          ((incidentBranch T r u h).not_occupied_iff_zero_on_vertices C).1
+            hOcc v hv
+      exact hPres.trans hC0
+  exact ⟨D, hReach, hRootScore, hOffRoot⟩
+
+/-- Positive rooted score gives an explicit legal stack at the chosen root. -/
+theorem stackableAt_of_score_pos
+    [DecidableEq V]
+    (T : FiniteTree V) (C : Configuration V) (r : V)
+    (hScore : 0 < score T C r) :
+    StackableAt T.graph C r := by
+  classical
+  have hSafe :
+      TaskScheduleSafe
+        (fun t : RootTask T C r => t.gain)
+        (C r : ℤ)
+        (orderedTasks
+          (fun t : RootTask T C r => t.gain)
+          (rootTasks T C r)) := by
+    apply orderedTasks_safe
+    · positivity
+    · rw [taskGainSum_rootTasks]
+      simpa [score] using hScore
+  rcases executeAllRootTasks T C r hSafe with
+    ⟨D, hReach, hRoot, hOffRoot⟩
+  refine ⟨D, hReach, ?_⟩
+  constructor
+  · have hPosZ : 0 < (D r : ℤ) := by
+      rw [hRoot]
+      exact hScore
+    exact_mod_cast hPosZ
+  · exact hOffRoot
 
 /-- A branch-local legal reach is in particular a global legal reach. -/
 theorem OrientedBranch.BranchReach.toReach
