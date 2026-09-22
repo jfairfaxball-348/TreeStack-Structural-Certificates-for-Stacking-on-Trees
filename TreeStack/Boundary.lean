@@ -1415,7 +1415,6 @@ theorem attainRootTransfer_odd
         B.root_mem_carrier B.parent_mem_carrier E 1 hEnough1 with
       ⟨E₁, hReach₁, h1root, h1parent, h1other⟩
     have hEnough2 : 2 * 1 ≤ E₁ B.parent := by
-      rw [h1parent]
       omega
     rcases BranchReach.repeat_move B B.adj.symm
         B.parent_mem_carrier B.root_mem_carrier E₁ 1 hEnough2 with
@@ -1431,7 +1430,6 @@ theorem attainRootTransfer_odd
       Relation.ReflTransGen.trans hReach₁
         (Relation.ReflTransGen.trans hReach₂ hReach₃)
     have hRootZero : D B.root = 0 := by
-      rw [h3root, h2root, h1root, hRoot]
       omega
     have hCleared : B.Cleared D := by
       intro v hv
@@ -1453,8 +1451,12 @@ theorem attainRootTransfer_odd
     have hParentZ :
         (D B.parent : ℤ) =
           (E B.parent : ℤ) + ((k : ℤ) - 1) := by
-      exact_mod_cast hParentNat
-      omega
+      calc
+        (D B.parent : ℤ) =
+            ((E B.parent + (k - 1) : ℕ) : ℤ) := by
+              exact_mod_cast hParentNat
+        _ = (E B.parent : ℤ) + ((k : ℤ) - 1) := by
+              rw [Nat.cast_add, Nat.cast_sub hk]
     refine ⟨D, hReach, hCleared, ?_⟩
     rw [hF]
     exact hParentZ
