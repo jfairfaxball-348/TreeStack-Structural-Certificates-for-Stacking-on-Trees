@@ -288,7 +288,7 @@ theorem auxHeight_succ_le_of_auxArrow
     (hArrow : AuxArrow (T := T) C ambientRoot u v) :
     auxHeight C ambientRoot hScores u + 1 ≤
       auxHeight C ambientRoot hScores v := by
-  rw [auxHeight]
+  nth_rewrite 2 [auxHeight]
   have hLe :=
     Finset.le_sup
       (f := fun x : V =>
@@ -346,7 +346,7 @@ theorem auxWeightInt_nonneg
     (hScores : ∀ v, score T C v ≤ 0)
     (v : V) :
     0 ≤ auxWeightInt C ambientRoot hScores v := by
-  exact_mod_cast (Nat.zero_le (auxWeight C ambientRoot hScores v))
+  simp [auxWeightInt]
 
 /-- Integer doubling form used directly by `DefectCharge.lean`. -/
 theorem two_mul_auxWeightInt_le_of_auxArrow
@@ -356,6 +356,9 @@ theorem two_mul_auxWeightInt_le_of_auxArrow
     (hArrow : AuxArrow (T := T) C ambientRoot u v) :
     2 * auxWeightInt C ambientRoot hScores u ≤
       auxWeightInt C ambientRoot hScores v := by
+  change
+    (2 : ℤ) * (auxWeight C ambientRoot hScores u : ℤ) ≤
+      (auxWeight C ambientRoot hScores v : ℤ)
   exact_mod_cast
     (two_mul_auxWeight_le_of_auxArrow
       C ambientRoot hScores hArrow)
