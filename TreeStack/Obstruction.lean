@@ -38,8 +38,9 @@ theorem extremalConfig_eq_one_of_mem_leafVertices
     (T : FiniteTree V) (r : V) {v : V}
     (hv : v ∈ leafVertices T r) :
     extremalConfig T r v = 1 := by
-  have hvr : v ≠ r := by
-    exact (by simpa [leafVertices] using hv).1
+  have hv' : v ≠ r ∧ T.graph.degree v = 1 := by
+    simpa [leafVertices] using hv
+  have hvr : v ≠ r := hv'.1
   simp [extremalConfig_of_ne_root T r hvr, hv]
 
 theorem extremalConfig_eq_zero_of_ne_root_not_mem_leafVertices
