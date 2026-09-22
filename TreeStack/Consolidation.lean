@@ -427,6 +427,122 @@ theorem mergeAssignment_eq_of_old_eq
   unfold mergeAssignment
   rw [hxy]
 
+/-- Every nonempty proper finite vertex carrier in a connected tree has an
+ambient edge crossing from the carrier to its complement. -/
+theorem exists_adj_mem_not_mem_of_nonempty_ne_univ
+    (S : Finset V)
+    (hNonempty : S.Nonempty)
+    (hProper : S ≠ (Finset.univ : Finset V)) :
+    ∃ a b : V, a ∈ S ∧ b ∉ S ∧ T.graph.Adj a b := by
+  classical
+  rcases hNonempty with ⟨x, hx⟩
+  have hOutside : ∃ y : V, y ∉ S := by
+    rw [Finset.eq_univ_iff_forall, not_forall] at hProper
+    exact hProper
+  rcases hOutside with ⟨y, hy⟩
+  rcases T.isTree.connected x y with ⟨p⟩
+  have hCross :
+      ∀ {u v : V} (q : T.graph.Walk u v),
+        u ∈ S → v ∉ S →
+          ∃ a b : V, a ∈ S ∧ b ∉ S ∧ T.graph.Adj a b := by
+    intro u v q hu hv
+    induction q with
+    | nil =>
+        exact (hv hu).elim
+    | @cons u w v hadj q ih =>
+        by_cases hw : w ∈ S
+        · exact ih hw hv
+        · exact ⟨u, w, hu, hw, hadj⟩
+  exact hCross p hx hy
+
+/-- Vertices whose selected canonical source belongs to a chosen source set. -/
+noncomputable def auxSourceCarrier
+    (C : Configuration V) (ambientRoot : V)
+    (hScores : ∀ v, score T C v ≤ 0)
+    (R : Finset V) : Finset V :=
+  (Finset.univ : Finset V).filter fun v =>
+    auxSource C ambientRoot hScores v ∈ R
+
+@[simp] theorem mem_auxSourceCarrier
+    (C : Configuration V) (ambientRoot : V)
+    (hScores : ∀ v, score T C v ≤ 0)
+    (R : Finset V) (v : V) :
+    v ∈ auxSourceCarrier C ambientRoot hScores R ↔
+      auxSource C ambientRoot hScores v ∈ R := by
+  simp [auxSourceCarrier]
+
+/-- Inserting one source adds exactly its whole canonical fibre. -/
+theorem auxSourceCarrier_insert
+    (C : Configuration V) (ambientRoot : V)
+    (hScores : ∀ v, score T C v ≤ 0)
+    (R : Finset V) (r : V) :
+    auxSourceCarrier C ambientRoot hScores (insert r R) =
+      auxSourceCarrier C ambientRoot hScores R ∪
+        auxSourceFiber C ambientRoot hScores r := by
+  ext v
+  simp [auxSourceCarrier, auxSourceFiber, or_comm]
+
+/-- A singleton source carrier is exactly its source fibre. -/
+theorem auxSourceCarrier_singleton
+    (C : Configuration V) (ambientRoot : V)
+    (hScores : ∀ v, score T C v ≤ 0)
+    (r : V) :
+    auxSourceCarrier C ambientRoot hScores {r} =
+      auxSourceFiber C ambientRoot hScores r := by
+  ext v
+  simp [auxSourceCarrier, auxSourceFiber]
+
+/-- Selecting every source gives the whole ambient vertex set. -/
+theorem auxSourceCarrier_univ
+    (C : Configuration V) (ambientRoot : V)
+    (hScores : ∀ v, score T C v ≤ 0) :
+    auxSourceCarrier C ambientRoot hScores (Finset.univ : Finset V) =
+      (Finset.univ : Finset V) := by
+  ext v
+  simp [auxSourceCarrier]
+
+/-- If a source has not yet been selected, its entire fibre is disjoint from
+the current source carrier. -/
+theorem auxSourceCarrier_disjoint_fiber_of_not_mem
+    (C : Configuration V) (ambientRoot : V)
+    (hScores : ∀ v, score T C v ≤ 0)
+    (R : Finset V) {s : V} (hs : s ∉ R) :
+    Disjoint
+      (auxSourceCarrier C ambientRoot hScores R)
+      (auxSourceFiber C ambientRoot hScores s) := by
+  rw [Finset.disjoint_left]
+  intro v hvCarrier hvFiber
+  have hmem :
+      auxSource C ambientRoot hScores v ∈ R := by
+    simpa using hvCarrier
+  have heq :
+      auxSource C ambientRoot hScores v = s := by
+    simpa using hvFiber
+  rw [heq] at hmem
+  exact hs hmem
+
+/-- Every nonempty canonical source fibre is height-dominated by its own
+source, in fact with equality pointwise. -/
+theorem auxSourceFiber_heightDominated_of_nonempty
+    (C : Configuration V) (ambientRoot : V)
+    (hScores : ∀ v, score T C v ≤ 0)
+    (r : V)
+    (hNonempty : (auxSourceFiber C ambientRoot hScores r).Nonempty) :
+    HeightDominated (T := T)
+      (fun v => auxHeight C ambientRoot hScores v)
+      (auxSourceFiber C ambientRoot hScores r) r := by
+  have hZero :=
+    (auxSourceFiber_nonempty_iff C ambientRoot hScores r).1 hNonempty
+  have hr :
+      r ∈ auxSourceFiber C ambientRoot hScores r := by
+    simp [auxSource_eq_self_of_height_zero
+      C ambientRoot hScores r hZero]
+  refine ⟨hr, ?_⟩
+  intro v hv
+  have hsrc : auxSource C ambientRoot hScores v = r := by
+    simpa using hv
+  rw [auxHeight_eq_dist_auxSource, hsrc]
+
 /-- Across an edge joining two distinct source fibres, tree distance splits
 exactly at that boundary edge. -/
 theorem dist_eq_dist_add_one_add_dist_of_adj_sourceFibers
