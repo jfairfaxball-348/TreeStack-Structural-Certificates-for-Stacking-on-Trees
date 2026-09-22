@@ -543,6 +543,135 @@ theorem auxSourceFiber_heightDominated_of_nonempty
     simpa using hv
   rw [auxHeight_eq_dist_auxSource, hsrc]
 
+/-- Starting from any nonempty connected union of canonical source
+fibres whose auxiliary height is dominated by one root, repeatedly adjoin the
+source fibre across a boundary edge.  The process terminates when the carrier
+is all vertices and returns one ambient root dominating every auxiliary
+height. -/
+theorem exists_global_heightDominatingRoot_from_sourceCarrier
+    (C : Configuration V) (ambientRoot : V)
+    (hScores : ∀ v, score T C v ≤ 0)
+    (R : Finset V) (r : V)
+    (hConn :
+      TreePathConnected (T := T)
+        (auxSourceCarrier C ambientRoot hScores R))
+    (hDom :
+      HeightDominated (T := T)
+        (fun v => auxHeight C ambientRoot hScores v)
+        (auxSourceCarrier C ambientRoot hScores R) r) :
+    ∃ t : V, ∀ v : V,
+      auxHeight C ambientRoot hScores v ≤ T.graph.dist t v := by
+  let S := auxSourceCarrier C ambientRoot hScores R
+  by_cases hFull : S = (Finset.univ : Finset V)
+  · refine ⟨r, ?_⟩
+    intro v
+    exact hDom.2 v (by simpa [S, hFull])
+  · have hNonempty : S.Nonempty :=
+      ⟨r, hDom.1⟩
+    rcases
+        exists_adj_mem_not_mem_of_nonempty_ne_univ
+          (T := T) S hNonempty hFull with
+      ⟨a, b, ha, hb, hadj⟩
+    let s := auxSource C ambientRoot hScores b
+    have hsNotR : s ∉ R := by
+      intro hsR
+      apply hb
+      change b ∈ auxSourceCarrier C ambientRoot hScores R
+      rw [mem_auxSourceCarrier]
+      simpa [s] using hsR
+    have hbFiber :
+        b ∈ auxSourceFiber C ambientRoot hScores s := by
+      simp [s]
+    have hFiberNonempty :
+        (auxSourceFiber C ambientRoot hScores s).Nonempty :=
+      ⟨b, hbFiber⟩
+    have hFiberConn :
+        TreePathConnected (T := T)
+          (auxSourceFiber C ambientRoot hScores s) :=
+      auxSourceFiber_treePathConnected C ambientRoot hScores s
+    have hFiberDom :
+        HeightDominated (T := T)
+          (fun v => auxHeight C ambientRoot hScores v)
+          (auxSourceFiber C ambientRoot hScores s) s :=
+      auxSourceFiber_heightDominated_of_nonempty
+        C ambientRoot hScores s hFiberNonempty
+    have hDisj :
+        Disjoint S (auxSourceFiber C ambientRoot hScores s) := by
+      simpa [S] using
+        auxSourceCarrier_disjoint_fiber_of_not_mem
+          C ambientRoot hScores R hsNotR
+    have hMergedConn :
+        TreePathConnected (T := T)
+          (S ∪ auxSourceFiber C ambientRoot hScores s) :=
+      treePathConnected_union_of_adj
+        hConn hFiberConn ha hbFiber hadj
+    rcases
+        exists_heightDominatingRoot_union_of_adj
+          (T := T)
+          (fun v => auxHeight C ambientRoot hScores v)
+          hConn hFiberConn hDisj ha hbFiber hadj hDom hFiberDom with
+      ⟨t, hMergedDom⟩
+    have hCarrierInsert :
+        auxSourceCarrier C ambientRoot hScores (insert s R) =
+          S ∪ auxSourceFiber C ambientRoot hScores s := by
+      simpa [S] using
+        auxSourceCarrier_insert C ambientRoot hScores R s
+    have hConn' :
+        TreePathConnected (T := T)
+          (auxSourceCarrier C ambientRoot hScores (insert s R)) := by
+      rw [hCarrierInsert]
+      exact hMergedConn
+    have hDom' :
+        HeightDominated (T := T)
+          (fun v => auxHeight C ambientRoot hScores v)
+          (auxSourceCarrier C ambientRoot hScores (insert s R)) t := by
+      rw [hCarrierInsert]
+      exact hMergedDom
+    exact
+      exists_global_heightDominatingRoot_from_sourceCarrier
+        C ambientRoot hScores (insert s R) t hConn' hDom'
+termination_by ((Finset.univ : Finset V) \ R).card
+decreasing_by
+  have hsDiff : s ∈ ((Finset.univ : Finset V) \ R) := by
+    simp [hsNotR]
+  rw [Finset.sdiff_insert]
+  exact Finset.card_erase_lt_of_mem hsDiff
+
+/-- The canonical source partition therefore consolidates to one ambient root
+whose distance profile dominates every auxiliary height. -/
+theorem exists_root_auxHeight_le_dist
+    (C : Configuration V) (ambientRoot : V)
+    (hScores : ∀ v, score T C v ≤ 0) :
+    ∃ r : V, ∀ v : V,
+      auxHeight C ambientRoot hScores v ≤ T.graph.dist r v := by
+  let r₀ := auxSource C ambientRoot hScores ambientRoot
+  let R₀ : Finset V := {r₀}
+  have hFiberNonempty :
+      (auxSourceFiber C ambientRoot hScores r₀).Nonempty := by
+    refine ⟨ambientRoot, ?_⟩
+    simp [r₀]
+  have hCarrier :
+      auxSourceCarrier C ambientRoot hScores R₀ =
+        auxSourceFiber C ambientRoot hScores r₀ := by
+    simpa [R₀] using
+      auxSourceCarrier_singleton C ambientRoot hScores r₀
+  have hConn :
+      TreePathConnected (T := T)
+        (auxSourceCarrier C ambientRoot hScores R₀) := by
+    rw [hCarrier]
+    exact auxSourceFiber_treePathConnected C ambientRoot hScores r₀
+  have hDom :
+      HeightDominated (T := T)
+        (fun v => auxHeight C ambientRoot hScores v)
+        (auxSourceCarrier C ambientRoot hScores R₀) r₀ := by
+    rw [hCarrier]
+    exact
+      auxSourceFiber_heightDominated_of_nonempty
+        C ambientRoot hScores r₀ hFiberNonempty
+  exact
+    exists_global_heightDominatingRoot_from_sourceCarrier
+      C ambientRoot hScores R₀ r₀ hConn hDom
+
 theorem assignmentFiber_merge_left
     (ρ : V → V) (r s : V) :
     assignmentFiber (mergeAssignment ρ r s r) r =
