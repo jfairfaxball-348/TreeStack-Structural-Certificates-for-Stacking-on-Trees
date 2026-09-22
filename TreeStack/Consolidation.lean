@@ -134,6 +134,83 @@ theorem exists_path_within_auxSourceFiber
   intro z hz
   exact hw z (w.support_toPath_subset_support hz)
 
+/-- A finite carrier is tree-path-connected when every two of its vertices
+are joined by a simple ambient-tree path whose support stays in the carrier. -/
+def TreePathConnected (S : Finset V) : Prop :=
+  ∀ ⦃x y : V⦄, x ∈ S → y ∈ S →
+    ∃ p : T.graph.Walk x y,
+      p.IsPath ∧ ∀ z ∈ p.support, z ∈ S
+
+/-- Every canonical source fibre is tree-path-connected. -/
+theorem auxSourceFiber_treePathConnected
+    (C : Configuration V) (ambientRoot : V)
+    (hScores : ∀ v, score T C v ≤ 0)
+    (r : V) :
+    TreePathConnected (T := T)
+      (auxSourceFiber C ambientRoot hScores r) := by
+  intro x y hx hy
+  exact exists_path_within_auxSourceFiber
+    C ambientRoot hScores r x y hx hy
+
+/-- Generic boundary additivity for two disjoint path-connected carriers.
+Because the ambient graph is a tree, concatenating an internal path in the
+first carrier, the crossing edge, and an internal path in the second carrier
+is itself the unique simple path between the endpoints. -/
+theorem dist_eq_dist_add_one_add_dist_of_adj_disjoint_carriers
+    {A B : Finset V}
+    (hA : TreePathConnected (T := T) A)
+    (hB : TreePathConnected (T := T) B)
+    (hDisj : Disjoint A B)
+    {a b x y : V}
+    (ha : a ∈ A) (hb : b ∈ B)
+    (hadj : T.graph.Adj a b)
+    (hx : x ∈ A) (hy : y ∈ B) :
+    T.graph.dist x y =
+      T.graph.dist x a + 1 + T.graph.dist b y := by
+  rcases hA hx ha with ⟨px, hpxPath, hpxCarrier⟩
+  rcases hB hb hy with ⟨py, hpyPath, hpyCarrier⟩
+  have hbNotPx : b ∉ px.support := by
+    intro hbpx
+    have hbA := hpxCarrier b hbpx
+    exact (Finset.disjoint_left.mp hDisj) hbA hb
+  let q : T.graph.Walk x b := px.concat hadj
+  have hqPath : q.IsPath :=
+    hpxPath.concat hbNotPx hadj
+  have hbNotPyTail : b ∉ py.support.tail := by
+    have hNodup := hpyPath.support_nodup
+    rw [← py.cons_tail_support, List.nodup_cons] at hNodup
+    exact hNodup.1
+  have hSupportsDisjoint : q.support.Disjoint py.support.tail := by
+    rw [List.disjoint_left]
+    intro z hzq hzpyTail
+    have hzpy : z ∈ py.support :=
+      List.mem_of_mem_tail hzpyTail
+    have hzB := hpyCarrier z hzpy
+    have hzq' : z ∈ px.support ∨ z = b := by
+      simpa [q] using hzq
+    rcases hzq' with hzpx | rfl
+    · have hzA := hpxCarrier z hzpx
+      exact (Finset.disjoint_left.mp hDisj) hzA hzB
+    · exact hbNotPyTail hzpyTail
+  have hpPath : (q.append py).IsPath := by
+    rw [SimpleGraph.Walk.isPath_def,
+      SimpleGraph.Walk.support_append, List.nodup_append']
+    exact
+      ⟨hqPath.support_nodup,
+        hpyPath.support_nodup.tail,
+        hSupportsDisjoint⟩
+  have hpxDist :=
+    tree_path_length_eq_dist (T := T) px hpxPath
+  have hpyDist :=
+    tree_path_length_eq_dist (T := T) py hpyPath
+  have hpDist :=
+    tree_path_length_eq_dist (T := T) (q.append py) hpPath
+  calc
+    T.graph.dist x y = (q.append py).length := hpDist.symm
+    _ = px.length + 1 + py.length := by simp [q]
+    _ = T.graph.dist x a + 1 + T.graph.dist b y := by
+      rw [hpxDist, hpyDist]
+
 /-- Across an edge joining two distinct source fibres, tree distance splits
 exactly at that boundary edge. -/
 theorem dist_eq_dist_add_one_add_dist_of_adj_sourceFibers
