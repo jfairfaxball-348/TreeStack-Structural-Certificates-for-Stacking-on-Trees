@@ -57,7 +57,9 @@ The current intake contract requires a 12-character lowercase alphanumeric
 preflight request id; this repository uses `treestackchk`.
 
 `.github/workflows/palomar-preflight.yml` pins both the reusable workflow
-reference and `pipeline_commit` to that exact SHA and requests `mode: full`.
+reference and `pipeline_commit` to that exact SHA, requests `mode: full`, and
+explicitly selects the current approved GitHub-hosted
+`palomar-standard-v1` execution profile for the public reusable preflight.
 
 The project pins Lean v4.34.0 and Mathlib
 `5ed2965256430c3649e86755f9576b54eca72435`. The canonical Mathlib revision's
