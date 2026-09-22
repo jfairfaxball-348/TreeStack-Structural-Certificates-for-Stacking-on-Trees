@@ -194,6 +194,56 @@ theorem vertices_eq_singleton_of_degree_one (B : OrientedBranch T)
   · intro x hx
     simpa using hx
 
+
+/-- Distances into a genuine child branch increase by exactly one when
+measured from the parent-branch root. -/
+theorem dist_root_eq_child_dist_add_one
+    (B : OrientedBranch T) (c : B.Child) {x : V}
+    (hx : x ∈ (B.childBranch c).vertices) :
+    T.graph.dist B.root x =
+      T.graph.dist c.vertex x + 1 := by
+  classical
+  have hcComp :
+      c.vertex ∈ (B.childBranch c).component.supp :=
+    SimpleGraph.ConnectedComponent.connectedComponentMk_mem
+  have hxComp :
+      x ∈ (B.childBranch c).component.supp := by
+    simpa [vertices] using hx
+  have hreach :
+      (B.childBranch c).deletedGraph.Reachable c.vertex x :=
+    (B.childBranch c).component.reachable_of_mem_supp hcComp hxComp
+  obtain ⟨p₀, hp₀⟩ := hreach.exists_isPath
+  have hle :
+      (B.childBranch c).deletedGraph ≤ T.graph := by
+    intro a b hab
+    rw [deletedGraph, SimpleGraph.deleteEdges_adj] at hab
+    exact hab.1
+  let p : T.graph.Walk c.vertex x := p₀.mapLe hle
+  have hp : p.IsPath := hp₀.mapLe hle
+  have hrootNot : B.root ∉ p.support := by
+    intro hroot
+    have hroot₀ : B.root ∈ p₀.support := by
+      simpa [p, SimpleGraph.Walk.support_mapLe_eq_support] using hroot
+    let q₀ :=
+      p₀.takeUntil B.root hroot₀
+    have hrootMem :
+        B.root ∈ (B.childBranch c).vertices := by
+      rw [vertices, Set.mem_toFinset,
+        SimpleGraph.ConnectedComponent.mem_supp_iff, component]
+      exact
+        (SimpleGraph.ConnectedComponent.sound q₀.reachable).symm
+    exact
+      (B.childBranch c).parent_not_mem_vertices
+        (by simpa [childBranch] using hrootMem)
+  let q : T.graph.Walk B.root x := p.cons c.adj
+  have hq : q.IsPath := by
+    rw [SimpleGraph.Walk.cons_isPath_iff]
+    exact ⟨hp, hrootNot⟩
+  have hpdist := tree_path_length_eq_dist (T := T) p hp
+  have hqdist := tree_path_length_eq_dist (T := T) q hq
+  simpa [q, p, SimpleGraph.Walk.length_cons,
+    SimpleGraph.Walk.length_mapLe, hpdist] using hqdist
+
 /-- Every descendant branch of the selected root is occupied by the explicit
 obstruction, and its exact recursive message is the negative obstruction
 height.  The hypothesis says precisely that the selected root lies outside
