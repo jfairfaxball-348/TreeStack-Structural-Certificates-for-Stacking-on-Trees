@@ -249,6 +249,86 @@ theorem defectEdgeState_of_supportEdge
   exact B.defectEdgeState_of_scores_nonpos C
     hEdge.1 hEdge.2 (hScores B.root) (hScores B.parent)
 
+
+/-- A forced oriented-type support edge: the message in the displayed
+orientation is nonnegative.  Under all-nonpositive scores the reverse message
+is then forced negative, so the orientation is unique. -/
+def DefectArrow (C : Configuration V) (B : OrientedBranch T) : Prop :=
+  B.SupportEdge C ∧
+    0 ≤ messageContribution (branchMessage C B)
+
+/-- A forced defect arrow has a strictly negative reverse message under
+all-nonpositive rooted scores. -/
+theorem reverse_message_neg_of_defectArrow
+    (C : Configuration V) (B : OrientedBranch T)
+    (hArrow : B.DefectArrow C)
+    (hScores : ∀ v, score T C v ≤ 0) :
+    messageContribution (branchMessage C B.reverseBranch) < 0 := by
+  have hEq :=
+    B.defect_equations_of_both_occupied C hArrow.1.1 hArrow.1.2
+  have hNotBoth :=
+    defect_not_both_nonneg
+      ((scoreDefect_nonneg_iff T C B.root).2 (hScores B.root))
+      ((scoreDefect_nonneg_iff T C B.parent).2 (hScores B.parent))
+      hEq.1 hEq.2
+  apply lt_of_not_ge
+  intro hReverse
+  exact hNotBoth ⟨hArrow.2, hReverse⟩
+
+/-- Forced orientations on retained support edges are antisymmetric. -/
+theorem not_defectArrow_reverse
+    (C : Configuration V) (B : OrientedBranch T)
+    (hArrow : B.DefectArrow C)
+    (hScores : ∀ v, score T C v ≤ 0) :
+    ¬ B.reverseBranch.DefectArrow C := by
+  intro hReverse
+  exact
+    (not_lt_of_ge hReverse.2)
+      (B.reverse_message_neg_of_defectArrow C hArrow hScores)
+
+/-- The tail of a forced defect arrow has enough endpoint-defect budget to pay
+twice the head defect.  This is the concrete support-core form of the local
+oriented-edge budget inequality. -/
+theorem defectArrow_tail_budget
+    (C : Configuration V) (B : OrientedBranch T)
+    (hArrow : B.DefectArrow C)
+    (hScores : ∀ v, score T C v ≤ 0) :
+    2 * scoreDefect T C B.parent ≤ scoreDefect T C B.root := by
+  have hEq :=
+    B.defect_equations_of_both_occupied C hArrow.1.1 hArrow.1.2
+  exact
+    defect_left_budget
+      ((scoreDefect_nonneg_iff T C B.root).2 (hScores B.root))
+      ((scoreDefect_nonneg_iff T C B.parent).2 (hScores B.parent))
+      hEq.1 hEq.2 hArrow.2
+
+/-- Every retained support edge has either a nonnegative message in one
+orientation or two negative messages.  Together with
+`not_defectArrow_reverse`, all-nonpositive scores make the nonnegative
+orientation unique when it exists. -/
+theorem supportEdge_defectArrow_or_reverse_or_both_neg
+    (C : Configuration V) (B : OrientedBranch T)
+    (hEdge : B.SupportEdge C) :
+    B.DefectArrow C ∨
+      B.reverseBranch.DefectArrow C ∨
+        (messageContribution (branchMessage C B) < 0 ∧
+          messageContribution (branchMessage C B.reverseBranch) < 0) := by
+  by_cases hForward :
+      0 ≤ messageContribution (branchMessage C B)
+  · exact Or.inl ⟨hEdge, hForward⟩
+  · have hForwardNeg :
+        messageContribution (branchMessage C B) < 0 :=
+      lt_of_not_ge hForward
+    by_cases hReverse :
+        0 ≤ messageContribution (branchMessage C B.reverseBranch)
+    · right
+      left
+      exact
+        ⟨(B.supportEdge_reverse_iff C).2 hEdge, hReverse⟩
+    · right
+      right
+      exact ⟨hForwardNeg, lt_of_not_ge hReverse⟩
+
 end OrientedBranch
 
 /-- If all positive piles are concentrated at one vertex, that vertex's rooted
