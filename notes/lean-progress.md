@@ -1,9 +1,10 @@
 # Lean formalization progress
 
-Status: **the exact branch-boundary invariant and rooted score characterization
-are merged on `main`; the explicit estimator obstruction and exact Lean
-lower-bound witness are now formalized in PR #12.**  The merged rooted-score
-baseline is `bea4d6dde1b75322b3db1ca8bee0813930d32ece`.
+Status: **the exact branch-boundary invariant, rooted score characterization,
+and explicit estimator obstruction are merged on `main`; the local
+arbitrary-defect edge classification for the upper bound is now machine-checked
+in PR #13.**  The authoritative pre-PR #13 baseline is merge commit
+`525e4568017856bd3db87128bd0039de22ae68f3`.
 
 ## Pinned environment
 
@@ -183,6 +184,61 @@ exists_nonstackable_mass_estim_sub_one :
 This closes the explicit-obstruction/lower-bound layer without conflating
 `EMPTY` with integer zero.
 
+## Arbitrary-defect edge classification milestone
+
+`TreeStack/Defect.lean` formalizes the local edge algebra used in the
+arbitrary-defect upper-bound proof.  For nonnegative endpoint defects satisfying
+
+```text
+a = F (-δu - b)
+b = F (-δv - a)
+```
+
+the development proves the two oriented cases and the two-negative case are
+exhaustive:
+
+```text
+defect_left_nonneg
+defect_right_nonneg
+defect_not_both_nonneg
+defect_two_negative
+defect_edge_classification
+```
+
+The oriented cases also expose the endpoint budget inequalities needed later
+for edge-excess charging:
+
+```text
+defect_left_budget  : 2 * δv ≤ δu
+defect_right_budget : 2 * δu ≤ δv
+```
+
+The abstract classification is connected back to the actual TreeStack
+recursion rather than left as standalone arithmetic.  The new score defect is
+
+```text
+scoreDefect T C v = - score T C v
+```
+
+and, whenever both sides of an oriented tree edge are occupied,
+`OrientedBranch.defect_equations_of_both_occupied` derives the two defect
+equations directly from the exact branch messages and the reverse-edge score
+decomposition.  Consequently
+
+```text
+OrientedBranch.defectEdgeState_of_scores_nonpos
+```
+
+classifies the actual pair of recursive messages whenever both edge sides are
+occupied and both endpoint scores are nonpositive.
+
+This closes the local arbitrary-defect edge-classification obligation.  It
+does **not** yet prove the global estimator upper bound: support pruning must
+first ensure that the surviving edge sides are occupied, after which the
+owner assignment, auxiliary orientation/height, weighted defect cancellation,
+occupied-leaf slack, and connected-partition consolidation remain to be
+formalized.
+
 ## Validation and trust
 
 There are no permitted `sorry`, `admit`, project axioms, weakened
@@ -200,16 +256,19 @@ lake build
 lake env lean Audit.lean
 ```
 
-The rooted-score milestone is complete on `main`; future work should branch
-from the authoritative merge commit above.
+The lower-bound obstruction is complete on `main`.  PR #13 adds the
+machine-checked local arbitrary-defect classification needed by the upper
+bound.
 
 ## Next formal frontier
 
-The explicit estimator obstruction now supplies the machine-checked lower
-bound.  The remaining Lean work is the global upper-bound layer: support
-pruning and the arbitrary-defect estimator bound, followed by the final theorem
-that every configuration of size `estim T` is stackable for every nontrivial
-finite tree.
+The explicit estimator obstruction supplies the machine-checked lower bound,
+and the local arbitrary-defect edge states are now classified.  The remaining
+Lean work is the global upper-bound layer: support pruning and estimator
+monotonicity under adjoining leaves; defective-edge owner assignment;
+auxiliary orientations and heights; weighted defect cancellation;
+occupied-leaf slack; connected-partition consolidation; and finally the
+global bound `mass C ≤ estim T - 1` for every non-stackable configuration.
 
 The Csernák–Soukup tree-stacking conjecture is therefore **not yet fully
 formalized in Lean**, but the lower-bound obstruction is no longer an open
