@@ -201,6 +201,71 @@ theorem dist_eq_dist_add_one_add_dist_of_adj_sourceFibers
     _ = T.graph.dist x a + 1 + T.graph.dist b y := by
       rw [hpxDist, hpyDist]
 
+/-- The index of every nonempty source fibre belongs to that fibre. -/
+theorem source_mem_auxSourceFiber_of_nonempty
+    (C : Configuration V) (ambientRoot : V)
+    (hScores : ∀ v, score T C v ≤ 0)
+    {r : V}
+    (hNonempty : (auxSourceFiber C ambientRoot hScores r).Nonempty) :
+    r ∈ auxSourceFiber C ambientRoot hScores r := by
+  have hZero :=
+    (auxSourceFiber_nonempty_iff C ambientRoot hScores r).1 hNonempty
+  rw [mem_auxSourceFiber]
+  exact auxSource_eq_self_of_height_zero
+    C ambientRoot hScores r hZero
+
+/-- If the depth of the first source to its boundary endpoint plus the crossing
+edge dominates the depth of the second source to its endpoint, then the first
+source is at least as far from every vertex in the second fibre as the second
+source is. -/
+theorem sourceFiber_dist_le_of_boundary_depth
+    (C : Configuration V) (ambientRoot : V)
+    (hScores : ∀ v, score T C v ≤ 0)
+    {r s a b v : V}
+    (hrs : r ≠ s)
+    (ha : a ∈ auxSourceFiber C ambientRoot hScores r)
+    (hb : b ∈ auxSourceFiber C ambientRoot hScores s)
+    (hadj : T.graph.Adj a b)
+    (hDepth :
+      T.graph.dist s b ≤ T.graph.dist r a + 1)
+    (hv : v ∈ auxSourceFiber C ambientRoot hScores s) :
+    T.graph.dist s v ≤ T.graph.dist r v := by
+  have hr :
+      r ∈ auxSourceFiber C ambientRoot hScores r :=
+    source_mem_auxSourceFiber_of_nonempty
+      C ambientRoot hScores ⟨a, ha⟩
+  have hCross :=
+    dist_eq_dist_add_one_add_dist_of_adj_sourceFibers
+      C ambientRoot hScores hrs ha hb hadj hr hv
+  have hTri :
+      T.graph.dist s v ≤
+        T.graph.dist s b + T.graph.dist b v :=
+    T.isTree.connected.dist_triangle
+  rw [hCross]
+  omega
+
+/-- Under the same boundary-depth comparison, the first source's rooted
+power-of-two weight pointwise dominates the auxiliary weight throughout the
+second fibre. -/
+theorem auxWeight_le_two_pow_dist_of_boundary_depth
+    (C : Configuration V) (ambientRoot : V)
+    (hScores : ∀ v, score T C v ≤ 0)
+    {r s a b v : V}
+    (hrs : r ≠ s)
+    (ha : a ∈ auxSourceFiber C ambientRoot hScores r)
+    (hb : b ∈ auxSourceFiber C ambientRoot hScores s)
+    (hadj : T.graph.Adj a b)
+    (hDepth :
+      T.graph.dist s b ≤ T.graph.dist r a + 1)
+    (hv : v ∈ auxSourceFiber C ambientRoot hScores s) :
+    auxWeight C ambientRoot hScores v ≤
+      2 ^ T.graph.dist r v := by
+  rw [auxWeight_eq_two_pow_dist_of_mem_sourceFiber
+    C ambientRoot hScores s v hv]
+  exact Nat.pow_le_pow_right Nat.zero_lt_two
+    (sourceFiber_dist_le_of_boundary_depth
+      C ambientRoot hScores hrs ha hb hadj hDepth hv)
+
 /-- On a source fibre, the auxiliary weight is exactly the power of two of
 ambient-tree distance from that fibre's height-zero source. -/
 theorem auxWeight_eq_two_pow_dist_of_mem_sourceFiber
