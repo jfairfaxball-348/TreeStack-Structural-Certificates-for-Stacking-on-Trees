@@ -136,16 +136,31 @@ noncomputable def dartOfEdgeBool
     (p : T.graph.edgeFinset × Bool) : T.graph.Dart :=
   if p.2 then (edgeDart (T := T) p.1).symm else edgeDart (T := T) p.1
 
+@[simp] theorem dartOfEdgeBool_edge
+    (p : T.graph.edgeFinset × Bool) :
+    (dartOfEdgeBool (T := T) p).edge = p.1.1 := by
+  rcases p with ⟨e, b⟩
+  cases b <;> simp [dartOfEdgeBool, edgeDart_edge]
+
 theorem dartOfEdgeBool_injective :
     Function.Injective (dartOfEdgeBool (T := T)) := by
   rintro ⟨e, b⟩ ⟨f, c⟩ h
   have hEdge : e = f := by
     apply Subtype.ext
-    have := congrArg SimpleGraph.Dart.edge h
-    simpa [dartOfEdgeBool] using this
+    have h' := congrArg SimpleGraph.Dart.edge h
+    simpa using h'
   subst f
-  congr 1
-  cases b <;> cases c <;> simp_all [dartOfEdgeBool]
+  cases b <;> cases c
+  · rfl
+  · have h' : edgeDart (T := T) e =
+        (edgeDart (T := T) e).symm := by
+      simpa [dartOfEdgeBool] using h
+    exact ((edgeDart (T := T) e).symm_ne h'.symm).elim
+  · have h' : (edgeDart (T := T) e).symm =
+        edgeDart (T := T) e := by
+      simpa [dartOfEdgeBool] using h
+    exact ((edgeDart (T := T) e).symm_ne h').elim
+  · rfl
 
 theorem dartOfEdgeBool_surjective :
     Function.Surjective (dartOfEdgeBool (T := T)) := by
@@ -168,6 +183,11 @@ noncomputable def edgeBoolEquivDart :
   Equiv.ofBijective (dartOfEdgeBool (T := T))
     ⟨dartOfEdgeBool_injective (T := T),
       dartOfEdgeBool_surjective (T := T)⟩
+
+@[simp] theorem edgeBoolEquivDart_apply
+    (p : T.graph.edgeFinset × Bool) :
+    edgeBoolEquivDart (T := T) p = dartOfEdgeBool (T := T) p :=
+  rfl
 
 /-- Sum a dart function by grouping the two orientations of each undirected
 edge. -/
@@ -265,9 +285,11 @@ theorem auxDartMessageTerm_add_symm
     auxDartMessageTerm C ambientRoot hScores (edgeDart e) +
         auxDartMessageTerm C ambientRoot hScores (edgeDart e).symm =
       -auxEdgeContribution C ambientRoot hScores (edgeBranch e) := by
+  have hAdj := (edgeDart (T := T) e).adj
+  have hAdjSymm := hAdj.symm
   simp [auxDartMessageTerm, auxEdgeContribution, edgeBranch,
-    rootMessageTerm, incidentBranch, reverseBranch]
-  ring
+    rootMessageTerm, incidentBranch, reverseBranch, hAdj, hAdjSymm]
+  ring_nf
 
 /-- The sum of undirected weighted edge contributions is the negative
 weighted root-message sum. -/
@@ -304,7 +326,8 @@ theorem auxWeightedMass_eq_edges_sub_defect
         auxDefectBudget C ambientRoot hScores := by
   rw [sum_auxEdgeContribution_eq_neg_messages]
   unfold auxWeightedMass auxDefectBudget scoreDefect score
-  simp only [Finset.mul_sum, Finset.sum_neg_distrib]
+  simp only [mul_neg, mul_add, Finset.sum_neg_distrib,
+    Finset.sum_add_distrib]
   ring
 
 /-- Sum of the two endpoint weights over undirected edges equals the weighted
