@@ -543,6 +543,86 @@ theorem auxSourceFiber_heightDominated_of_nonempty
     simpa using hv
   rw [auxHeight_eq_dist_auxSource, hsrc]
 
+theorem assignmentFiber_merge_left
+    (ρ : V → V) (r s : V) :
+    assignmentFiber (mergeAssignment ρ r s r) r =
+      assignmentFiber ρ r ∪ assignmentFiber ρ s := by
+  ext v
+  simp [assignmentFiber, mergeAssignment]
+
+theorem assignmentFiber_merge_right
+    (ρ : V → V) (r s : V) :
+    assignmentFiber (mergeAssignment ρ r s s) s =
+      assignmentFiber ρ r ∪ assignmentFiber ρ s := by
+  ext v
+  simp [assignmentFiber, mergeAssignment, or_comm]
+
+theorem assignmentFiber_merge_left_other_empty
+    (ρ : V → V) {r s : V} (hrs : r ≠ s) :
+    assignmentFiber (mergeAssignment ρ r s r) s = ∅ := by
+  ext v
+  simp [assignmentFiber, mergeAssignment, hrs]
+
+theorem assignmentFiber_merge_right_other_empty
+    (ρ : V → V) {r s : V} (hrs : r ≠ s) :
+    assignmentFiber (mergeAssignment ρ r s s) r = ∅ := by
+  ext v
+  simp [assignmentFiber, mergeAssignment, hrs]
+
+theorem assignmentFiber_merge_eq_of_ne
+    (ρ : V → V) {r s t q : V}
+    (hqr : q ≠ r) (hqs : q ≠ s) :
+    assignmentFiber (mergeAssignment ρ r s t) q =
+      assignmentFiber ρ q := by
+  ext v
+  simp only [mem_assignmentFiber]
+  unfold mergeAssignment
+  split
+  next h =>
+    rcases h with hvr | hvs
+    · subst r
+      simp [hqr]
+    · subst s
+      simp [hqs]
+  next h =>
+    rfl
+
+/-- Empty carriers are path-connected vacuously. -/
+theorem treePathConnected_empty :
+    TreePathConnected (T := T) (∅ : Finset V) := by
+  intro x y hx
+  simp at hx
+
+/-- Canonical auxiliary sources are fixed points of the source map. -/
+theorem auxSource_idempotent
+    (C : Configuration V) (ambientRoot : V)
+    (hScores : ∀ v, score T C v ≤ 0)
+    (v : V) :
+    auxSource C ambientRoot hScores
+        (auxSource C ambientRoot hScores v) =
+      auxSource C ambientRoot hScores v := by
+  apply auxSource_eq_self_of_height_zero
+  exact auxSource_height_zero C ambientRoot hScores v
+
+/-- The canonical source assignment is a valid initial consolidation state. -/
+theorem auxSource_rootAssignmentValid
+    (C : Configuration V) (ambientRoot : V)
+    (hScores : ∀ v, score T C v ≤ 0) :
+    RootAssignmentValid (T := T)
+      (auxHeight C ambientRoot hScores)
+      (auxSource C ambientRoot hScores) := by
+  refine ⟨auxSource_idempotent C ambientRoot hScores, ?_, ?_⟩
+  · intro r
+    have hEq :
+        assignmentFiber (auxSource C ambientRoot hScores) r =
+          auxSourceFiber C ambientRoot hScores r := by
+      ext v
+      simp [assignmentFiber, auxSourceFiber]
+    rw [hEq]
+    exact auxSourceFiber_treePathConnected C ambientRoot hScores r
+  · intro v
+    rw [auxHeight_eq_dist_auxSource]
+
 /-- Across an edge joining two distinct source fibres, tree distance splits
 exactly at that boundary edge. -/
 theorem dist_eq_dist_add_one_add_dist_of_adj_sourceFibers
