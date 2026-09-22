@@ -211,6 +211,120 @@ theorem dist_eq_dist_add_one_add_dist_of_adj_disjoint_carriers
     _ = T.graph.dist x a + 1 + T.graph.dist b y := by
       rw [hpxDist, hpyDist]
 
+/-- A height profile is dominated on a carrier by a root when the root lies
+in the carrier and every profile height is at most the ambient distance from
+that root. -/
+def HeightDominated
+    (h : V → ℕ) (S : Finset V) (r : V) : Prop :=
+  r ∈ S ∧ ∀ v ∈ S, h v ≤ T.graph.dist r v
+
+/-- The union of two path-connected carriers joined by an ambient edge is
+again path-connected. -/
+theorem treePathConnected_union_of_adj
+    {A B : Finset V}
+    (hA : TreePathConnected (T := T) A)
+    (hB : TreePathConnected (T := T) B)
+    {a b : V} (ha : a ∈ A) (hb : b ∈ B)
+    (hadj : T.graph.Adj a b) :
+    TreePathConnected (T := T) (A ∪ B) := by
+  intro x y hx hy
+  rw [Finset.mem_union] at hx hy
+  rcases hx with hxA | hxB
+  · rcases hy with hyA | hyB
+    · rcases hA hxA hyA with ⟨p, hpPath, hpSupp⟩
+      refine ⟨p, hpPath, ?_⟩
+      intro z hz
+      exact Finset.mem_union_left _ (hpSupp z hz)
+    · rcases hA hxA ha with ⟨p, hpPath, hpSupp⟩
+      rcases hB hb hyB with ⟨q, hqPath, hqSupp⟩
+      let w : T.graph.Walk x y := (p.concat hadj).append q
+      refine ⟨w.toPath, w.toPath.2, ?_⟩
+      intro z hz
+      have hzw : z ∈ w.support :=
+        w.support_toPath_subset_support hz
+      have hzCases :
+          z ∈ p.support ∨ z = b ∨ z ∈ q.support.tail := by
+        simpa [w] using hzw
+      rcases hzCases with hzp | hzb | hzq
+      · exact Finset.mem_union_left _ (hpSupp z hzp)
+      · subst z
+        exact Finset.mem_union_right _ hb
+      · exact Finset.mem_union_right _ (hqSupp z (List.mem_of_mem_tail hzq))
+  · rcases hy with hyA | hyB
+    · rcases hB hxB hb with ⟨p, hpPath, hpSupp⟩
+      rcases hA ha hyA with ⟨q, hqPath, hqSupp⟩
+      let w : T.graph.Walk x y := (p.concat hadj.symm).append q
+      refine ⟨w.toPath, w.toPath.2, ?_⟩
+      intro z hz
+      have hzw : z ∈ w.support :=
+        w.support_toPath_subset_support hz
+      have hzCases :
+          z ∈ p.support ∨ z = a ∨ z ∈ q.support.tail := by
+        simpa [w] using hzw
+      rcases hzCases with hzp | hza | hzq
+      · exact Finset.mem_union_right _ (hpSupp z hzp)
+      · subst z
+        exact Finset.mem_union_left _ ha
+      · exact Finset.mem_union_left _ (hqSupp z (List.mem_of_mem_tail hzq))
+    · rcases hB hxB hyB with ⟨p, hpPath, hpSupp⟩
+      refine ⟨p, hpPath, ?_⟩
+      intro z hz
+      exact Finset.mem_union_right _ (hpSupp z hz)
+
+/-- Merge two disjoint connected dominated carriers across one boundary edge.
+The root on the side whose boundary depth is large enough dominates the whole
+union; if that comparison fails, the opposite root necessarily works. -/
+theorem exists_heightDominatingRoot_union_of_adj
+    (h : V → ℕ)
+    {A B : Finset V}
+    (hAConn : TreePathConnected (T := T) A)
+    (hBConn : TreePathConnected (T := T) B)
+    (hDisj : Disjoint A B)
+    {a b r s : V}
+    (ha : a ∈ A) (hb : b ∈ B)
+    (hadj : T.graph.Adj a b)
+    (hADom : HeightDominated (T := T) h A r)
+    (hBDom : HeightDominated (T := T) h B s) :
+    ∃ t : V,
+      HeightDominated (T := T) h (A ∪ B) t := by
+  rcases hADom with ⟨hrA, hAHeight⟩
+  rcases hBDom with ⟨hsB, hBHeight⟩
+  by_cases hDepth :
+      T.graph.dist s b ≤ T.graph.dist r a + 1
+  · refine ⟨r, Finset.mem_union_left _ hrA, ?_⟩
+    intro v hv
+    rw [Finset.mem_union] at hv
+    rcases hv with hvA | hvB
+    · exact hAHeight v hvA
+    · have hCross :=
+        dist_eq_dist_add_one_add_dist_of_adj_disjoint_carriers
+          hAConn hBConn hDisj ha hb hadj hrA hvB
+      have hTri :
+          T.graph.dist s v ≤
+            T.graph.dist s b + T.graph.dist b v :=
+        T.isTree.connected.dist_triangle
+      have hBase := hBHeight v hvB
+      rw [hCross]
+      omega
+  · have hDepth' :
+        T.graph.dist r a ≤ T.graph.dist s b + 1 := by
+      omega
+    refine ⟨s, Finset.mem_union_right _ hsB, ?_⟩
+    intro v hv
+    rw [Finset.mem_union] at hv
+    rcases hv with hvA | hvB
+    · have hCross :=
+        dist_eq_dist_add_one_add_dist_of_adj_disjoint_carriers
+          hBConn hAConn hDisj.symm hb ha hadj.symm hsB hvA
+      have hTri :
+          T.graph.dist r v ≤
+            T.graph.dist r a + T.graph.dist a v :=
+        T.isTree.connected.dist_triangle
+      have hBase := hAHeight v hvA
+      rw [hCross]
+      omega
+    · exact hBHeight v hvB
+
 /-- Across an edge joining two distinct source fibres, tree distance splits
 exactly at that boundary edge. -/
 theorem dist_eq_dist_add_one_add_dist_of_adj_sourceFibers
