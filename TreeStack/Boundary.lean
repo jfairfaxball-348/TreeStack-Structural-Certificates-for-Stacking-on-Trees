@@ -263,8 +263,39 @@ theorem taskGainSum_orderedTasks (gain : α → ℤ) (tasks : List α) :
 
 theorem mem_orderedTasks_iff (gain : α → ℤ) (tasks : List α) (t : α) :
     t ∈ orderedTasks gain tasks ↔ t ∈ tasks := by
-  simp [orderedTasks, positiveTasks, zeroTasks, negativeTasks]
-  omega
+  constructor
+  · intro ht
+    simp only [orderedTasks, List.mem_append] at ht
+    rcases ht with ht | ht
+    · have hpos : t ∈ tasks ∧ 0 < gain t := by
+        simpa [positiveTasks] using ht
+      exact hpos.1
+    · rcases ht with ht | ht
+      · have hzero : t ∈ tasks ∧ gain t = 0 := by
+          simpa [zeroTasks] using ht
+        exact hzero.1
+      · have hneg : t ∈ tasks ∧ gain t < 0 := by
+          simpa [negativeTasks] using ht
+        exact hneg.1
+  · intro ht
+    by_cases hp : 0 < gain t
+    · have : t ∈ positiveTasks gain tasks := by
+        simpa [positiveTasks, ht, hp]
+      exact by
+        simp only [orderedTasks, List.mem_append]
+        exact Or.inl this
+    · by_cases hz : gain t = 0
+      · have : t ∈ zeroTasks gain tasks := by
+          simpa [zeroTasks, ht, hz]
+        exact by
+          simp only [orderedTasks, List.mem_append]
+          exact Or.inr (Or.inl this)
+      · have hn : gain t < 0 := by omega
+        have : t ∈ negativeTasks gain tasks := by
+          simpa [negativeTasks, ht, hn]
+        exact by
+          simp only [orderedTasks, List.mem_append]
+          exact Or.inr (Or.inr this)
 
 theorem orderedTasks_nodup (gain : α → ℤ) {tasks : List α}
     (h : tasks.Nodup) :
@@ -280,16 +311,26 @@ theorem orderedTasks_nodup (gain : α → ℤ) {tasks : List α}
     · rw [List.nodup_append]
       exact ⟨hz, hn, by
         intro t htZero htNeg
-        simp [zeroTasks] at htZero
-        simp [negativeTasks] at htNeg
+        have hZero : gain t = 0 := by
+          have h := htZero
+          simpa [zeroTasks] using h
+        have hNeg : gain t < 0 := by
+          have h := htNeg
+          simpa [negativeTasks] using h
         omega⟩
     · intro t htPos htRest
-      simp [positiveTasks] at htPos
+      have hPos : 0 < gain t := by
+        have h := htPos
+        simpa [positiveTasks] using h
       simp only [List.mem_append] at htRest
       rcases htRest with htZero | htNeg
-      · simp [zeroTasks] at htZero
+      · have hZero : gain t = 0 := by
+          have h := htZero
+          simpa [zeroTasks] using h
         omega
-      · simp [negativeTasks] at htNeg
+      · have hNeg : gain t < 0 := by
+          have h := htNeg
+          simpa [negativeTasks] using h
         omega
 
 /-- Positive/zero/negative scheduling lemma from the audited construction.
@@ -1297,7 +1338,6 @@ theorem attainRootTransfer_odd
         (E B.parent : ℤ) + F (E B.root : ℤ) := by
   classical
   have hkMinus : 0 ≤ (k : ℤ) - 1 := by
-    exact_mod_cast hk
     omega
   have hRootZ :
       (E B.root : ℤ) = 2 * (k : ℤ) + 1 := by
@@ -1321,7 +1361,6 @@ theorem attainRootTransfer_odd
         B.root_mem_carrier B.parent_mem_carrier E 2 hEnough1 with
       ⟨E₁, hReach₁, h1root, h1parent, h1other⟩
     have hEnough2 : 2 * 1 ≤ E₁ B.parent := by
-      rw [h1parent, hq]
       omega
     rcases BranchReach.repeat_move B B.adj.symm
         B.parent_mem_carrier B.root_mem_carrier E₁ 1 hEnough2 with
@@ -1337,7 +1376,6 @@ theorem attainRootTransfer_odd
       Relation.ReflTransGen.trans hReach₁
         (Relation.ReflTransGen.trans hReach₂ hReach₃)
     have hRootZero : D B.root = 0 := by
-      rw [h3root, h2root, h1root, hRoot]
       omega
     have hCleared : B.Cleared D := by
       intro v hv
@@ -1355,13 +1393,17 @@ theorem attainRootTransfer_odd
           _ = 0 := hNonroot v hv hvr
     have hParentNat :
         D B.parent = E B.parent + (k - 1) := by
-      rw [h3parent, h2parent, h1parent, hq]
       omega
     have hParentZ :
         (D B.parent : ℤ) =
           (E B.parent : ℤ) + ((k : ℤ) - 1) := by
-      exact_mod_cast hParentNat
-      omega
+      calc
+        (D B.parent : ℤ) =
+            ((E B.parent + (k - 1) : ℕ) : ℤ) := by
+              exact_mod_cast hParentNat
+        _ = (E B.parent : ℤ) + ((k : ℤ) - 1) := by
+              rw [Nat.cast_add, Nat.cast_sub hk]
+
     refine ⟨D, hReach, hCleared, ?_⟩
     rw [hF]
     exact hParentZ
@@ -1406,8 +1448,7 @@ theorem attainRootTransfer_odd
           _ = E v := h1other v hvr hvp
           _ = 0 := hNonroot v hv hvr
     have hParentNat :
-        D B.parent = E B.parent + k - 1 := by
-      rw [h3parent, h2parent, h1parent]
+        D B.parent = E B.parent + (k - 1) := by
       omega
     have hParentZ :
         (D B.parent : ℤ) =
