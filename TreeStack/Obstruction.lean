@@ -316,11 +316,10 @@ noncomputable def childVertexEquivProper (B : OrientedBranch T) :
             ⟨hnotRoot z.1 z.2.2,
               B.childBranch_vertices_subset z.1 z.2.2⟩⟩
       have hdisj :=
-        B.childBranch_vertices_disjoint z.1 (chosen x) hne
+        B.childBranch_vertices_disjoint z.1 (chosen x) hne.symm
       exact
         (Finset.disjoint_left.mp hdisj) z.2.2 (hchosen x)
-    · apply Subtype.ext
-      rfl
+    · simp
   · intro x
     apply Subtype.ext
     rfl
@@ -779,10 +778,7 @@ theorem score_eq_effectiveInput_add_reverse
       have hadj : T.graph.Adj B.parent B.root := B.adj.symm
       rw [rootMessageTerm]
       simp only [dif_pos hadj]
-      change
-        messageContribution
-            (branchMessage C (incidentBranch T B.root B.parent hadj)) =
-          messageContribution (branchMessage C B.reverseBranch)
+      simp only [ne_eq, not_true, and_false, dite_false, if_true, zero_add]
       congr 2
     · by_cases hadj : T.graph.Adj B.root u
       · have hadj' : T.graph.Adj u B.root := hadj.symm
@@ -987,6 +983,12 @@ noncomputable def rootBranchVertexEquivProper
     (T : FiniteTree V) (r : V) :
     RootBranchVertex T r ≃ RootProperVertex r := by
   classical
+  have hnotRoot :
+      ∀ (n : RootNeighbor T r) {x : V},
+        x ∈ n.branch.vertices → x ≠ r := by
+    intro n x hx hxr
+    apply n.branch.parent_not_mem_vertices
+    simpa [RootNeighbor.branch, incidentBranch, hxr] using hx
   have hex :
       ∀ x : RootProperVertex r,
         ∃ n : RootNeighbor T r, x.1 ∈ n.branch.vertices := by
@@ -1004,14 +1006,13 @@ noncomputable def rootBranchVertexEquivProper
     exact Classical.choose_spec (hex x)
   refine
     { toFun := fun z =>
-        ⟨z.2.1, Finset.mem_erase.mpr ⟨?_, Finset.mem_univ _⟩⟩
+        ⟨z.2.1,
+          Finset.mem_erase.mpr
+            ⟨hnotRoot z.1 z.2.2, Finset.mem_univ _⟩⟩
       invFun := fun x =>
         ⟨chosen x, ⟨x.1, hchosen x⟩⟩
       left_inv := ?_
       right_inv := ?_ }
-  · intro h
-    subst h
-    exact z.1.branch.parent_not_mem_vertices z.2.2
   · intro z
     apply Sigma.ext
     · apply Subtype.ext
@@ -1019,19 +1020,14 @@ noncomputable def rootBranchVertexEquivProper
       let x : RootProperVertex r :=
         ⟨z.2.1,
           Finset.mem_erase.mpr
-            ⟨by
-              intro h
-              subst h
-              exact z.1.branch.parent_not_mem_vertices z.2.2,
-             Finset.mem_univ _⟩⟩
+            ⟨hnotRoot z.1 z.2.2, Finset.mem_univ _⟩⟩
       have hdisj :=
         incidentBranch_vertices_disjoint
-          (T := T) r z.1.2 (chosen x).2 hne
+          (T := T) r z.1.2 (chosen x).2 hne.symm
       exact
         (Finset.disjoint_left.mp hdisj)
           z.2.2 (hchosen x)
-    · apply Subtype.ext
-      rfl
+    · simp
   · intro x
     apply Subtype.ext
     rfl
@@ -1065,19 +1061,19 @@ theorem sum_dite_rootNeighbors {M : Type*} [AddCommMonoid M]
   apply Finset.sum_bij
     (fun u hu =>
       ⟨u, by simpa using
-        (T.graph.mem_neighborFinset.mp hu).symm⟩)
+        ((T.graph.mem_neighborFinset r u).mp hu).symm⟩)
   · intro u hu
     exact Finset.mem_univ _
   · intro u₁ hu₁ u₂ hu₂ hEq
     exact congrArg Subtype.val hEq
   · intro n hn
     refine ⟨n.1, ?_, ?_⟩
-    · exact T.graph.mem_neighborFinset.mpr n.2.symm
+    · exact (T.graph.mem_neighborFinset r n.1).mpr n.2.symm
     · apply Subtype.ext
       rfl
   · intro u hu
     have h : T.graph.Adj u r := by
-      simpa using (T.graph.mem_neighborFinset.mp hu).symm
+      simpa using ((T.graph.mem_neighborFinset r u).mp hu).symm
     simp [term, h]
 
 /-- The number of root neighbors is the degree of the root. -/
@@ -1094,7 +1090,8 @@ theorem card_rootNeighbor (T : FiniteTree V) (r : V) :
             sum_dite_rootNeighbors T r
               (fun _ : RootNeighbor T r => (1 : ℕ))
     _ = T.graph.degree r := by
-          simpa [SimpleGraph.degree_eq_sum_if_adj, adj_comm]
+          simpa [T.graph.adj_comm] using
+            (T.graph.degree_eq_sum_if_adj (R := ℕ) r).symm
 
 /-- Summing over all incident branch interiors is exactly summing over all
 non-root vertices. -/
