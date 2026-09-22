@@ -58,12 +58,12 @@ automation:
   methods:
     - method: "agent"
       models: ["OpenAI GPT-5.6 Sol"]
-      framework: "ChatGPT"
+      framework: "ChatGPT and Codex"
       tool_setup: >-
         Human-directed AI-assisted mathematics, Lean development, repository
-        operations, and documentation using the GitHub connector, GitHub
-        Actions, Lean tactics, Python regression checks, and theorem-level
-        axiom audits.
+        operations, and documentation using ChatGPT, local Codex workflows, the
+        GitHub connector, GitHub Actions, Lean tactics, Python regression
+        checks, and theorem-level axiom audits.
       cost:
         wall_time: "multiple interactive sessions in September 2026"
         spend_usd: "subscription-based; exact API-equivalent spend not tracked"
@@ -98,7 +98,8 @@ review:
     affiliation, review date, or quotation is recorded in the repository or
     supplied for publication here, so none is asserted in this metadata.
     Separate machine validation includes the complete Lean build, theorem-level
-    axiom audit, Python regression checks, and Palomar mechanical preflight.
+    axiom audit, and Python regression checks; a successful Palomar full
+    mechanical preflight is a required packaging gate before submission.
 
 alignment:
   namespace: "TreeStack"
