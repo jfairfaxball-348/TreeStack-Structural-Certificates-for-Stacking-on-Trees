@@ -1,267 +1,154 @@
 # Lean formalization progress
 
-Status: **Phase 1 partial, sound and compiling through the recursive
-move-signature upper bound, the necessity half of the exact boundary
-invariant, audited child-task scheduling, configuration locality, and sibling
-child-branch separation.**  The equality-attainment construction in the exact
-boundary theorem and the rooted score characterization remain unproved in Lean.
+Status: **Phase 1 exact branch-boundary invariant proved in Lean on PR #8.**
+The recursive message necessity layer, occupied-child scheduling, constructive
+attainment, universal boundary upper bound, and nonpositive impossibility are
+all machine-checked.  The next unproved layer is the rooted score
+characterization
+`StackableAt T.graph C r ↔ 0 < score T C r`.
 
-## Session baseline and pinned environment
+## Pinned environment and baseline
 
-This phase extension started from `main` at merge commit
-`ad37ae4f31de008cc5fff03d626a1405b4e268ff`, the merge of PR #5.
+This slice started from `main` at merge commit
+`04e6bd9653ed35e320e99e2d104ca659845ab11a`, the merge of PR #7,
+“Lean: exact boundary necessity, scheduling, and child separation.”
 
 - Lean: `v4.34.0`
-- Mathlib commit: `5ed2965256430c3649e86755f9576b54eca72435`
-- Lake manifest: committed at repository root
+- Mathlib: `5ed2965256430c3649e86755f9576b54eca72435`
 - Namespace: `TreeStack`
 
-No existing semantics were weakened.  In particular,
-`UniversalStackable G t` still quantifies over configurations of exactly
-`t` pebbles, and `EMPTY : Option Int = none` remains a message state
-categorically different from `some 0`.
+The source semantics are unchanged.  In particular,
+`UniversalStackable G t` still means exact-size universality, and
+`EMPTY = none` remains categorically different from `some 0`.
 
-## Definitions and theorem layer now available
+## Exact boundary theorem
 
-The pre-existing files retain finite-tree/configuration semantics, legal
-pebbling moves and finite reachability, the audited transfer function `F`,
-the exact estimator, and deleted-edge oriented branches.
-
-### Strict recursive branch geometry
-
-For `B : OrientedBranch T` and `c : B.Child`, `TreeStack/Branch.lean`
-now proves
+`TreeStack/Boundary.lean` retains the target proposition
 
 ```text
-(B.childBranch c).vertices ⊆ B.vertices
-(B.childBranch c).vertices ⊂ B.vertices
-(B.childBranch c).card < B.card
+ExactBoundaryInvariant C B
 ```
 
-via Mathlib reachability and bridge deletion in the acyclic tree.  The
-cardinality decrease is relative to the parent branch, not merely relative to
-the whole tree, and therefore supplies an honest well-founded recursion
-measure.
-
-Reusable boundary-separation lemmas are also proved:
-
-- `edge_leaving_vertices_eq_boundary`: every tree edge leaving
-  `B.vertices` is exactly the deleted boundary edge;
-- `eq_root_of_mem_vertices_adj_parent`: the exterior parent has no neighbor
-  in the branch other than `B.root`.
-
-### Recursive branch message
-
-`TreeStack/Message.lean` defines
-
-- `OrientedBranch.Occupied C B`, meaning the configuration restriction to
-  the branch has a positive pebble somewhere;
-- `messageContribution : Message → Int`, used only when aggregating child
-  messages;
-- `branchMessage C B : Message`;
-- `childMessageSum C B : Int`;
-- `effectiveInput C B : Int`.
-
-The recursive definition uses
+and now proves it as
 
 ```text
-termination_by B.card
-decreasing_by B.childBranch_card_lt ...
+OrientedBranch.exactBoundaryInvariant :
+  ExactBoundaryInvariant C B
 ```
 
-and therefore recurses only on strict child branches.  For occupied branches
-Lean proves the audited equation
+for every finite-tree configuration and oriented branch.
+
+For an occupied branch with recursive message `some d`, this theorem
+machine-checks all three audited clauses:
+
+1. if `0 < q + d`, a legal branch-local clearing exists whose final external
+   boundary pile is exactly `q + d`;
+2. every legal clearing has final boundary pile at most `q + d`;
+3. if `q + d ≤ 0`, no legal clearing can leave a positive boundary pile.
+
+The upper-bound and nonpositive clauses continue to come from the previously
+proved move-signature necessity layer:
 
 ```text
-branchMessage C B = some (F (effectiveInput C B)).
+ClearOutcome.boundary_le_message
+ClearOutcome.no_positive_boundary_of_message_nonpos
 ```
 
-For configuration-empty branches Lean proves exactly
+The new constructive half is
 
 ```text
-branchMessage C B = EMPTY ↔ ¬ B.Occupied C.
+OrientedBranch.boundary_attainment
 ```
 
-Thus `EMPTY` has not been replaced by integer zero.  Its contribution to a
-parent sum is zero only after explicitly applying `messageContribution`.
+and is well-founded by the existing strict child-cardinality theorem
+`childBranch_card_lt`.
 
-### Exact boundary-invariant statement layer
+## Constructive child scheduler
 
-`TreeStack/Boundary.lean` introduces the static and legal-sequence objects
-needed to state the next theorem without conflating balance feasibility with
-legal scheduling:
+The construction enumerates only occupied genuine child branches.  The task
+type itself contains an occupancy proof, so a configuration-empty child cannot
+be represented as an executable zero-gain task.
 
-- `MoveSignature`, `incoming`, `outgoing`, and `BalancesAt`;
-- branch `carrier`;
-- signature predicates `SupportedOn`, `Clears`, `CausalOutward`,
-  `FeasibleClearing`, and `EmptyExcursion`;
-- `boundaryFlux`;
-- legal branch-local `BranchPebbleStep` and `BranchReach`;
-- `Cleared`, `withBoundary`, and `ClearOutcome`;
-- `ExactBoundaryInvariant C B`.
-
-`ExactBoundaryInvariant` is currently a **target proposition**, not a proved
-theorem.  It encodes all three audited claims for an occupied branch of message
-`d`: exact attainment when `q+d>0`, the universal upper bound
-`D(parent) ≤ q+d`, and impossibility of a positive cleared boundary pile when
-`q+d≤0`.
-
-## Dependency graph reached
+New supporting declarations include:
 
 ```text
-legal pebbling semantics
-        |
-        +--------------------------+
-        |                          |
-        v                          v
-exact-size universality        transfer F
-        |                          |
-        v                          +--> F(z-3) <= F(z)
-upward closure                    +--> flux upper bound / mod 3
-                                   +--> equality attainment
-
-tree bridge deletion / components
-        |
-        v
-OrientedBranch
-        |
-        +--> child side containment
-        +--> strict child subset
-        +--> childBranch.card < parent.card
-        +--> unique boundary edge
-        |
-        v
-well-founded branchMessage : Option Int
-        |
-        +--> occupied recursive equation
-        +--> EMPTY iff branch restriction unoccupied
-        |
-        v
-move signatures + branch-local legal reachability
-        |
-        v
-ExactBoundaryInvariant  [STATEMENT PRESENT; PROOF NEXT]
-        |
-        v
-rooted score theorem
-        |
-        v
-downstream obstruction / defect-flow formalization
+OccupiedChild
+occupiedChildTasks
+taskGainSum_occupiedChildTasks
+executeOccupiedTaskSchedule
+executeAllOccupiedChildren
 ```
 
-The exact estimator branch remains available in parallel:
+The sum of executable task gains is proved equal to `childMessageSum`.
+The existing `orderedTasks_safe` theorem is then applied to the occupied
+task list.
+
+Sibling independence is formal rather than implicit.  The construction uses
+and extends the checked locality/separation layer, including:
 
 ```text
-leafCount / sigma / rootEstimate / estim
-        |
-        +--> corrected root-sensitive expansion
-        +--> |V| + 1 <= rootEstimate(T,r)
-        +--> |V| + 1 <= estim(T)
+branchMessage_congr_vertices
+BranchReach.eq_of_not_mem_carrier
+childBranch_carrier_subset
+childBranch_vertices_disjoint
+exists_childBranch_mem_of_mem_vertices_ne_root
+parent_not_mem_childBranch_carrier
+BranchReach.of_child
 ```
 
-## Strongest new machine-checked results
+Thus clearing an earlier sibling cannot change a later sibling's interior or
+recursive message.
 
-The key new structural theorem is the strict recursive decrease
+## Explicit root/boundary attainment
+
+After all occupied children have been cleared, every non-root branch vertex is
+zero and the construction reduces to the branch root and its external
+boundary.
+
+`BranchReach.repeat_move` supplies exact legal repeated moves along one
+oriented edge.  The endpoint construction is split into explicit audited
+cases:
 
 ```text
-OrientedBranch.childBranch_card_lt :
-  (B.childBranch c).card < B.card
+attainRootTransfer_even
+attainRootTransfer_odd
+attainRootTransfer_ge_two
 ```
 
-together with the corresponding strict finite-set containment.  This removes
-the previous well-founded-recursion blocker.
+For effective input at least two, the proof performs the exact outward/inward
+sequence realizing `F`.  The odd case explicitly handles whether the
+external boundary initially has a pebble.
 
-The strongest new boundary theorem on the current branch is
+For effective input at most one, `boundary_attainment` first preloads
 
 ```text
-OrientedBranch.ClearOutcome.boundary_le_message :
-  B.Occupied C →
-  branchMessage C B = some d →
-  B.ClearOutcome C q D →
-  (D B.parent : ℤ) ≤ (q : ℤ) + d
+b = 2 - effectiveInput C B
 ```
 
-derived from the recursive signature theorem
-`OrientedBranch.signature_branchFlux_bounds`.  The recursive message theorem
-remains
+pebbles at the root using exactly `b` inward boundary moves.  Positivity of
+the requested final boundary value proves that these moves are affordable.
+The occupied children are then executed in the audited task order, leaving
+exactly two pebbles at the root; one final outward move realizes
 
 ```text
-OrientedBranch.branchMessage_eq_some_of_occupied :
-  B.Occupied C →
-  branchMessage C B = some (F (effectiveInput C B))
+F x = 2*x - 3.
 ```
 
-with the separate empty-state classification
+No balance-only or phantom sequence is used.
 
-```text
-OrientedBranch.branchMessage_eq_empty_iff :
-  branchMessage C B = EMPTY ↔ ¬ B.Occupied C.
-```
+## Trust and validation status
 
-The complete Csernák–Soukup stacking theorem is **not** yet formalized in
-Lean, and neither `ExactBoundaryInvariant` nor the rooted score equivalence is
-claimed as proved.
+There are no `sorry`, `admit`, or project-specific axioms in the project
+Lean source.  The draft PR workflow rejects proof-hole tokens.
 
-## Exact remaining Phase 1 frontier
+Draft Lean CI is green for commit
+`0f9e5f7aeddd58a61b18a85fab70334a2822a2b1`, which includes the complete
+constructive proof and `OrientedBranch.exactBoundaryInvariant`.
+`Audit.lean` now prints axiom dependencies for the new construction and
+checks the final theorem.
 
-Dependencies 1–5 from the earlier boundary plan are now substantially
-machine-checked:
-
-- `BranchReach.exists_moveSignature` extracts exact move counts and
-  per-vertex balances from a legal branch-local sequence.
-- Occupied clearings force causal outward boundary crossing.
-- Empty excursions have nonpositive boundary gain and exact gain `-3k`.
-- `signature_branchFlux_bounds` proves the recursive occupied-branch upper
-  bound together with the modulo-three residue statement, while empty children
-  contribute only nonnegative three-step losses.
-- `ClearOutcome.boundary_le_message` and
-  `ClearOutcome.no_positive_boundary_of_message_nonpos` establish the
-  necessity half of the target boundary theorem.
-- `orderedTasks_safe` proves the audited positive/zero/negative task order.
-  Empty branches are omitted rather than converted into executable zero tasks.
-- Message locality, branch-local outside-state preservation, child-carrier
-  containment, and sibling child-branch disjointness are available for the
-  constructive induction.
-
-The immediate blocker is now **sufficiency / exact attainment**:
-
-1. Instantiate the generic task scheduler with the occupied genuine child
-   branches and their recursive message gains.
-2. Compose the inductively supplied child clearing sequences while proving
-   earlier child clearings do not alter later child interiors or messages.
-3. After the child tasks, prove the root/boundary one-vertex construction
-   attains exactly `q + F (effectiveInput C B)`; keep the audited
-   `x ≥ 2` and `x ≤ 1` cases explicit.
-4. Package this construction with the already-proved upper and nonpositive
-   halves to prove `ExactBoundaryInvariant C B`.
-5. Only then define the rooted score and prove
-   `StackableAt T.graph C r ↔ 0 < score T C r`.
-
-The exact branch boundary theorem remains the Phase 1 blocker, but its
-necessity half and scheduling arithmetic are no longer open obligations.
-
-## Current branch checkpoint
-
-PR #7 (`chatgpt/exact-boundary-invariant`) contains the first full
-move-signature/necessity layer for the exact boundary theorem.  The latest
-substantive code also proves configuration locality and geometric separation
-needed by the constructive half.  Before merge, the draft PR must be marked
-ready so that the repository's **full** workflow runs the Python regression
-suite, verifier, complete Lean build, and `Audit.lean`.
-
-## Small-case and regression coverage
-
-The Python regression suite remains falsification/specification evidence only.
-Its message-vs-reachability test enumerates every unlabeled tree in its stated
-orders and every root, so the bounded coverage includes `K₂`, paths, stars,
-leaf roots, and zero-total configurations.  A separate test checks the
-stronger exact boundary-gain identity on small branches for multiple exterior
-boundary piles.  None of these computations is used to discharge a Lean proof
-obligation.
-
-## Verification
-
-The required full CI path remains
+Before this slice is considered merged and complete, PR #8 must pass the full
+repository validation path and the post-merge `main` workflow:
 
 ```bash
 python3 -m pip install -e '.[test]'
@@ -272,26 +159,18 @@ lake build
 lake env lean Audit.lean
 ```
 
-Two substantive checkpoints in this session have already passed Lean:
+Python computation remains regression/falsification evidence only and is not
+used to discharge Lean obligations.
 
-- commit `3f4b2749b4a3709b3e38cfe6b83992901c3f8229`, proving strict child
-  nesting, passed the complete then-current workflow in run `35634489385`;
-- commit `7b93bdd79f657c98110e3dc20310daf5156d2ebb`, including the recursive
-  message definition, passed the complete then-current workflow in run
-  `35635336057`.
+## Next formal frontier
 
-At those full runs the Python regression suite had **23 passing tests**, and
-the verifier checked **131,958 rooted cases from 23,079 configurations on 13
-unlabeled trees**.  The later boundary-layer development uses a draft-PR
-Lean-only checkpoint to avoid repeatedly rerunning unchanged Python tests;
-before merge PR #6 must be marked ready and the complete workflow above must
-pass again on the final head.
+Only after the exact-boundary PR is fully validated and merged should Phase 1
+continue with the rooted score layer:
 
-## Trust statement
+```text
+StackableAt T.graph C r ↔ 0 < score T C r
+```
 
-There are no `sorry`, `admit`, or project-specific axioms in the
-`TreeStack` Lean source.  The workflow rejects proof-hole tokens in project
-Lean files.  `Audit.lean` prints the axiom dependencies of the strongest
-proved branch and message theorems; only standard Lean/Mathlib logical axioms
-are permitted.  Python and bounded computation remain regression and
-specification checks only.
+The Csernák–Soukup tree-stacking conjecture is **not yet formally proved**.
+The machine-checked milestone reached here is the complete recursive exact
+boundary invariant on oriented branches.
