@@ -2401,6 +2401,195 @@ theorem ClearOutcome.no_positive_boundary_of_message_nonpos
     exact_mod_cast hPos
   omega
 
+/-- Constructive half of the exact boundary invariant.  For every occupied
+branch, whenever the requested final boundary value q+d is positive, there is
+a legal branch-local clearing that attains it exactly.  The recursion is on
+strict child-branch cardinality. -/
+theorem boundary_attainment
+    (C : Configuration V) (B : OrientedBranch T)
+    (hOcc : B.Occupied C) :
+    ∀ d : ℤ, branchMessage C B = some d →
+      ∀ q : ℕ, 0 < (q : ℤ) + d →
+        ∃ D : Configuration V,
+          B.ClearOutcome C q D ∧
+            (D B.parent : ℤ) = (q : ℤ) + d := by
+  classical
+  intro d hMsg q hPos
+  have hCanonical :=
+    branchMessage_eq_some_of_occupied C B hOcc
+  have hd : d = F (effectiveInput C B) := by
+    rw [hCanonical] at hMsg
+    exact (Option.some.inj hMsg).symm
+  have hFinalF :
+      0 < (q : ℤ) + F (effectiveInput C B) := by
+    simpa [hd] using hPos
+  have hChildAttain :
+      ∀ (c : B.Child) (E : Configuration V) (d' : ℤ) (q' : ℕ),
+        (B.childBranch c).Occupied E →
+        branchMessage E (B.childBranch c) = some d' →
+        0 < (q' : ℤ) + d' →
+        ∃ D : Configuration V,
+          (B.childBranch c).ClearOutcome E q' D ∧
+            (D B.root : ℤ) = (q' : ℤ) + d' := by
+    intro c E d' q' hOcc' hMsg' hPos'
+    exact boundary_attainment E (B.childBranch c)
+      hOcc' d' hMsg' q' hPos'
+  by_cases hy : effectiveInput C B ≤ 1
+  · have hF :
+        F (effectiveInput C B) =
+          2 * effectiveInput C B - 3 :=
+      F_of_le_one hy
+    have hbNonneg :
+        0 ≤ 2 - effectiveInput C B := by
+      omega
+    let b : ℕ := (2 - effectiveInput C B).toNat
+    have hbCast :
+        (b : ℤ) = 2 - effectiveInput C B := by
+      rw [b, Int.toNat_of_nonneg hbNonneg]
+    have hqEnoughZ :
+        2 * (b : ℤ) ≤ (q : ℤ) := by
+      rw [hF] at hFinalF
+      rw [hbCast]
+      omega
+    have hqEnough : 2 * b ≤ q := by
+      exact_mod_cast hqEnoughZ
+    have hPreEnough :
+        2 * b ≤ (B.withBoundary C q) B.parent := by
+      simpa using hqEnough
+    rcases BranchReach.repeat_move B B.adj.symm
+        B.parent_mem_carrier B.root_mem_carrier
+        (B.withBoundary C q) b hPreEnough with
+      ⟨Epre, hPreReach, hPreParent, hPreRoot, hPreOther⟩
+    have hPreRootZ :
+        (Epre B.root : ℤ) =
+          (C B.root : ℤ) + (b : ℤ) := by
+      rw [hPreRoot,
+        B.withBoundary_of_mem_vertices C q B.root_mem_vertices]
+      push_cast
+    have hScheduleFinal :
+        (Epre B.root : ℤ) + childMessageSum C B = 2 := by
+      calc
+        (Epre B.root : ℤ) + childMessageSum C B =
+            (C B.root : ℤ) + (b : ℤ) +
+              childMessageSum C B := by rw [hPreRootZ]
+        _ = effectiveInput C B + (b : ℤ) := by
+              rw [effectiveInput]
+              ring
+        _ = 2 := by
+              rw [hbCast]
+              ring
+    have hSamePre :
+        ∀ v ∈ B.vertices, v ≠ B.root → Epre v = C v := by
+      intro v hv hvRoot
+      have hvParent : v ≠ B.parent := by
+        intro hvp
+        subst v
+        exact B.parent_not_mem_vertices hv
+      calc
+        Epre v = B.withBoundary C q v :=
+          hPreOther v hvParent hvRoot
+        _ = C v := B.withBoundary_of_mem_vertices C q hv
+    have hSafe :
+        TaskScheduleSafe
+          (fun t : B.OccupiedChild C => t.gain)
+          (Epre B.root : ℤ)
+          (orderedTasks
+            (fun t : B.OccupiedChild C => t.gain)
+            (B.occupiedChildTasks C)) := by
+      apply orderedTasks_safe
+      · positivity
+      · rw [taskGainSum_occupiedChildTasks]
+        omega
+    rcases B.executeAllOccupiedChildren C Epre hChildAttain
+        hSamePre hSafe with
+      ⟨E₁, hChildReach, hChildRoot, hChildParent, hNonroot⟩
+    have hE₁RootZ : (E₁ B.root : ℤ) = 2 := by
+      calc
+        (E₁ B.root : ℤ) =
+            (Epre B.root : ℤ) + childMessageSum C B :=
+          hChildRoot
+        _ = 2 := hScheduleFinal
+    have hE₁Root : E₁ B.root = 2 := by
+      exact_mod_cast hE₁RootZ
+    rcases B.attainRootTransfer_even E₁ 1 (by omega)
+        hE₁Root hNonroot with
+      ⟨D, hRootReach, hCleared, hDParent⟩
+    have hPreParentZ :
+        (Epre B.parent : ℤ) =
+          (q : ℤ) - 2 * (b : ℤ) := by
+      rw [hPreParent, B.withBoundary_parent C q,
+        Nat.cast_sub hqEnough]
+      push_cast
+    have hParentFinal :
+        (D B.parent : ℤ) = (q : ℤ) + d := by
+      rw [hDParent, hChildParent, hE₁RootZ, F_two,
+        hPreParentZ, hd, hF, hbCast]
+      ring
+    have hReach :
+        B.BranchReach (B.withBoundary C q) D :=
+      Relation.ReflTransGen.trans hPreReach
+        (Relation.ReflTransGen.trans hChildReach hRootReach)
+    exact ⟨D, ⟨hReach, hCleared⟩, hParentFinal⟩
+  · have hyTwo : 2 ≤ effectiveInput C B := by
+      omega
+    have hyPos : 0 < effectiveInput C B := by
+      omega
+    have hSafe :
+        TaskScheduleSafe
+          (fun t : B.OccupiedChild C => t.gain)
+          ((B.withBoundary C q) B.root : ℤ)
+          (orderedTasks
+            (fun t : B.OccupiedChild C => t.gain)
+            (B.occupiedChildTasks C)) := by
+      apply orderedTasks_safe
+      · positivity
+      · rw [taskGainSum_occupiedChildTasks,
+          B.withBoundary_of_mem_vertices C q B.root_mem_vertices]
+        simpa [effectiveInput] using hyPos
+    have hSame :
+        ∀ v ∈ B.vertices, v ≠ B.root →
+          B.withBoundary C q v = C v := by
+      intro v hv hvr
+      exact B.withBoundary_of_mem_vertices C q hv
+    rcases B.executeAllOccupiedChildren C (B.withBoundary C q)
+        hChildAttain hSame hSafe with
+      ⟨E₁, hChildReach, hChildRoot, hChildParent, hNonroot⟩
+    have hE₁RootZ :
+        (E₁ B.root : ℤ) = effectiveInput C B := by
+      calc
+        (E₁ B.root : ℤ) =
+            ((B.withBoundary C q) B.root : ℤ) +
+              childMessageSum C B := hChildRoot
+        _ = effectiveInput C B := by
+              rw [B.withBoundary_of_mem_vertices C q
+                B.root_mem_vertices]
+              rfl
+    have hE₁RootTwo : 2 ≤ E₁ B.root := by
+      have hz : (2 : ℤ) ≤ (E₁ B.root : ℤ) := by
+        rw [hE₁RootZ]
+        exact hyTwo
+      exact_mod_cast hz
+    have hE₁Parent : E₁ B.parent = q := by
+      rw [hChildParent, B.withBoundary_parent C q]
+    have hTransferPos :
+        0 < (E₁ B.parent : ℤ) + F (E₁ B.root : ℤ) := by
+      rw [hE₁Parent, hE₁RootZ]
+      exact hFinalF
+    rcases B.attainRootTransfer_ge_two E₁ hE₁RootTwo
+        hNonroot hTransferPos with
+      ⟨D, hRootReach, hCleared, hDParent⟩
+    have hParentFinal :
+        (D B.parent : ℤ) = (q : ℤ) + d := by
+      rw [hDParent, hE₁Parent, hE₁RootZ, hd]
+    have hReach :
+        B.BranchReach (B.withBoundary C q) D :=
+      Relation.ReflTransGen.trans hChildReach hRootReach
+    exact ⟨D, ⟨hReach, hCleared⟩, hParentFinal⟩
+termination_by B.card
+decreasing_by
+  exact B.childBranch_card_lt c
+
+
 /-- The exact boundary theorem in the form targeted by the Phase 1 induction.
 This is a proposition/target definition; later proofs must establish it from
 legal move sequences and the recursive message.
