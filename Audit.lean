@@ -107,3 +107,17 @@ import TreeStack
 #print axioms TreeStack.OrientedBranch.defectEdgeState_of_scores_nonpos
 
 #check TreeStack.OrientedBranch.defectEdgeState_of_scores_nonpos
+
+
+#print axioms TreeStack.OrientedBranch.vertices_disjoint_reverseBranch
+#print axioms TreeStack.OrientedBranch.mem_vertices_or_mem_reverseBranch
+#print axioms TreeStack.OrientedBranch.vertices_union_reverseBranch
+#print axioms TreeStack.OrientedBranch.occupied_or_reverse_occupied
+#print axioms TreeStack.OrientedBranch.score_eq_effectiveInput_of_reverse_not_occupied
+#print axioms TreeStack.OrientedBranch.defectEdgeState_of_supportEdge
+#print axioms TreeStack.score_eq_of_support_subset_singleton
+#print axioms TreeStack.exists_other_occupied_of_all_scores_nonpos
+
+#check TreeStack.OrientedBranch.SupportEdge
+#check TreeStack.OrientedBranch.defectEdgeState_of_supportEdge
+#check TreeStack.exists_other_occupied_of_all_scores_nonpos
