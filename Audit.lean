@@ -159,3 +159,28 @@ import TreeStack
 #print axioms TreeStack.two_negative_edge_excess_eq
 #print axioms TreeStack.two_negative_excess_le_owner_budget
 
+
+-- Auxiliary defect orientation, acyclicity, height, and weighted charging (PR #16)
+#print axioms TreeStack.OrientedBranch.two_negative_parameters_toward_rootedOwner
+#check TreeStack.OrientedBranch.TwoNegativeOwnerArrow
+#check TreeStack.OrientedBranch.AuxArrow
+#print axioms TreeStack.OrientedBranch.auxArrow_or_reverse_of_defectiveSupportEdge
+#print axioms TreeStack.OrientedBranch.auxArrow_defectiveGraph
+#print axioms TreeStack.OrientedBranch.not_auxArrow_reverse
+#print axioms TreeStack.OrientedBranch.auxArrow_no_reflTransGen_reverse
+#print axioms TreeStack.OrientedBranch.auxArrow_transGen_irrefl
+#check TreeStack.OrientedBranch.auxPred
+#print axioms TreeStack.OrientedBranch.auxPred_ssubset_of_auxArrow
+#check TreeStack.OrientedBranch.auxRank
+#print axioms TreeStack.OrientedBranch.auxRank_lt_of_auxArrow
+#check TreeStack.OrientedBranch.auxHeight
+#print axioms TreeStack.OrientedBranch.auxHeight_succ_le_of_auxArrow
+#check TreeStack.OrientedBranch.auxWeight
+#print axioms TreeStack.OrientedBranch.two_mul_auxWeight_le_of_auxArrow
+#check TreeStack.OrientedBranch.auxWeightInt
+#print axioms TreeStack.OrientedBranch.two_mul_auxWeightInt_le_of_auxArrow
+
+#print axioms TreeStack.OrientedBranch.defectArrow_auxEdgeContribution_le_tail_charge
+#print axioms TreeStack.OrientedBranch.defectArrow_auxEdgeContribution_le_head_charge
+#print axioms TreeStack.OrientedBranch.twoNegativeOwnerArrow_auxEdgeContribution_le_owner_charge
+#print axioms TreeStack.OrientedBranch.auxiliaryState_auxEdgeContribution_le_rootedOwner_charge
