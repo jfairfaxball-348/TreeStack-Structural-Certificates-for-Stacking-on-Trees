@@ -243,13 +243,13 @@ theorem treePathConnected_union_of_adj
       have hzw : z ∈ w.support :=
         w.support_toPath_subset_support hz
       have hzCases :
-          z ∈ p.support ∨ z = b ∨ z ∈ q.support.tail := by
+          z ∈ p.support ∨ z = b ∨ z ∈ q.support := by
         simpa [w] using hzw
       rcases hzCases with hzp | hzb | hzq
       · exact Finset.mem_union_left _ (hpSupp z hzp)
       · subst z
         exact Finset.mem_union_right _ hb
-      · exact Finset.mem_union_right _ (hqSupp z (List.mem_of_mem_tail hzq))
+      · exact Finset.mem_union_right _ (hqSupp z hzq)
   · rcases hy with hyA | hyB
     · rcases hB hxB hb with ⟨p, hpPath, hpSupp⟩
       rcases hA ha hyA with ⟨q, hqPath, hqSupp⟩
@@ -259,13 +259,13 @@ theorem treePathConnected_union_of_adj
       have hzw : z ∈ w.support :=
         w.support_toPath_subset_support hz
       have hzCases :
-          z ∈ p.support ∨ z = a ∨ z ∈ q.support.tail := by
+          z ∈ p.support ∨ z = a ∨ z ∈ q.support := by
         simpa [w] using hzw
       rcases hzCases with hzp | hza | hzq
       · exact Finset.mem_union_right _ (hpSupp z hzp)
       · subst z
         exact Finset.mem_union_left _ ha
-      · exact Finset.mem_union_left _ (hqSupp z (List.mem_of_mem_tail hzq))
+      · exact Finset.mem_union_left _ (hqSupp z hzq)
     · rcases hB hxB hyB with ⟨p, hpPath, hpSupp⟩
       refine ⟨p, hpPath, ?_⟩
       intro z hz
@@ -847,6 +847,19 @@ theorem sourceFiber_dist_le_of_boundary_depth
   rw [hCross]
   omega
 
+/-- On a source fibre, the auxiliary weight is exactly the power of two of
+ambient-tree distance from that fibre's height-zero source. -/
+theorem auxWeight_eq_two_pow_dist_of_mem_sourceFiber
+    (C : Configuration V) (ambientRoot : V)
+    (hScores : ∀ v, score T C v ≤ 0)
+    (r v : V)
+    (hv : v ∈ auxSourceFiber C ambientRoot hScores r) :
+    auxWeight C ambientRoot hScores v =
+      2 ^ T.graph.dist r v := by
+  have hsrc : auxSource C ambientRoot hScores v = r := by
+    simpa using hv
+  rw [auxWeight, auxHeight_eq_dist_auxSource, hsrc]
+
 /-- Under the same boundary-depth comparison, the first source's rooted
 power-of-two weight pointwise dominates the auxiliary weight throughout the
 second fibre. -/
@@ -868,19 +881,6 @@ theorem auxWeight_le_two_pow_dist_of_boundary_depth
   exact Nat.pow_le_pow_right Nat.zero_lt_two
     (sourceFiber_dist_le_of_boundary_depth
       C ambientRoot hScores hrs ha hb hadj hDepth hv)
-
-/-- On a source fibre, the auxiliary weight is exactly the power of two of
-ambient-tree distance from that fibre's height-zero source. -/
-theorem auxWeight_eq_two_pow_dist_of_mem_sourceFiber
-    (C : Configuration V) (ambientRoot : V)
-    (hScores : ∀ v, score T C v ≤ 0)
-    (r v : V)
-    (hv : v ∈ auxSourceFiber C ambientRoot hScores r) :
-    auxWeight C ambientRoot hScores v =
-      2 ^ T.graph.dist r v := by
-  have hsrc : auxSource C ambientRoot hScores v = r := by
-    simpa using hv
-  rw [auxWeight, auxHeight_eq_dist_auxSource, hsrc]
 
 end OrientedBranch
 
