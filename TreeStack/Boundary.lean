@@ -1272,6 +1272,146 @@ theorem attainRootTransfer_even
   rw [hF]
   exact hParentZ
 
+/-- Once all non-root branch vertices are clear, an odd root pile 2k+1
+with k at least one attains the exact transfer by an explicit legal sequence.
+If the boundary is empty, two outward moves are made first; otherwise one
+outward move suffices to fund the single inward move. -/
+theorem attainRootTransfer_odd
+    (B : OrientedBranch T) (E : Configuration V) (k : ℕ)
+    (hk : 1 ≤ k)
+    (hRoot : E B.root = 2 * k + 1)
+    (hNonroot :
+      ∀ v ∈ B.vertices, v ≠ B.root → E v = 0)
+    (hPos :
+      0 < (E B.parent : ℤ) + F (E B.root : ℤ)) :
+    ∃ D : Configuration V,
+      B.BranchReach E D ∧
+      B.Cleared D ∧
+      (D B.parent : ℤ) =
+        (E B.parent : ℤ) + F (E B.root : ℤ) := by
+  classical
+  have hkMinus : 0 ≤ (k : ℤ) - 1 := by
+    exact_mod_cast hk
+    omega
+  have hRootZ :
+      (E B.root : ℤ) = 2 * (k : ℤ) + 1 := by
+    exact_mod_cast hRoot
+  have hF :
+      F (E B.root : ℤ) = (k : ℤ) - 1 := by
+    apply (F_eq_nonneg_iff (z := (E B.root : ℤ))
+      (k := (k : ℤ) - 1) hkMinus).2
+    exact Or.inr (by
+      rw [hRootZ]
+      ring)
+  by_cases hq : E B.parent = 0
+  · have hk2 : 2 ≤ k := by
+      rw [hF, hq] at hPos
+      norm_num at hPos
+      omega
+    have hEnough1 : 2 * 2 ≤ E B.root := by
+      rw [hRoot]
+      omega
+    rcases BranchReach.repeat_move B B.adj
+        B.root_mem_carrier B.parent_mem_carrier E 2 hEnough1 with
+      ⟨E₁, hReach₁, h1root, h1parent, h1other⟩
+    have hEnough2 : 2 * 1 ≤ E₁ B.parent := by
+      rw [h1parent, hq]
+      omega
+    rcases BranchReach.repeat_move B B.adj.symm
+        B.parent_mem_carrier B.root_mem_carrier E₁ 1 hEnough2 with
+      ⟨E₂, hReach₂, h2parent, h2root, h2other⟩
+    have hEnough3 : 2 * (k - 1) ≤ E₂ B.root := by
+      rw [h2root, h1root, hRoot]
+      omega
+    rcases BranchReach.repeat_move B B.adj
+        B.root_mem_carrier B.parent_mem_carrier E₂ (k - 1) hEnough3 with
+      ⟨D, hReach₃, h3root, h3parent, h3other⟩
+    have hReach :
+        B.BranchReach E D :=
+      Relation.ReflTransGen.trans hReach₁
+        (Relation.ReflTransGen.trans hReach₂ hReach₃)
+    have hRootZero : D B.root = 0 := by
+      rw [h3root, h2root, h1root, hRoot]
+      omega
+    have hCleared : B.Cleared D := by
+      intro v hv
+      by_cases hvr : v = B.root
+      · subst v
+        exact hRootZero
+      · have hvp : v ≠ B.parent := by
+          intro hvp
+          subst v
+          exact B.parent_not_mem_vertices hv
+        calc
+          D v = E₂ v := h3other v hvr hvp
+          _ = E₁ v := h2other v hvp hvr
+          _ = E v := h1other v hvr hvp
+          _ = 0 := hNonroot v hv hvr
+    have hParentNat :
+        D B.parent = E B.parent + (k - 1) := by
+      rw [h3parent, h2parent, h1parent, hq]
+      omega
+    have hParentZ :
+        (D B.parent : ℤ) =
+          (E B.parent : ℤ) + ((k : ℤ) - 1) := by
+      exact_mod_cast hParentNat
+      omega
+    refine ⟨D, hReach, hCleared, ?_⟩
+    rw [hF]
+    exact hParentZ
+  · have hq1 : 1 ≤ E B.parent := Nat.one_le_iff_ne_zero.mpr hq
+    have hEnough1 : 2 * 1 ≤ E B.root := by
+      rw [hRoot]
+      omega
+    rcases BranchReach.repeat_move B B.adj
+        B.root_mem_carrier B.parent_mem_carrier E 1 hEnough1 with
+      ⟨E₁, hReach₁, h1root, h1parent, h1other⟩
+    have hEnough2 : 2 * 1 ≤ E₁ B.parent := by
+      rw [h1parent]
+      omega
+    rcases BranchReach.repeat_move B B.adj.symm
+        B.parent_mem_carrier B.root_mem_carrier E₁ 1 hEnough2 with
+      ⟨E₂, hReach₂, h2parent, h2root, h2other⟩
+    have hEnough3 : 2 * k ≤ E₂ B.root := by
+      rw [h2root, h1root, hRoot]
+      omega
+    rcases BranchReach.repeat_move B B.adj
+        B.root_mem_carrier B.parent_mem_carrier E₂ k hEnough3 with
+      ⟨D, hReach₃, h3root, h3parent, h3other⟩
+    have hReach :
+        B.BranchReach E D :=
+      Relation.ReflTransGen.trans hReach₁
+        (Relation.ReflTransGen.trans hReach₂ hReach₃)
+    have hRootZero : D B.root = 0 := by
+      rw [h3root, h2root, h1root, hRoot]
+      omega
+    have hCleared : B.Cleared D := by
+      intro v hv
+      by_cases hvr : v = B.root
+      · subst v
+        exact hRootZero
+      · have hvp : v ≠ B.parent := by
+          intro hvp
+          subst v
+          exact B.parent_not_mem_vertices hv
+        calc
+          D v = E₂ v := h3other v hvr hvp
+          _ = E₁ v := h2other v hvp hvr
+          _ = E v := h1other v hvr hvp
+          _ = 0 := hNonroot v hv hvr
+    have hParentNat :
+        D B.parent = E B.parent + k - 1 := by
+      rw [h3parent, h2parent, h1parent]
+      omega
+    have hParentZ :
+        (D B.parent : ℤ) =
+          (E B.parent : ℤ) + ((k : ℤ) - 1) := by
+      exact_mod_cast hParentNat
+      omega
+    refine ⟨D, hReach, hCleared, ?_⟩
+    rw [hF]
+    exact hParentZ
+
 theorem MoveSignature.zero_supportedOn (B : OrientedBranch T) :
     MoveSignature.SupportedOn (MoveSignature.zero T) B := by
   intro u v h
