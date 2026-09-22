@@ -709,7 +709,7 @@ theorem score_pos_of_stackableAt
     intro u
     by_cases hAdj : T.graph.Adj u r
     · let B : OrientedBranch T := incidentBranch T r u hAdj
-      have hClears : MoveSignature.Clears m C B := by
+      have hClears : OrientedBranch.MoveSignature.Clears m C B := by
         intro w hw
         have hwr : w ≠ r := by
           intro hEq
@@ -723,7 +723,7 @@ theorem score_pos_of_stackableAt
           ∀ A : OrientedBranch T,
             A.vertices ⊆ B.vertices →
             A.Occupied C →
-            MoveSignature.CausalOutward m A := by
+            OrientedBranch.MoveSignature.CausalOutward m A := by
         intro A hAB hOcc
         apply Nat.pos_of_ne_zero
         intro hzero
