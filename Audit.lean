@@ -145,3 +145,17 @@ import TreeStack
 #print axioms TreeStack.OrientedBranch.eq_of_adj_owner_of_dist
 #print axioms TreeStack.OrientedBranch.edge_eq_of_rootedOwner_eq
 #print axioms TreeStack.OrientedBranch.rootedOwner_reverse
+
+-- Defective retained-edge forest and weighted charging algebra
+#check TreeStack.OrientedBranch.DefectiveSupportEdge
+#print axioms TreeStack.OrientedBranch.defectiveSupportEdge_reverse_iff
+#check TreeStack.OrientedBranch.defectiveGraph
+#print axioms TreeStack.OrientedBranch.defectiveGraph_le_tree
+#print axioms TreeStack.OrientedBranch.defectiveGraph_isAcyclic
+
+#print axioms TreeStack.oriented_edge_excess_bound
+#print axioms TreeStack.oriented_excess_le_tail_budget
+#print axioms TreeStack.oriented_excess_le_head_budget
+#print axioms TreeStack.two_negative_edge_excess_eq
+#print axioms TreeStack.two_negative_excess_le_owner_budget
+
