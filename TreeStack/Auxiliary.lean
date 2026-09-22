@@ -264,6 +264,102 @@ theorem auxRank_lt_of_auxArrow
     (auxPred_ssubset_of_auxArrow
       C ambientRoot hScores hArrow)
 
+/-- Length of a longest auxiliary directed path ending at a vertex.  The
+well-founded measure is the strict-predecessor rank, which increases along
+every arrow. -/
+noncomputable def auxHeight
+    (C : Configuration V) (ambientRoot : V)
+    (hScores : ∀ v, score T C v ≤ 0)
+    (v : V) : ℕ :=
+  (Finset.univ : Finset V).sup fun u =>
+    if h : AuxArrow (T := T) C ambientRoot u v then
+      auxHeight C ambientRoot hScores u + 1
+    else
+      0
+termination_by auxRank (T := T) C ambientRoot v
+decreasing_by
+  exact auxRank_lt_of_auxArrow C ambientRoot hScores h
+
+/-- Every auxiliary arrow extends a longest directed path by one step. -/
+theorem auxHeight_succ_le_of_auxArrow
+    (C : Configuration V) (ambientRoot : V)
+    (hScores : ∀ v, score T C v ≤ 0)
+    {u v : V}
+    (hArrow : AuxArrow (T := T) C ambientRoot u v) :
+    auxHeight C ambientRoot hScores u + 1 ≤
+      auxHeight C ambientRoot hScores v := by
+  rw [auxHeight]
+  have hLe :=
+    Finset.le_sup
+      (f := fun x : V =>
+        if h : AuxArrow (T := T) C ambientRoot x v then
+          auxHeight C ambientRoot hScores x + 1
+        else
+          0)
+      (Finset.mem_univ u)
+  simpa [hArrow] using hLe
+
+/-- Powers-of-two auxiliary weights attached to longest-path heights. -/
+noncomputable def auxWeight
+    (C : Configuration V) (ambientRoot : V)
+    (hScores : ∀ v, score T C v ≤ 0)
+    (v : V) : ℕ :=
+  2 ^ auxHeight C ambientRoot hScores v
+
+/-- Auxiliary weights are positive (and in particular at least one). -/
+theorem auxWeight_pos
+    (C : Configuration V) (ambientRoot : V)
+    (hScores : ∀ v, score T C v ≤ 0)
+    (v : V) :
+    0 < auxWeight C ambientRoot hScores v := by
+  simp [auxWeight]
+
+/-- The key doubling inequality: weights at least double along every auxiliary
+directed edge. -/
+theorem two_mul_auxWeight_le_of_auxArrow
+    (C : Configuration V) (ambientRoot : V)
+    (hScores : ∀ v, score T C v ≤ 0)
+    {u v : V}
+    (hArrow : AuxArrow (T := T) C ambientRoot u v) :
+    2 * auxWeight C ambientRoot hScores u ≤
+      auxWeight C ambientRoot hScores v := by
+  have hHeight :=
+    auxHeight_succ_le_of_auxArrow
+      C ambientRoot hScores hArrow
+  have hPow :
+      2 ^ (auxHeight C ambientRoot hScores u + 1) ≤
+        2 ^ auxHeight C ambientRoot hScores v :=
+    Nat.pow_le_pow_of_le (by omega) hHeight
+  simpa [auxWeight, Nat.two_pow_succ, two_mul] using hPow
+
+/-- Integer form of the powers-of-two auxiliary weight, convenient for the
+weighted defect inequalities, which are stated over integers. -/
+noncomputable def auxWeightInt
+    (C : Configuration V) (ambientRoot : V)
+    (hScores : ∀ v, score T C v ≤ 0)
+    (v : V) : ℤ :=
+  (auxWeight C ambientRoot hScores v : ℤ)
+
+/-- Integer auxiliary weights are nonnegative. -/
+theorem auxWeightInt_nonneg
+    (C : Configuration V) (ambientRoot : V)
+    (hScores : ∀ v, score T C v ≤ 0)
+    (v : V) :
+    0 ≤ auxWeightInt C ambientRoot hScores v := by
+  exact_mod_cast (Nat.zero_le (auxWeight C ambientRoot hScores v))
+
+/-- Integer doubling form used directly by `DefectCharge.lean`. -/
+theorem two_mul_auxWeightInt_le_of_auxArrow
+    (C : Configuration V) (ambientRoot : V)
+    (hScores : ∀ v, score T C v ≤ 0)
+    {u v : V}
+    (hArrow : AuxArrow (T := T) C ambientRoot u v) :
+    2 * auxWeightInt C ambientRoot hScores u ≤
+      auxWeightInt C ambientRoot hScores v := by
+  exact_mod_cast
+    (two_mul_auxWeight_le_of_auxArrow
+      C ambientRoot hScores hArrow)
+
 end OrientedBranch
 
 end TreeStack
