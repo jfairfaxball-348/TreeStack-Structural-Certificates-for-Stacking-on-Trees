@@ -121,3 +121,5 @@ import TreeStack
 #check TreeStack.OrientedBranch.SupportEdge
 #check TreeStack.OrientedBranch.defectEdgeState_of_supportEdge
 #check TreeStack.exists_other_occupied_of_all_scores_nonpos
+
+#print axioms TreeStack.OrientedBranch.root_pos_of_supportEdge_of_no_child_supportEdge
