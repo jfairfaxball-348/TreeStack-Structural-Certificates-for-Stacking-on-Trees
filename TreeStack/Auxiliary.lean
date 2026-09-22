@@ -92,6 +92,71 @@ def AuxArrow
     (B.DefectiveSupportEdge C ∧ B.DefectArrow C) ∨
       B.TwoNegativeOwnerArrow C ambientRoot
 
+/-- Rebuilding an oriented branch from its own endpoints and adjacency proof
+returns the same branch. -/
+@[simp] theorem incidentBranch_self
+    (B : OrientedBranch T) :
+    incidentBranch T B.parent B.root B.adj = B := by
+  cases B
+  rfl
+
+/-- Every defective retained support edge receives an auxiliary direction.
+Oriented-type edges use their forced message direction; two-negative edges
+point toward the fixed rooted owner. -/
+theorem auxArrow_or_reverse_of_defectiveSupportEdge
+    (C : Configuration V) (ambientRoot : V) (B : OrientedBranch T)
+    (hDef : B.DefectiveSupportEdge C) :
+    AuxArrow (T := T) C ambientRoot B.root B.parent ∨
+      AuxArrow (T := T) C ambientRoot B.parent B.root := by
+  rcases
+      B.supportEdge_defectArrow_or_reverse_or_both_neg C hDef.1 with
+    hForward | hReverse | hBothNeg
+  · left
+    refine ⟨B.adj, ?_⟩
+    simpa using
+      (Or.inl ⟨hDef, hForward⟩ :
+        (B.DefectiveSupportEdge C ∧ B.DefectArrow C) ∨
+          B.TwoNegativeOwnerArrow C ambientRoot)
+  · right
+    have hDefReverse :
+        B.reverseBranch.DefectiveSupportEdge C :=
+      (B.defectiveSupportEdge_reverse_iff C).2 hDef
+    refine ⟨B.adj.symm, ?_⟩
+    simpa using
+      (Or.inl ⟨hDefReverse, hReverse⟩ :
+        (B.reverseBranch.DefectiveSupportEdge C ∧
+            B.reverseBranch.DefectArrow C) ∨
+          B.reverseBranch.TwoNegativeOwnerArrow C ambientRoot)
+  · rcases B.rootedOwner_eq_root_or_parent ambientRoot with
+      hOwnerRoot | hOwnerParent
+    · right
+      have hDefReverse :
+          B.reverseBranch.DefectiveSupportEdge C :=
+        (B.defectiveSupportEdge_reverse_iff C).2 hDef
+      have hOwnerReverse :
+          B.reverseBranch.parent =
+            B.reverseBranch.rootedOwner ambientRoot := by
+        simpa [rootedOwner_reverse] using hOwnerRoot.symm
+      have hTwoReverse :
+          B.reverseBranch.TwoNegativeOwnerArrow C ambientRoot := by
+        refine ⟨hDefReverse, hBothNeg.2, ?_, hOwnerReverse⟩
+        simpa using hBothNeg.1
+      refine ⟨B.adj.symm, ?_⟩
+      simpa using
+        (Or.inr hTwoReverse :
+          (B.reverseBranch.DefectiveSupportEdge C ∧
+              B.reverseBranch.DefectArrow C) ∨
+            B.reverseBranch.TwoNegativeOwnerArrow C ambientRoot)
+    · left
+      have hTwo :
+          B.TwoNegativeOwnerArrow C ambientRoot :=
+        ⟨hDef, hBothNeg.1, hBothNeg.2, hOwnerParent.symm⟩
+      refine ⟨B.adj, ?_⟩
+      simpa using
+        (Or.inr hTwo :
+          (B.DefectiveSupportEdge C ∧ B.DefectArrow C) ∨
+            B.TwoNegativeOwnerArrow C ambientRoot)
+
 /-- Every auxiliary arrow is an ambient tree edge. -/
 theorem auxArrow_adj
     (C : Configuration V) (ambientRoot : V) {u v : V}
