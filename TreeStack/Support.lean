@@ -24,13 +24,15 @@ theorem vertices_disjoint_reverseBranch (B : OrientedBranch T) :
   have hxRComp : x ∈ B.reverseBranch.component.supp := by
     simpa [vertices] using hxR
   have hparentComp : B.parent ∈ B.reverseBranch.component.supp := by
-    simpa using
-      (SimpleGraph.ConnectedComponent.connectedComponentMk_mem :
-        B.reverseBranch.root ∈ B.reverseBranch.component.supp)
+    have hroot := B.reverseBranch.root_mem_vertices
+    simpa [vertices] using hroot
   have hparentxR :
       B.reverseBranch.deletedGraph.Reachable B.parent x :=
     B.reverseBranch.component.reachable_of_mem_supp hparentComp hxRComp
   have hparentx : B.deletedGraph.Reachable B.parent x := by
+    change
+      (T.graph.deleteEdges {s(B.root, B.parent)}).Reachable B.parent x
+    rw [Sym2.eq_swap]
     simpa [deletedGraph, reverseBranch] using hparentxR
   have hreach : B.deletedGraph.Reachable B.root B.parent :=
     hrootx.trans hparentx.symm
@@ -100,7 +102,7 @@ theorem score_eq_effectiveInput_of_reverse_not_occupied
     score T C B.root = B.effectiveInput C := by
   rw [score_eq_effectiveInput_add_reverse C B,
     branchMessage_eq_empty_of_not_occupied C B.reverseBranch hEmpty]
-  rfl
+  simp [messageContribution, EMPTY]
 
 /-- The already-proved local defect classification applies directly to every
 retained support edge, without changing the ambient vertex type. -/
