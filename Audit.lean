@@ -71,3 +71,15 @@ import TreeStack
 #check TreeStack.stackableAt_iff_score_pos
 #check TreeStack.not_stackable_iff_all_scores_nonpos
 
+#print axioms TreeStack.obstruction
+#print axioms TreeStack.mass_obstruction
+#print axioms TreeStack.OrientedBranch.obstructionHeight_closedForm
+#print axioms TreeStack.score_obstruction_eq_zero
+#print axioms TreeStack.obstruction_not_stackable
+#print axioms TreeStack.exists_nonstackable_mass_estim_sub_one
+
+#check TreeStack.obstruction
+#check TreeStack.mass_obstruction
+#check TreeStack.score_obstruction_eq_zero
+#check TreeStack.obstruction_not_stackable
+#check TreeStack.exists_nonstackable_mass_estim_sub_one
