@@ -322,6 +322,68 @@ noncomputable def childVertexEquivProper (B : OrientedBranch T) :
     rfl
 
 
+
+/-- The finite set of genuine child vertices of an oriented branch. -/
+noncomputable def childFinset (B : OrientedBranch T) : Finset V :=
+  (T.graph.neighborFinset B.root).erase B.parent
+
+@[simp] theorem mem_childFinset (B : OrientedBranch T) (v : V) :
+    v ∈ B.childFinset ↔
+      T.graph.Adj B.root v ∧ v ≠ B.parent := by
+  classical
+  simp [childFinset, and_left_comm, and_comm]
+
+/-- A dependent sum over genuine child vertices agrees with the corresponding
+sum over the finite child type. -/
+theorem sum_dite_children {M : Type*} [AddCommMonoid M]
+    (B : OrientedBranch T) (f : B.Child → M) :
+    (∑ v : V,
+      if h : T.graph.Adj B.root v ∧ v ≠ B.parent then
+        f { vertex := v, adj := h.1, ne_parent := h.2 }
+      else
+        0) =
+      ∑ c : B.Child, f c := by
+  classical
+  let term : V → M := fun v =>
+    if h : T.graph.Adj B.root v ∧ v ≠ B.parent then
+      f { vertex := v, adj := h.1, ne_parent := h.2 }
+    else
+      0
+  have hrestrict :
+      (∑ v ∈ B.childFinset, term v) =
+        ∑ v : V, term v := by
+    apply Finset.sum_subset (Finset.subset_univ B.childFinset)
+    intro v hvUniv hvNot
+    have hnot :
+        ¬ (T.graph.Adj B.root v ∧ v ≠ B.parent) := by
+      intro h
+      exact hvNot ((B.mem_childFinset v).2 h)
+    simp [term, hnot]
+  rw [← hrestrict]
+  change
+    (∑ v ∈ B.childFinset, term v) =
+      ∑ c ∈ (Finset.univ : Finset B.Child), f c
+  apply Finset.sum_bij
+    (fun v hv =>
+      { vertex := v
+        adj := ((B.mem_childFinset v).1 hv).1
+        ne_parent := ((B.mem_childFinset v).1 hv).2 })
+  · intro v hv
+    exact Finset.mem_univ _
+  · intro v₁ hv₁ v₂ hv₂ hEq
+    exact congrArg Child.vertex hEq
+  · intro c hc
+    refine ⟨c.vertex, ?_, ?_⟩
+    · exact (B.mem_childFinset c.vertex).2 ⟨c.adj, c.ne_parent⟩
+    · apply Child.eq_of_vertex_eq
+      rfl
+  · intro v hv
+    have h := (B.mem_childFinset v).1 hv
+    simp [term, h]
+    congr 1
+    apply Child.eq_of_vertex_eq
+    rfl
+
 /-- Summing over every child interior is exactly summing over the non-root
 vertices of the parent branch. -/
 theorem sum_childBranch_vertices (B : OrientedBranch T) (f : V → ℕ) :
