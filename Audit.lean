@@ -187,6 +187,16 @@ import TreeStack
 
 
 -- Global weighted cancellation, leaf slack, consolidation, and final formula
+#print axioms TreeStack.OrientedBranch.sum_edgeSeparatedCharge_le_auxDefectBudget
+#print axioms TreeStack.OrientedBranch.auxWeightedMass_eq_edges_sub_defect
+#print axioms TreeStack.OrientedBranch.sum_auxEdgeContribution_le_degree_add_defect
+#print axioms TreeStack.OrientedBranch.auxWeightedMass_sub_configurationSlack_eq_mass
+#print axioms TreeStack.OrientedBranch.auxLeafSlack_le_auxConfigurationSlack
+#print axioms TreeStack.OrientedBranch.auxDegreePotential_sub_leafSlack_eq_auxCompactPotential
+#print axioms TreeStack.OrientedBranch.exists_heightDominatingRoot_union_of_adj
+#print axioms TreeStack.OrientedBranch.exists_global_heightDominatingRoot_from_sourceCarrier
+#print axioms TreeStack.OrientedBranch.auxInternalDegreePotential_le_rootedInternalPotential
+#print axioms TreeStack.OrientedBranch.rootEstimate_eq_one_add_ambientLeafCount_add_rootedInternalPotential
 #print axioms TreeStack.OrientedBranch.auxWeightedMass_le_auxDegreePotential
 #print axioms TreeStack.OrientedBranch.mass_le_auxCompactPotential
 #print axioms TreeStack.OrientedBranch.exists_root_auxHeight_le_dist
