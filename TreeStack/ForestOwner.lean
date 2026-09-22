@@ -33,7 +33,8 @@ theorem defectiveGraph_le_tree
     (C : Configuration V) :
     defectiveGraph (T := T) C ≤ T.graph := by
   intro u v huv
-  exact huv.1
+  rcases huv with ⟨h, _⟩
+  exact h
 
 /-- Defective retained edges form a forest: their graph is acyclic because it
 is a subgraph of the ambient tree. -/
