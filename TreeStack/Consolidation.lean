@@ -134,6 +134,73 @@ theorem exists_path_within_auxSourceFiber
   intro z hz
   exact hw z (w.support_toPath_subset_support hz)
 
+/-- Across an edge joining two distinct source fibres, tree distance splits
+exactly at that boundary edge. -/
+theorem dist_eq_dist_add_one_add_dist_of_adj_sourceFibers
+    (C : Configuration V) (ambientRoot : V)
+    (hScores : ∀ v, score T C v ≤ 0)
+    {r s a b x y : V}
+    (hrs : r ≠ s)
+    (ha : a ∈ auxSourceFiber C ambientRoot hScores r)
+    (hb : b ∈ auxSourceFiber C ambientRoot hScores s)
+    (hadj : T.graph.Adj a b)
+    (hx : x ∈ auxSourceFiber C ambientRoot hScores r)
+    (hy : y ∈ auxSourceFiber C ambientRoot hScores s) :
+    T.graph.dist x y =
+      T.graph.dist x a + 1 + T.graph.dist b y := by
+  rcases
+      exists_path_within_auxSourceFiber
+        C ambientRoot hScores r x a hx ha with
+    ⟨px, hpxPath, hpxFiber⟩
+  rcases
+      exists_path_within_auxSourceFiber
+        C ambientRoot hScores s b y hb hy with
+    ⟨py, hpyPath, hpyFiber⟩
+  have hFibDisj :=
+    auxSourceFiber_disjoint_of_ne
+      C ambientRoot hScores hrs
+  have hbNotPx : b ∉ px.support := by
+    intro hbpx
+    have hbR := hpxFiber b hbpx
+    exact (Finset.disjoint_left.mp hFibDisj) hbR hb
+  let q : T.graph.Walk x b := px.concat hadj
+  have hqPath : q.IsPath := by
+    exact hpxPath.concat hbNotPx hadj
+  have hbNotPyTail : b ∉ py.support.tail := by
+    have hNodup := hpyPath.support_nodup
+    rw [← py.cons_tail_support, List.nodup_cons] at hNodup
+    exact hNodup.1
+  have hDisjoint : q.support.Disjoint py.support.tail := by
+    rw [List.disjoint_left]
+    intro z hzq hzpyTail
+    have hzpy : z ∈ py.support :=
+      List.mem_of_mem_tail hzpyTail
+    have hzS := hpyFiber z hzpy
+    have hzq' :
+        z ∈ px.support ∨ z = b := by
+      simpa [q] using hzq
+    rcases hzq' with hzpx | rfl
+    · have hzR := hpxFiber z hzpx
+      exact (Finset.disjoint_left.mp hFibDisj) hzR hzS
+    · exact hbNotPyTail hzpyTail
+  have hpPath : (q.append py).IsPath := by
+    rw [SimpleGraph.Walk.isPath_def,
+      SimpleGraph.Walk.support_append, List.nodup_append']
+    exact
+      ⟨hqPath.support_nodup, hpyPath.support_nodup.tail, hDisjoint⟩
+  have hpxDist :=
+    tree_path_length_eq_dist (T := T) px hpxPath
+  have hpyDist :=
+    tree_path_length_eq_dist (T := T) py hpyPath
+  have hpDist :=
+    tree_path_length_eq_dist (T := T) (q.append py) hpPath
+  calc
+    T.graph.dist x y = (q.append py).length := hpDist.symm
+    _ = px.length + 1 + py.length := by
+      simp [q]
+    _ = T.graph.dist x a + 1 + T.graph.dist b y := by
+      rw [hpxDist, hpyDist]
+
 /-- On a source fibre, the auxiliary weight is exactly the power of two of
 ambient-tree distance from that fibre's height-zero source. -/
 theorem auxWeight_eq_two_pow_dist_of_mem_sourceFiber
