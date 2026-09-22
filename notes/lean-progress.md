@@ -1,10 +1,12 @@
 # Lean formalization progress
 
 Status: **the exact branch-boundary invariant, rooted score characterization,
-explicit estimator obstruction, and local arbitrary-defect edge classification
-are merged on `main`; PR #14 adds an in-place support-reduction core for the
-global upper bound.**  The authoritative pre-PR #14 baseline is merge commit
-`693f1d72974b9193cd9cf6818a1a0ecba8bc05ce`.
+explicit estimator obstruction, local arbitrary-defect edge classification,
+and the in-place support-reduction core are merged on `main`.  PR #15 extends
+that core with retained path closure, forced defect-edge orientations, and an
+injective incident-owner assignment for arbitrary tree-edge subsets.**  The
+authoritative baseline for PR #15 is the PR #14 merge commit
+`53a57b2b21a9e2a8c714a9574587382b07c2d620`.
 
 ## Pinned environment
 
@@ -310,6 +312,94 @@ transport obligations.  A remaining structural packaging step is to organize
 the retained `SupportEdge` edges as the connected support core (or prove the
 equivalent path/forest facts directly) before the global defect-flow argument.
 
+## Retained path closure, forced orientations, and rooted owners
+
+PR #15 packages the retained `SupportEdge` predicate into the path/edge facts
+needed by the global defect-flow proof while continuing to avoid subtype
+transport.
+
+Below a retained edge, its occupied reverse side supplies exterior support for
+every genuine child edge.  Consequently child retention is characterized
+exactly by child-side occupation:
+
+```text
+OrientedBranch.reverse_child_occupied_of_supportEdge
+OrientedBranch.child_supportEdge_iff_occupied_of_supportEdge
+```
+
+The new inductive certificate
+
+```text
+OrientedBranch.SupportDescent
+```
+
+records a descent from an oriented-branch root through retained child edges.
+The recursive theorem
+
+```text
+OrientedBranch.supportDescent_of_mem_pos
+```
+
+shows that every positive-support vertex on the retained side of an edge is
+joined to the edge root entirely through retained support edges.  Together with
+
+```text
+OrientedBranch.exists_child_supportEdge_of_supportEdge_of_root_not_pos
+OrientedBranch.root_pos_of_supportEdge_of_no_child_supportEdge
+```
+
+this gives the in-place connected/path-closure and leaf-occupancy interface
+needed from the minimal subtree spanning the positive support.
+
+The first global orientation interface is also now formalized.  A forced
+oriented-type edge is represented by
+
+```text
+OrientedBranch.DefectArrow
+```
+
+meaning a retained edge whose displayed recursive message is nonnegative.
+Under all-nonpositive scores the reverse message is strictly negative, the
+reverse orientation cannot also be a `DefectArrow`, and the tail defect has
+the required factor-two budget:
+
+```text
+OrientedBranch.reverse_message_neg_of_defectArrow
+OrientedBranch.not_defectArrow_reverse
+OrientedBranch.defectArrow_tail_budget
+OrientedBranch.supportEdge_defectArrow_or_reverse_or_both_neg
+```
+
+PR #15 also adds `TreeStack/ForestOwner.lean`.  Instead of separately rooting
+each defective-forest component, it fixes one ambient tree root and assigns
+every tree edge to its endpoint farther from that root:
+
+```text
+OrientedBranch.rootedOwner
+OrientedBranch.rootedOther
+OrientedBranch.rootedOther_adj_rootedOwner
+OrientedBranch.rootedOwner_dist_eq_rootedOther_add_one
+OrientedBranch.rootedOwner_other_edge
+OrientedBranch.eq_of_adj_owner_of_dist
+OrientedBranch.edge_eq_of_rootedOwner_eq
+OrientedBranch.rootedOwner_reverse
+```
+
+The key theorem `edge_eq_of_rootedOwner_eq` proves injectivity on underlying
+undirected tree edges.  Therefore its restriction to any later-defined
+defective-edge subset is already the required injective incident-owner
+assignment; no separate forest-component rooting theorem is needed.
+
+This in-place architecture removes the need to transport configurations,
+messages, scores, and defect states to a subtype-valued support tree.  It does
+**not by itself remove every estimator comparison obligation**.  The current
+mass/leaf-slack proof from `notes/defect-flow.md` still compares the potential
+of the minimal support core with the estimator of the ambient tree.  Unless the
+remaining upper-bound argument is reformulated wholly with ambient-tree
+degrees/leaves, an explicit monotonicity/comparison lemma for the embedded
+connected support core is still needed.  That comparison should be kept purely
+combinatorial and independent of message transport.
+
 ## Validation and trust
 
 There are no permitted `sorry`, `admit`, project axioms, weakened
@@ -327,21 +417,27 @@ lake build
 lake env lean Audit.lean
 ```
 
-The lower-bound obstruction and local arbitrary-defect classification are
-complete on `main`.  PR #14 adds the machine-checked in-place support core
-needed to pass from arbitrary support to retained two-sided-occupied edges.
+The lower-bound obstruction, local arbitrary-defect classification, and PR #14
+support-reduction core are complete on `main`.  PR #15 adds the machine-checked
+retained-path closure, forced-orientation interface, and injective ambient-root
+edge-owner mechanism needed for the next charging layer.
 
 ## Next formal frontier
 
 The explicit estimator obstruction supplies the machine-checked lower bound,
-the local arbitrary-defect edge states are classified, and the first
-support-reduction layer is now in place without subtype transport.  The
-remaining Lean work is the global upper-bound layer: package the retained
-support edges into the connected support core (and establish any estimator
-comparison still needed by the chosen in-place architecture); defective-edge
-forest/owner assignment; auxiliary orientations and heights; weighted defect
-cancellation; occupied-leaf slack; connected-partition consolidation; and
-finally the global bound `mass C ≤ estim T - 1` for every non-stackable
+the local arbitrary-defect edge states are classified, and retained
+`SupportEdge` edges now have an in-place connected/path-closure interface.
+Forced oriented-type edges and an injective incident-owner assignment are also
+available.
+
+The remaining Lean work is the global upper-bound layer: define the exact
+defective retained-edge subset and connect its two-negative states to the owner
+choice; establish the support-core estimator comparison still required by the
+current proof architecture (or replace it with an equivalent ambient-tree
+bound); orient owner-charged two-negative edges; define longest-directed-path
+heights and prove the powers-of-two doubling inequality; formalize weighted
+defect cancellation; prove occupied-leaf slack; formalize connected-partition
+consolidation; and finally derive `mass C ≤ estim T - 1` for every non-stackable
 configuration.
 
 The Csernák–Soukup tree-stacking conjecture is therefore **not yet fully
