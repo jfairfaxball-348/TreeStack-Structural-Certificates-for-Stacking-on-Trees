@@ -12,3 +12,4 @@ import TreeStack.Support
 import TreeStack.ForestOwner
 import TreeStack.DefectCharge
 import TreeStack.Auxiliary
+import TreeStack.AuxiliaryCharge
