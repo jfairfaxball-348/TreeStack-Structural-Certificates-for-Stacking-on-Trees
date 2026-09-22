@@ -7,6 +7,45 @@ namespace OrientedBranch
 
 variable {V : Type*} [Fintype V] {T : FiniteTree V}
 
+/-- The graph of defective retained support edges.  Adjacency is defined by
+presenting the ambient tree edge in one orientation and asking for the
+orientation-invariant defective-support predicate. -/
+noncomputable def defectiveGraph
+    (C : Configuration V) : SimpleGraph V where
+  Adj u v :=
+    ∃ h : T.graph.Adj u v,
+      (incidentBranch T v u h).DefectiveSupportEdge C
+  symm := by
+    intro u v huv
+    rcases huv with ⟨h, hDef⟩
+    refine ⟨h.symm, ?_⟩
+    have hRev :
+        (incidentBranch T v u h).reverseBranch.DefectiveSupportEdge C :=
+      ((incidentBranch T v u h).defectiveSupportEdge_reverse_iff C).2 hDef
+    simpa [incidentBranch, reverseBranch] using hRev
+  loopless := by
+    intro u huu
+    rcases huu with ⟨h, _⟩
+    exact h.ne rfl
+
+/-- The defective-edge graph is a spanning subgraph of the ambient tree. -/
+theorem defectiveGraph_le_tree
+    (C : Configuration V) :
+    defectiveGraph (T := T) C ≤ T.graph := by
+  intro u v huv
+  exact huv.1
+
+/-- Defective retained edges form a forest: their graph is acyclic because it
+is a subgraph of the ambient tree. -/
+theorem defectiveGraph_isAcyclic
+    (C : Configuration V) :
+    (defectiveGraph (T := T) C).IsAcyclic := by
+  exact
+    SimpleGraph.IsAcyclic.anti
+      (defectiveGraph_le_tree (T := T) C)
+      T.isTree.isAcyclic
+
+
 /-- For an oriented presentation of a tree edge and a fixed ambient root,
 choose the endpoint farther from the root.  Tree acyclicity ensures adjacent
 endpoints have distinct distances, so this choice is canonical on the
