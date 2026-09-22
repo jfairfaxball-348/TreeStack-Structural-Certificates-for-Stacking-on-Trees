@@ -75,38 +75,46 @@ project stage.
 
 ## Lean formalization
 
-The Lean development now machine-checks the exact-size stacking semantics,
-the exact oriented-branch boundary invariant, and the rooted score
+The Lean development now machine-checks the corrected nontrivial-tree formula
+end to end.  It includes the exact rooted branch-message theorem and score
 characterization
 
-[
-operatorname{StackableAt}(T,C,r) iff 0 < S_r(C).
-]
+\[
+\operatorname{StackableAt}(T,C,r) \iff 0 < S_r(C),
+\]
 
-It also formalizes the explicit estimator obstruction.  For every selected
-root (r), the configuration placing (sigma(T,r)-1) pebbles at (r), one
-pebble at every other leaf, and zero elsewhere has exact mass
+the explicit zero-score obstruction of mass
+\(\operatorname{estim}(T)-1\), and the arbitrary-defect upper bound
 
-[
-operatorname{rootEstimate}(T,r)-1,
-]
+\[
+S_v(C)\le0\text{ for every }v
+\quad\Longrightarrow\quad
+|C|\le\operatorname{estim}(T)-1.
+\]
 
-and every rooted score of that configuration is exactly zero.  Hence it is
-globally non-stackable.  Choosing a root attaining (operatorname{estim}(T))
-gives a machine-checked non-stackable configuration of mass
+The upper-bound proof stays on the ambient tree throughout.  It combines
+weighted defect cancellation, occupied-leaf slack, canonical height-zero
+source fibres, and connected-partition consolidation to obtain one root whose
+distance profile dominates the auxiliary height profile.
 
-[
-operatorname{estim}(T)-1.
-]
+The final Lean layer proves exact-size universality at the estimator and
+formalizes the source stacking number as the least exact size \(t\ge2\) for
+which every configuration is stackable.  For every finite tree with at least
+two vertices, the headline checked theorem is
 
-This completes the Lean lower-bound obstruction layer.  The remaining global
-formalization frontier is the upper bound: support pruning and the
-arbitrary-defect estimator inequality needed to show that every configuration
-of size (operatorname{estim}(T)) is stackable on every nontrivial finite
-tree.
+```text
+TreeStack.stack_eq_estim_of_two_le_card :
+  2 ≤ Fintype.card V → TreeStack.stack T = TreeStack.estim T
+```
+
+The one-vertex case is intentionally excluded because of the source convention
+that the stacking threshold is at least two.  As elsewhere in this repository,
+the formal proof is still pending external mathematical review and a complete
+prior-art/originality audit; the repository does not claim a new theorem of
+record on the basis of mechanization alone.
 
 The Lean environment is pinned by `lean-toolchain` and
-`lake-manifest.json`. To reproduce the full CI path:
+`lake-manifest.json`. To reproduce the complete validation path:
 
 ```bash
 python3 -m pip install -e '.[test]'
@@ -118,4 +126,4 @@ lake env lean Audit.lean
 ```
 
 See `notes/lean-progress.md` for the exact proved theorem list, dependency
-boundary, trust statement, and remaining obligations.
+boundary, trust statement, and validation status.
