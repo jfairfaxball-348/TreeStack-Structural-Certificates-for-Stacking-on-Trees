@@ -1,9 +1,10 @@
 # Lean formalization progress
 
-Status: **the exact branch-boundary invariant is merged on `main`, and the
-rooted score characterization is machine-checked on draft PR #9.**  The rooted
-slice still requires the complete PR workflow, merge, and post-merge `main`
-validation before it is treated as the next authoritative baseline.
+Status: **the exact branch-boundary invariant and rooted score characterization
+are both merged on `main` and post-merge validated.**  The authoritative
+baseline is merge commit
+`fd6f7a90111f0a6424510792fa7c0b8dcdfcbfab`, the merge of PR #9,
+“Lean: rooted score characterization.”
 
 ## Pinned environment
 
@@ -64,13 +65,14 @@ lemmas.  The low-input construction explicitly preloads the root from the
 external boundary; the high-input construction uses explicit legal repeated
 moves.  No balance-only phantom sequence is used.
 
-## Rooted score layer on PR #9
+## Merged rooted score milestone
 
-The focused branch is
+PR #9, “Lean: rooted score characterization,” merged as
 
-`chatgpt/root-score-characterization`
+`fd6f7a90111f0a6424510792fa7c0b8dcdfcbfab`.
 
-and draft PR #9 is “Lean: rooted score characterization.”
+The complete PR workflow passed before merge, and the post-merge `main` full
+workflow also passed completely.
 
 A new file `TreeStack/RootScore.lean` defines the exact rooted score from
 incident oriented branch messages:
@@ -125,10 +127,8 @@ not_stackable_iff_all_scores_nonpos :
   ¬ Stackable T.graph C ↔ ∀ r, score T C r ≤ 0
 ```
 
-Draft Lean CI passed for commit
-`016bbba3c002cb60f567f7e8392bd8aebb62f289`, containing the complete rooted
-proof.  `Audit.lean` is being extended to print axiom dependencies for this
-layer before the PR is promoted to the complete workflow.
+The rooted proof, its `Audit.lean` axiom checks, the complete repository
+workflow, and the post-merge `main` workflow are all green.
 
 ## Validation and trust
 
@@ -147,8 +147,8 @@ lake build
 lake env lean Audit.lean
 ```
 
-PR #9 is not considered complete until that full workflow is green, it is
-merged into `main`, and the post-merge `main` workflow is also green.
+The rooted-score milestone is complete on `main`; future work should branch
+from the authoritative merge commit above.
 
 ## Next formal frontier
 
@@ -157,5 +157,7 @@ roadmap is the explicit estimator obstruction, followed by support pruning and
 the arbitrary-defect estimator bound.
 
 The Csernák–Soukup tree-stacking conjecture is **not yet formally proved**.
-The strongest merged milestone at present is the complete exact branch-boundary
-invariant; the rooted score theorem is the current integration milestone.
+The strongest merged machine-checked milestone is now the rooted score
+characterization.  The next formal frontier is the explicit estimator
+obstruction, followed by support pruning and the arbitrary-defect estimator
+bound.
