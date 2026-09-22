@@ -35,9 +35,23 @@ import TreeStack
 #print axioms TreeStack.OrientedBranch.ClearOutcome.boundary_le_message
 #print axioms TreeStack.OrientedBranch.ClearOutcome.no_positive_boundary_of_message_nonpos
 
+#print axioms TreeStack.OrientedBranch.exists_childBranch_mem_of_mem_vertices_ne_root
+#print axioms TreeStack.OrientedBranch.parent_not_mem_childBranch_carrier
+#print axioms TreeStack.OrientedBranch.BranchReach.repeat_move
+#print axioms TreeStack.OrientedBranch.taskGainSum_occupiedChildTasks
+#print axioms TreeStack.OrientedBranch.executeOccupiedTaskSchedule
+#print axioms TreeStack.OrientedBranch.executeAllOccupiedChildren
+#print axioms TreeStack.OrientedBranch.attainRootTransfer_even
+#print axioms TreeStack.OrientedBranch.attainRootTransfer_odd
+#print axioms TreeStack.OrientedBranch.attainRootTransfer_ge_two
+#print axioms TreeStack.OrientedBranch.boundary_attainment
+#print axioms TreeStack.OrientedBranch.exactBoundaryInvariant
+
 #check TreeStack.MoveSignature
 #check TreeStack.OrientedBranch.MoveSignature.boundaryFlux
 #check TreeStack.OrientedBranch.MoveSignature.FeasibleClearing
 #check TreeStack.OrientedBranch.MoveSignature.EmptyExcursion
 #check TreeStack.OrientedBranch.BranchReach
 #check TreeStack.OrientedBranch.ExactBoundaryInvariant
+#check TreeStack.OrientedBranch.boundary_attainment
+#check TreeStack.OrientedBranch.exactBoundaryInvariant
