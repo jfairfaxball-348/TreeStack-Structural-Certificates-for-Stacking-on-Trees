@@ -184,3 +184,21 @@ import TreeStack
 #print axioms TreeStack.OrientedBranch.defectArrow_auxEdgeContribution_le_head_charge
 #print axioms TreeStack.OrientedBranch.twoNegativeOwnerArrow_auxEdgeContribution_le_owner_charge
 #print axioms TreeStack.OrientedBranch.auxiliaryState_auxEdgeContribution_le_rootedOwner_charge
+
+
+-- Global weighted cancellation, leaf slack, consolidation, and final formula
+#print axioms TreeStack.OrientedBranch.auxWeightedMass_le_auxDegreePotential
+#print axioms TreeStack.OrientedBranch.mass_le_auxCompactPotential
+#print axioms TreeStack.OrientedBranch.exists_root_auxHeight_le_dist
+#print axioms TreeStack.OrientedBranch.exists_root_auxCompactPotential_le_rootEstimate_sub_one
+#print axioms TreeStack.mass_add_one_le_estim_of_all_scores_nonpos
+#print axioms TreeStack.mass_le_estim_sub_one_of_all_scores_nonpos
+#print axioms TreeStack.nonstackable_mass_le_estim_sub_one
+#print axioms TreeStack.universalStackable_estim
+#print axioms TreeStack.universal_stackable_mono
+#print axioms TreeStack.estim_le_of_stackingCandidate
+#print axioms TreeStack.stack_eq_estim
+#print axioms TreeStack.stack_eq_estim_of_two_le_card
+
+#check TreeStack.stack
+#check TreeStack.stack_eq_estim_of_two_le_card
