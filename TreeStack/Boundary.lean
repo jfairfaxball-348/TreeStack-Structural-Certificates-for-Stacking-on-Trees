@@ -92,6 +92,21 @@ def taskGainSum (gain : α → ℤ) : List α → ℤ
   | [] => 0
   | t :: ts => gain t + taskGainSum gain ts
 
+/-- The recursive task sum is the ordinary sum of the mapped list. -/
+theorem taskGainSum_eq_list_sum (gain : α → ℤ) :
+    ∀ tasks : List α,
+      taskGainSum gain tasks = (tasks.map gain).sum
+  | [] => by simp [taskGainSum]
+  | t :: ts => by
+      simp [taskGainSum, taskGainSum_eq_list_sum gain ts]
+
+/-- The list sum agrees with the corresponding finite-set sum. -/
+theorem taskGainSum_toList [DecidableEq α]
+    (gain : α → ℤ) (s : Finset α) :
+    taskGainSum gain s.toList = Finset.sum s gain := by
+  rw [taskGainSum_eq_list_sum]
+  exact Finset.sum_map_toList s gain
+
 /-- A task order is safe from an initial pile `a` if every successive task
 leaves a strictly positive pile.  This is exactly the precondition needed to
 apply the occupied-child boundary invariant task by task. -/
@@ -245,6 +260,80 @@ theorem taskGainSum_orderedTasks (gain : α → ℤ) (tasks : List α) :
       taskGainSum gain tasks := by
   rw [orderedTasks, taskGainSum_append, taskGainSum_append]
   linarith [taskGainSum_partition gain tasks]
+
+theorem mem_orderedTasks_iff (gain : α → ℤ) (tasks : List α) (t : α) :
+    t ∈ orderedTasks gain tasks ↔ t ∈ tasks := by
+  constructor
+  · intro ht
+    simp only [orderedTasks, List.mem_append] at ht
+    rcases ht with ht | ht
+    · have hpos : t ∈ tasks ∧ 0 < gain t := by
+        simpa [positiveTasks] using ht
+      exact hpos.1
+    · rcases ht with ht | ht
+      · have hzero : t ∈ tasks ∧ gain t = 0 := by
+          simpa [zeroTasks] using ht
+        exact hzero.1
+      · have hneg : t ∈ tasks ∧ gain t < 0 := by
+          simpa [negativeTasks] using ht
+        exact hneg.1
+  · intro ht
+    by_cases hp : 0 < gain t
+    · have : t ∈ positiveTasks gain tasks := by
+        simpa [positiveTasks, ht, hp]
+      exact by
+        simp only [orderedTasks, List.mem_append]
+        exact Or.inl this
+    · by_cases hz : gain t = 0
+      · have : t ∈ zeroTasks gain tasks := by
+          simpa [zeroTasks, ht, hz]
+        exact by
+          simp only [orderedTasks, List.mem_append]
+          exact Or.inr (Or.inl this)
+      · have hn : gain t < 0 := by omega
+        have : t ∈ negativeTasks gain tasks := by
+          simpa [negativeTasks, ht, hn]
+        exact by
+          simp only [orderedTasks, List.mem_append]
+          exact Or.inr (Or.inr this)
+
+theorem orderedTasks_nodup (gain : α → ℤ) {tasks : List α}
+    (h : tasks.Nodup) :
+    (orderedTasks gain tasks).Nodup := by
+  rw [orderedTasks]
+  have hp := h.filter (fun t => 0 < gain t)
+  have hz := h.filter (fun t => gain t = 0)
+  have hn := h.filter (fun t => gain t < 0)
+  rw [List.nodup_append]
+  constructor
+  · exact hp
+  · constructor
+    · rw [List.nodup_append]
+      exact ⟨hz, hn, by
+        intro a ha b hb hab
+        subst b
+        have hZeroData : a ∈ tasks ∧ gain a = 0 := by
+          simpa [zeroTasks] using ha
+        have hNegData : a ∈ tasks ∧ gain a < 0 := by
+          simpa [negativeTasks] using hb
+        have hZero : gain a = 0 := hZeroData.2
+        have hNeg : gain a < 0 := hNegData.2
+        omega⟩
+    · intro a ha b hb hab
+      subst b
+      have hPosData : a ∈ tasks ∧ 0 < gain a := by
+        simpa [positiveTasks] using ha
+      have hPos : 0 < gain a := hPosData.2
+      simp only [List.mem_append] at hb
+      rcases hb with hZeroMem | hNegMem
+      · have hZeroData : a ∈ tasks ∧ gain a = 0 := by
+          simpa [zeroTasks] using hZeroMem
+        have hZero : gain a = 0 := hZeroData.2
+        omega
+      · have hNegData : a ∈ tasks ∧ gain a < 0 := by
+          simpa [negativeTasks] using hNegMem
+        have hNeg : gain a < 0 := hNegData.2
+        omega
 
 /-- Positive/zero/negative scheduling lemma from the audited construction.
 If the starting pile is nonnegative and the final total is positive, placing
@@ -445,6 +534,21 @@ theorem childBranch_carrier_subset
     rw [carrier]
     exact Finset.mem_insert.mpr (Or.inr hvB)
 
+/-- The external parent of a branch is outside every genuine child carrier. -/
+theorem parent_not_mem_childBranch_carrier
+    (B : OrientedBranch T) (c : B.Child) :
+    B.parent ∉ (B.childBranch c).carrier := by
+  classical
+  intro hp
+  have hpCases :
+      B.parent = B.root ∨
+        B.parent ∈ (B.childBranch c).vertices := by
+    simpa [carrier, childBranch] using hp
+  rcases hpCases with hroot | hpChild
+  · exact B.root_ne_parent hroot.symm
+  · exact B.parent_not_mem_vertices
+      (B.childBranch_vertices_subset c hpChild)
+
 /-- Distinct genuine child branches of the same oriented branch have disjoint
 vertex sets.  A common vertex would give a path in one child component that
 crosses the other's unique boundary edge and hence reaches the deleted parent
@@ -520,6 +624,27 @@ theorem childBranch_vertices_disjoint
       T.isTree.isAcyclic) d.adj.symm
   exact (SimpleGraph.isBridge_iff.mp hbridge) hreachRoot
 
+
+/-- A vertex in one child branch is outside the full carrier of every
+distinct sibling.  The only extra carrier vertex of a child is the common
+parent root, which lies in no child vertex set. -/
+theorem mem_childBranch_vertices_not_mem_sibling_carrier
+    (B : OrientedBranch T) (c d : B.Child)
+    (hcd : c.vertex ≠ d.vertex) {w : V}
+    (hw : w ∈ (B.childBranch c).vertices) :
+    w ∉ (B.childBranch d).carrier := by
+  classical
+  intro hwCarrier
+  have hwCases :
+      w = B.root ∨ w ∈ (B.childBranch d).vertices := by
+    simpa [carrier, childBranch] using hwCarrier
+  rcases hwCases with hroot | hwd
+  · subst w
+    exact (B.childBranch c).parent_not_mem_vertices hw
+  · exact
+      (Finset.disjoint_left.mp
+        (B.childBranch_vertices_disjoint c d hcd)) hw hwd
+
 section LegalSequences
 
 variable [DecidableEq V]
@@ -560,6 +685,74 @@ theorem BranchReach.eq_of_not_mem_carrier
         exact hw hv
       simp [move, hwu, hwv, ih]
 
+/-- A legal sequence inside a genuine child carrier is also a legal sequence
+inside the parent branch carrier. -/
+theorem BranchReach.of_child
+    (B : OrientedBranch T) (c : B.Child)
+    {C D : Configuration V}
+    (hreach : (B.childBranch c).BranchReach C D) :
+    B.BranchReach C D := by
+  induction hreach with
+  | refl =>
+      exact Relation.ReflTransGen.refl
+  | tail hCE hED ih =>
+      apply Relation.ReflTransGen.tail ih
+      rcases hED with ⟨u, v, huv, hlegal, hu, hv, rfl⟩
+      exact
+        ⟨u, v, huv, hlegal,
+          B.childBranch_carrier_subset c hu,
+          B.childBranch_carrier_subset c hv, rfl⟩
+
+/-- Repeating one legal oriented edge move a prescribed number of times
+gives exact endpoint counts and leaves every other vertex unchanged. -/
+theorem BranchReach.repeat_move
+    (B : OrientedBranch T) {u v : V}
+    (huv : T.graph.Adj u v)
+    (huCarrier : u ∈ B.carrier) (hvCarrier : v ∈ B.carrier) :
+    ∀ (C : Configuration V) (n : ℕ),
+      2 * n ≤ C u →
+      ∃ D : Configuration V,
+        B.BranchReach C D ∧
+        D u = C u - 2 * n ∧
+        D v = C v + n ∧
+        (∀ w : V, w ≠ u → w ≠ v → D w = C w) := by
+  classical
+  intro C n
+  induction n generalizing C with
+  | zero =>
+      intro h
+      refine ⟨C, Relation.ReflTransGen.refl, ?_, ?_, ?_⟩
+      · simp
+      · simp
+      · intro w hwu hwv
+        rfl
+  | succ n ih =>
+      intro hTotal
+      have hLegal : 2 ≤ C u := by omega
+      let E : Configuration V := move C u v
+      have hStep : B.BranchPebbleStep C E :=
+        ⟨u, v, huv, hLegal, huCarrier, hvCarrier, rfl⟩
+      have hReachStep : B.BranchReach C E :=
+        Relation.ReflTransGen.single hStep
+      have hEu : E u = C u - 2 := by
+        simp [E, move, huv.ne]
+      have hEv : E v = C v + 1 := by
+        simp [E, move, huv.ne]
+      have hRemain : 2 * n ≤ E u := by
+        rw [hEu]
+        omega
+      rcases ih E hRemain with ⟨D, hReachRest, hDu, hDv, hOther⟩
+      have hReach : B.BranchReach C D :=
+        Relation.ReflTransGen.trans hReachStep hReachRest
+      refine ⟨D, hReach, ?_, ?_, ?_⟩
+      · rw [hDu, hEu]
+        omega
+      · rw [hDv, hEv]
+        omega
+      · intro w hwu hwv
+        rw [hOther w hwu hwv]
+        simp [E, move, hwu, hwv]
+
 /-- All vertices of the branch have been cleared. -/
 def Cleared (B : OrientedBranch T) (D : Configuration V) : Prop :=
   ∀ v ∈ B.vertices, D v = 0
@@ -599,11 +792,708 @@ theorem occupied_withBoundary_iff (B : OrientedBranch T)
   · rintro ⟨v, hv, hpos⟩
     exact ⟨v, hv, by simpa [B.withBoundary_of_mem_vertices C q hv] using hpos⟩
 
+/-- Predicate saying that a vertex indexes a genuine child branch. -/
+def IsChildVertex (B : OrientedBranch T) (v : V) : Prop :=
+  T.graph.Adj B.root v ∧ v ≠ B.parent
+
+/-- The genuine child branch indexed by a vertex satisfying the child predicate. -/
+def childOfVertex (B : OrientedBranch T) (v : V)
+    (h : B.IsChildVertex v) : B.Child where
+  vertex := v
+  adj := h.1
+  ne_parent := h.2
+
+/-- Predicate for vertices indexing occupied genuine children. -/
+def IsOccupiedChildVertex
+    (B : OrientedBranch T) (C : Configuration V) (v : V) : Prop :=
+  ∃ h : B.IsChildVertex v,
+    (B.childBranch (B.childOfVertex v h)).Occupied C
+
+/-- An executable child task is a genuine child branch that is occupied in
+the original configuration. Empty child branches are absent from this type,
+rather than represented by zero-gain tasks. -/
+def OccupiedChild (B : OrientedBranch T) (C : Configuration V) :=
+  {v : V // B.IsOccupiedChildVertex C v}
+
+noncomputable instance OccupiedChild.instFintype
+    (B : OrientedBranch T) (C : Configuration V) :
+    Fintype (B.OccupiedChild C) :=
+  Fintype.ofInjective
+    (fun t : B.OccupiedChild C => (t.1 : V))
+    Subtype.val_injective
+
+/-- The genuine child carried by an occupied-child task. -/
+noncomputable def OccupiedChild.child
+    {B : OrientedBranch T} {C : Configuration V}
+    (t : B.OccupiedChild C) : B.Child :=
+  B.childOfVertex t.1 (Classical.choose t.2)
+
+/-- The child represented by an occupied-child task is occupied. -/
+theorem OccupiedChild.occupied
+    {B : OrientedBranch T} {C : Configuration V}
+    (t : B.OccupiedChild C) :
+    (B.childBranch t.child).Occupied C := by
+  exact Classical.choose_spec t.2
+
+@[simp] theorem OccupiedChild.child_vertex
+    {B : OrientedBranch T} {C : Configuration V}
+    (t : B.OccupiedChild C) :
+    t.child.vertex = t.1 := rfl
+
+/-- The summand appearing in childMessageSum at a vertex. -/
+noncomputable def childMessageTerm
+    (B : OrientedBranch T) (C : Configuration V) (v : V) : ℤ :=
+  if h : B.IsChildVertex v then
+    messageContribution
+      (branchMessage C (B.childBranch (B.childOfVertex v h)))
+  else
+    0
+
+theorem childMessageSum_eq_sum_term
+    (B : OrientedBranch T) (C : Configuration V) :
+    childMessageSum C B = ∑ v : V, B.childMessageTerm C v := by
+  rw [childMessageSum]
+  apply Finset.sum_congr rfl
+  intro v _
+  by_cases h : T.graph.Adj B.root v ∧ v ≠ B.parent
+  · simp [childMessageTerm, IsChildVertex, childOfVertex, h]
+  · simp [childMessageTerm, IsChildVertex, h]
+
+theorem childMessageTerm_eq_zero_of_not_occupiedChild
+    (B : OrientedBranch T) (C : Configuration V) {v : V}
+    (hv : ¬ B.IsOccupiedChildVertex C v) :
+    B.childMessageTerm C v = 0 := by
+  by_cases h : B.IsChildVertex v
+  · have hnot :
+        ¬ (B.childBranch (B.childOfVertex v h)).Occupied C := by
+      intro hocc
+      exact hv ⟨h, hocc⟩
+    simp [childMessageTerm, h,
+      branchMessage_eq_empty_of_not_occupied C
+        (B.childBranch (B.childOfVertex v h)) hnot]
+  · simp [childMessageTerm, h]
+
+/-- Recursive integer gain attached to an occupied child task. -/
+noncomputable def OccupiedChild.gain
+    {B : OrientedBranch T} {C : Configuration V}
+    (t : B.OccupiedChild C) : ℤ :=
+  messageContribution (branchMessage C (B.childBranch t.child))
+
+theorem OccupiedChild.gain_eq_F
+    {B : OrientedBranch T} {C : Configuration V}
+    (t : B.OccupiedChild C) :
+    t.gain = F (effectiveInput C (B.childBranch t.child)) := by
+  rw [OccupiedChild.gain,
+    branchMessage_eq_some_of_occupied C (B.childBranch t.child) t.occupied]
+  rfl
+
+theorem OccupiedChild.gain_eq_term
+    {B : OrientedBranch T} {C : Configuration V}
+    (t : B.OccupiedChild C) :
+    t.gain = B.childMessageTerm C t.1 := by
+  have h : B.IsChildVertex t.1 := Classical.choose t.2
+  simp [OccupiedChild.gain, OccupiedChild.child,
+    childMessageTerm, h]
+
+/-- The unscheduled child-task list contains every occupied genuine child once
+and contains no empty branch. -/
+noncomputable def occupiedChildTasks
+    (B : OrientedBranch T) (C : Configuration V) :
+    List (B.OccupiedChild C) := by
+  classical
+  exact (Finset.univ : Finset (B.OccupiedChild C)).toList
+
+theorem occupiedChildTasks_nodup
+    (B : OrientedBranch T) (C : Configuration V) :
+    (B.occupiedChildTasks C).Nodup := by
+  classical
+  exact Finset.nodup_toList (Finset.univ : Finset (B.OccupiedChild C))
+
+@[simp] theorem mem_occupiedChildTasks
+    (B : OrientedBranch T) (C : Configuration V)
+    (t : B.OccupiedChild C) :
+    t ∈ B.occupiedChildTasks C := by
+  classical
+  exact Finset.mem_toList.mpr (Finset.mem_univ t)
+
+/-- The occupied executable tasks carry exactly the recursive child-message
+sum. Empty genuine children contribute zero to childMessageSum but are absent
+from the task list. -/
+theorem taskGainSum_occupiedChildTasks
+    (B : OrientedBranch T) (C : Configuration V) :
+    taskGainSum
+        (fun t : B.OccupiedChild C => t.gain)
+        (B.occupiedChildTasks C) =
+      childMessageSum C B := by
+  classical
+  calc
+    taskGainSum
+        (fun t : B.OccupiedChild C => t.gain)
+        (B.occupiedChildTasks C) =
+        ∑ t : B.OccupiedChild C, t.gain := by
+          rw [occupiedChildTasks, taskGainSum_toList]
+    _ = ∑ t : B.OccupiedChild C,
+          B.childMessageTerm C t.1 := by
+          apply Finset.sum_congr rfl
+          intro t _
+          exact t.gain_eq_term
+    _ = ∑ v ∈
+          (Finset.univ.filter fun v : V =>
+            B.IsOccupiedChildVertex C v),
+          B.childMessageTerm C v := by
+          symm
+          simpa [OccupiedChild] using
+            (Finset.sum_subtype
+              (Finset.univ.filter fun v : V =>
+                B.IsOccupiedChildVertex C v)
+              (fun v => by simp)
+              (fun v => B.childMessageTerm C v))
+    _ = ∑ v : V, B.childMessageTerm C v := by
+          apply Finset.sum_subset (Finset.filter_subset _ _)
+          intro v hvUniv hvNot
+          have hvNotOcc : ¬ B.IsOccupiedChildVertex C v := by
+            intro hvOcc
+            exact hvNot (Finset.mem_filter.mpr ⟨hvUniv, hvOcc⟩)
+          exact B.childMessageTerm_eq_zero_of_not_occupiedChild C hvNotOcc
+    _ = childMessageSum C B := (B.childMessageSum_eq_sum_term C).symm
+
 /-- A final configuration obtained by a legal branch-local sequence which
 clears the entire branch. -/
 def ClearOutcome (B : OrientedBranch T) (C : Configuration V)
     (q : ℕ) (D : Configuration V) : Prop :=
   B.BranchReach (B.withBoundary C q) D ∧ B.Cleared D
+
+/-- Execute a safe list of occupied child tasks by recursively attaining each
+child's exact boundary gain.  The theorem records the parent-root gain,
+preservation of the external boundary, clearing of every scheduled child, and
+pointwise preservation of every sibling omitted from the list. -/
+theorem executeOccupiedTaskSchedule
+    (B : OrientedBranch T) (C : Configuration V)
+    (hChildAttain :
+      ∀ (c : B.Child) (E : Configuration V) (d : ℤ) (q : ℕ),
+        (B.childBranch c).Occupied E →
+        branchMessage E (B.childBranch c) = some d →
+        0 < (q : ℤ) + d →
+        ∃ D : Configuration V,
+          (B.childBranch c).ClearOutcome E q D ∧
+            (D B.root : ℤ) = (q : ℤ) + d) :
+    ∀ (tasks : List (B.OccupiedChild C)) (E : Configuration V),
+      tasks.Nodup →
+      (∀ t ∈ tasks, ∀ v ∈ (B.childBranch t.child).vertices,
+        E v = C v) →
+      TaskScheduleSafe
+        (fun t : B.OccupiedChild C => t.gain)
+        (E B.root : ℤ) tasks →
+      ∃ D : Configuration V,
+        B.BranchReach E D ∧
+        (D B.root : ℤ) =
+          (E B.root : ℤ) +
+            taskGainSum
+              (fun t : B.OccupiedChild C => t.gain) tasks ∧
+        D B.parent = E B.parent ∧
+        (∀ t ∈ tasks, (B.childBranch t.child).Cleared D) ∧
+        (∀ c : B.Child,
+          (∀ t ∈ tasks, t.1 ≠ c.vertex) →
+          ∀ v ∈ (B.childBranch c).vertices, D v = E v) := by
+  classical
+  intro tasks
+  induction tasks with
+  | nil =>
+      intro E hNodup hSame hSafe
+      refine ⟨E, Relation.ReflTransGen.refl, ?_, rfl, ?_, ?_⟩
+      · simp [taskGainSum]
+      · intro t ht
+        simp at ht
+      · intro c hnot v hv
+        rfl
+  | cons t ts ih =>
+      intro E hNodup hSame hSafe
+      have hNodupData := List.nodup_cons.mp hNodup
+      have htNot : t ∉ ts := hNodupData.1
+      have hNodupTail : ts.Nodup := hNodupData.2
+      change
+        0 < (E B.root : ℤ) + t.gain ∧
+          TaskScheduleSafe
+            (fun s : B.OccupiedChild C => s.gain)
+            ((E B.root : ℤ) + t.gain) ts at hSafe
+      have hSameHead :
+          ∀ v ∈ (B.childBranch t.child).vertices, E v = C v :=
+        hSame t (by simp)
+      have hCE :
+          ∀ v ∈ (B.childBranch t.child).vertices, C v = E v := by
+        intro v hv
+        exact (hSameHead v hv).symm
+      have hOccE :
+          (B.childBranch t.child).Occupied E :=
+        ((B.childBranch t.child).occupied_congr_vertices C E hCE).mp
+          t.occupied
+      have hMsgC :
+          branchMessage C (B.childBranch t.child) = some t.gain := by
+        rw [branchMessage_eq_some_of_occupied C
+          (B.childBranch t.child) t.occupied, t.gain_eq_F]
+      have hMsgE :
+          branchMessage E (B.childBranch t.child) = some t.gain := by
+        calc
+          branchMessage E (B.childBranch t.child) =
+              branchMessage C (B.childBranch t.child) :=
+            (branchMessage_congr_vertices C E
+              (B.childBranch t.child) hCE).symm
+          _ = some t.gain := hMsgC
+      rcases hChildAttain t.child E t.gain (E B.root)
+          hOccE hMsgE hSafe.1 with
+        ⟨E₁, hClear₁, hRoot₁⟩
+      rcases hClear₁ with ⟨hReachRaw, hCleared₁⟩
+      have hStart :
+          (B.childBranch t.child).withBoundary E (E B.root) = E := by
+        have hSelf := (B.childBranch t.child).withBoundary_self E
+        simpa [childBranch] using hSelf
+      have hReachChild :
+          (B.childBranch t.child).BranchReach E E₁ := by
+        rw [hStart] at hReachRaw
+        exact hReachRaw
+      have hReachParent : B.BranchReach E E₁ :=
+        BranchReach.of_child B t.child hReachChild
+      have hParent₁ : E₁ B.parent = E B.parent :=
+        BranchReach.eq_of_not_mem_carrier
+          (B.childBranch t.child) hReachChild
+          (B.parent_not_mem_childBranch_carrier t.child)
+      have hSameTail :
+          ∀ s ∈ ts, ∀ v ∈ (B.childBranch s.child).vertices,
+            E₁ v = C v := by
+        intro s hs v hv
+        have hst : s.1 ≠ t.1 := by
+          intro hEq
+          have hObj : s = t := Subtype.ext hEq
+          subst s
+          exact htNot hs
+        have hChildNe : s.child.vertex ≠ t.child.vertex := by
+          simpa using hst
+        have hOutside :
+            v ∉ (B.childBranch t.child).carrier :=
+          B.mem_childBranch_vertices_not_mem_sibling_carrier
+            s.child t.child hChildNe hv
+        have hEqStep :=
+          BranchReach.eq_of_not_mem_carrier
+            (B.childBranch t.child) hReachChild hOutside
+        calc
+          E₁ v = E v := hEqStep
+          _ = C v := hSame s (by simp [hs]) v hv
+      have hSafeTail :
+          TaskScheduleSafe
+            (fun s : B.OccupiedChild C => s.gain)
+            (E₁ B.root : ℤ) ts := by
+        rw [hRoot₁]
+        exact hSafe.2
+      rcases ih E₁ hNodupTail hSameTail hSafeTail with
+        ⟨D, hReachTail, hRootTail, hParentTail,
+          hClearedTail, hUntouchedTail⟩
+      have hReachAll : B.BranchReach E D :=
+        Relation.ReflTransGen.trans hReachParent hReachTail
+      have hRootAll :
+          (D B.root : ℤ) =
+            (E B.root : ℤ) +
+              taskGainSum
+                (fun s : B.OccupiedChild C => s.gain) (t :: ts) := by
+        rw [hRootTail, hRoot₁]
+        simp only [taskGainSum]
+        ring
+      have hParentAll : D B.parent = E B.parent := by
+        rw [hParentTail, hParent₁]
+      have hHeadNotTail :
+          ∀ s ∈ ts, s.1 ≠ t.child.vertex := by
+        intro s hs hEq
+        have hEq' : s.1 = t.1 := by
+          simpa using hEq
+        have hObj : s = t := Subtype.ext hEq'
+        subst s
+        exact htNot hs
+      have hHeadPres :
+          ∀ v ∈ (B.childBranch t.child).vertices, D v = E₁ v :=
+        hUntouchedTail t.child hHeadNotTail
+      have hClearedHead :
+          (B.childBranch t.child).Cleared D := by
+        intro v hv
+        rw [hHeadPres v hv]
+        exact hCleared₁ v hv
+      have hClearedAll :
+          ∀ s ∈ t :: ts, (B.childBranch s.child).Cleared D := by
+        intro s hs
+        rcases List.mem_cons.mp hs with rfl | hs
+        · exact hClearedHead
+        · exact hClearedTail s hs
+      have hUntouchedAll :
+          ∀ c : B.Child,
+            (∀ s ∈ t :: ts, s.1 ≠ c.vertex) →
+            ∀ v ∈ (B.childBranch c).vertices, D v = E v := by
+        intro c hnot v hv
+        have hnotHead : t.1 ≠ c.vertex :=
+          hnot t (by simp)
+        have hnotTail : ∀ s ∈ ts, s.1 ≠ c.vertex := by
+          intro s hs
+          exact hnot s (by simp [hs])
+        have hcHead : c.vertex ≠ t.child.vertex := by
+          simpa using hnotHead.symm
+        have hOutside :
+            v ∉ (B.childBranch t.child).carrier :=
+          B.mem_childBranch_vertices_not_mem_sibling_carrier
+            c t.child hcHead hv
+        have hStep :=
+          BranchReach.eq_of_not_mem_carrier
+            (B.childBranch t.child) hReachChild hOutside
+        calc
+          D v = E₁ v := hUntouchedTail c hnotTail v hv
+          _ = E v := hStep
+      exact
+        ⟨D, hReachAll, hRootAll, hParentAll,
+          hClearedAll, hUntouchedAll⟩
+
+/-- Execute every occupied genuine child in the audited order.  The resulting
+configuration has accumulated exactly childMessageSum at the root, leaves the
+external parent unchanged, and clears every non-root vertex of the branch.
+Configuration-empty children are never tasks and remain untouched. -/
+theorem executeAllOccupiedChildren
+    (B : OrientedBranch T) (C E : Configuration V)
+    (hChildAttain :
+      ∀ (c : B.Child) (E' : Configuration V) (d : ℤ) (q : ℕ),
+        (B.childBranch c).Occupied E' →
+        branchMessage E' (B.childBranch c) = some d →
+        0 < (q : ℤ) + d →
+        ∃ D : Configuration V,
+          (B.childBranch c).ClearOutcome E' q D ∧
+            (D B.root : ℤ) = (q : ℤ) + d)
+    (hSame :
+      ∀ v ∈ B.vertices, v ≠ B.root → E v = C v)
+    (hSafe :
+      TaskScheduleSafe
+        (fun t : B.OccupiedChild C => t.gain)
+        (E B.root : ℤ)
+        (orderedTasks
+          (fun t : B.OccupiedChild C => t.gain)
+          (B.occupiedChildTasks C))) :
+    ∃ D : Configuration V,
+      B.BranchReach E D ∧
+      (D B.root : ℤ) =
+        (E B.root : ℤ) + childMessageSum C B ∧
+      D B.parent = E B.parent ∧
+      (∀ v ∈ B.vertices, v ≠ B.root → D v = 0) := by
+  classical
+  let gain : B.OccupiedChild C → ℤ := fun t => t.gain
+  let baseTasks : List (B.OccupiedChild C) := B.occupiedChildTasks C
+  let scheduled : List (B.OccupiedChild C) :=
+    orderedTasks gain baseTasks
+  have hNodupBase : baseTasks.Nodup := by
+    simpa [baseTasks] using B.occupiedChildTasks_nodup C
+  have hNodupScheduled : scheduled.Nodup := by
+    exact orderedTasks_nodup gain hNodupBase
+  have hSameScheduled :
+      ∀ t ∈ scheduled, ∀ v ∈ (B.childBranch t.child).vertices,
+        E v = C v := by
+    intro t ht v hv
+    have hvB : v ∈ B.vertices :=
+      B.childBranch_vertices_subset t.child hv
+    have hvRoot : v ≠ B.root := by
+      intro hvr
+      subst v
+      exact (B.childBranch t.child).parent_not_mem_vertices
+        (by simpa using hv)
+    exact hSame v hvB hvRoot
+  have hSafe' :
+      TaskScheduleSafe gain (E B.root : ℤ) scheduled := by
+    simpa [gain, baseTasks, scheduled] using hSafe
+  rcases executeOccupiedTaskSchedule B C hChildAttain
+      scheduled E hNodupScheduled hSameScheduled hSafe' with
+    ⟨D, hReach, hRoot, hParent, hCleared, hUntouched⟩
+  have hRoot' :
+      (D B.root : ℤ) =
+        (E B.root : ℤ) + childMessageSum C B := by
+    calc
+      (D B.root : ℤ) =
+          (E B.root : ℤ) + taskGainSum gain scheduled := hRoot
+      _ =
+          (E B.root : ℤ) + taskGainSum gain baseTasks := by
+            change
+              (E B.root : ℤ) +
+                  taskGainSum gain (orderedTasks gain baseTasks) =
+                (E B.root : ℤ) + taskGainSum gain baseTasks
+            rw [taskGainSum_orderedTasks]
+      _ = (E B.root : ℤ) + childMessageSum C B := by
+            change
+              (E B.root : ℤ) +
+                  taskGainSum
+                    (fun t : B.OccupiedChild C => t.gain)
+                    (B.occupiedChildTasks C) =
+                (E B.root : ℤ) + childMessageSum C B
+            rw [taskGainSum_occupiedChildTasks]
+  have hNonroot :
+      ∀ v ∈ B.vertices, v ≠ B.root → D v = 0 := by
+    intro v hvB hvRoot
+    rcases B.exists_childBranch_mem_of_mem_vertices_ne_root hvB hvRoot with
+      ⟨c, hvc⟩
+    by_cases hOcc : (B.childBranch c).Occupied C
+    · let hcv : B.IsChildVertex c.vertex := ⟨c.adj, c.ne_parent⟩
+      have hcEq : B.childOfVertex c.vertex hcv = c :=
+        Child.eq_of_vertex_eq rfl
+      let t : B.OccupiedChild C :=
+        ⟨c.vertex, ⟨hcv, by
+          rw [hcEq]
+          exact hOcc⟩⟩
+      have htChild : t.child = c := by
+        apply Child.eq_of_vertex_eq
+        calc
+          t.child.vertex = t.1 := t.child_vertex
+          _ = c.vertex := rfl
+      have htBase : t ∈ baseTasks := by
+        simpa [baseTasks] using B.mem_occupiedChildTasks C t
+      have htScheduled : t ∈ scheduled := by
+        change t ∈ orderedTasks gain baseTasks
+        exact (mem_orderedTasks_iff gain baseTasks t).2 htBase
+      have htClear := hCleared t htScheduled
+      rw [htChild] at htClear
+      exact htClear v hvc
+    · have hNoTask :
+          ∀ t ∈ scheduled, t.1 ≠ c.vertex := by
+        intro t ht hEq
+        have htc : t.child = c := by
+          apply Child.eq_of_vertex_eq
+          simpa using hEq
+        have htOcc := t.occupied
+        rw [htc] at htOcc
+        exact hOcc htOcc
+      have hPres : D v = E v :=
+        hUntouched c hNoTask v hvc
+      have hEC : E v = C v :=
+        hSame v hvB hvRoot
+      have hC0 : C v = 0 := by
+        by_contra hne
+        exact hOcc ⟨v, hvc, Nat.pos_of_ne_zero hne⟩
+      calc
+        D v = E v := hPres
+        _ = C v := hEC
+        _ = 0 := hC0
+  exact ⟨D, hReach, hRoot', hParent, hNonroot⟩
+
+/-- Once all non-root branch vertices are clear, an even root pile 2k
+with k at least one is cleared optimally by k outward boundary moves. -/
+theorem attainRootTransfer_even
+    (B : OrientedBranch T) (E : Configuration V) (k : ℕ)
+    (hk : 1 ≤ k)
+    (hRoot : E B.root = 2 * k)
+    (hNonroot :
+      ∀ v ∈ B.vertices, v ≠ B.root → E v = 0) :
+    ∃ D : Configuration V,
+      B.BranchReach E D ∧
+      B.Cleared D ∧
+      (D B.parent : ℤ) =
+        (E B.parent : ℤ) + F (E B.root : ℤ) := by
+  classical
+  have hEnough : 2 * k ≤ E B.root := by
+    omega
+  rcases BranchReach.repeat_move B B.adj
+      B.root_mem_carrier B.parent_mem_carrier E k hEnough with
+    ⟨D, hReach, hDroot, hDparent, hOther⟩
+  have hRootZero : D B.root = 0 := by
+    rw [hDroot, hRoot]
+    omega
+  have hCleared : B.Cleared D := by
+    intro v hv
+    by_cases hvr : v = B.root
+    · subst v
+      exact hRootZero
+    · have hvp : v ≠ B.parent := by
+        intro hvp
+        subst v
+        exact B.parent_not_mem_vertices hv
+      rw [hOther v hvr hvp]
+      exact hNonroot v hv hvr
+  have hkZ : 0 ≤ (k : ℤ) := by positivity
+  have hkPosZ : 0 < (k : ℤ) := by exact_mod_cast hk
+  have hRootZ : (E B.root : ℤ) = 2 * (k : ℤ) := by
+    exact_mod_cast hRoot
+  have hF : F (E B.root : ℤ) = (k : ℤ) := by
+    apply (F_eq_nonneg_iff (z := (E B.root : ℤ))
+      (k := (k : ℤ)) hkZ).2
+    exact Or.inl ⟨hkPosZ, hRootZ⟩
+  have hParentZ :
+      (D B.parent : ℤ) =
+        (E B.parent : ℤ) + (k : ℤ) := by
+    exact_mod_cast hDparent
+  refine ⟨D, hReach, hCleared, ?_⟩
+  rw [hF]
+  exact hParentZ
+
+/-- Once all non-root branch vertices are clear, an odd root pile 2k+1
+with k at least one attains the exact transfer by an explicit legal sequence.
+If the boundary is empty, two outward moves are made first; otherwise one
+outward move suffices to fund the single inward move. -/
+theorem attainRootTransfer_odd
+    (B : OrientedBranch T) (E : Configuration V) (k : ℕ)
+    (hk : 1 ≤ k)
+    (hRoot : E B.root = 2 * k + 1)
+    (hNonroot :
+      ∀ v ∈ B.vertices, v ≠ B.root → E v = 0)
+    (hPos :
+      0 < (E B.parent : ℤ) + F (E B.root : ℤ)) :
+    ∃ D : Configuration V,
+      B.BranchReach E D ∧
+      B.Cleared D ∧
+      (D B.parent : ℤ) =
+        (E B.parent : ℤ) + F (E B.root : ℤ) := by
+  classical
+  have hkMinus : 0 ≤ (k : ℤ) - 1 := by
+    omega
+  have hRootZ :
+      (E B.root : ℤ) = 2 * (k : ℤ) + 1 := by
+    exact_mod_cast hRoot
+  have hF :
+      F (E B.root : ℤ) = (k : ℤ) - 1 := by
+    apply (F_eq_nonneg_iff (z := (E B.root : ℤ))
+      (k := (k : ℤ) - 1) hkMinus).2
+    exact Or.inr (by
+      rw [hRootZ]
+      ring)
+  by_cases hq : E B.parent = 0
+  · have hk2 : 2 ≤ k := by
+      rw [hF, hq] at hPos
+      norm_num at hPos
+      omega
+    have hEnough1 : 2 * 2 ≤ E B.root := by
+      rw [hRoot]
+      omega
+    rcases BranchReach.repeat_move B B.adj
+        B.root_mem_carrier B.parent_mem_carrier E 2 hEnough1 with
+      ⟨E₁, hReach₁, h1root, h1parent, h1other⟩
+    have hEnough2 : 2 * 1 ≤ E₁ B.parent := by
+      omega
+    rcases BranchReach.repeat_move B B.adj.symm
+        B.parent_mem_carrier B.root_mem_carrier E₁ 1 hEnough2 with
+      ⟨E₂, hReach₂, h2parent, h2root, h2other⟩
+    have hEnough3 : 2 * (k - 1) ≤ E₂ B.root := by
+      rw [h2root, h1root, hRoot]
+      omega
+    rcases BranchReach.repeat_move B B.adj
+        B.root_mem_carrier B.parent_mem_carrier E₂ (k - 1) hEnough3 with
+      ⟨D, hReach₃, h3root, h3parent, h3other⟩
+    have hReach :
+        B.BranchReach E D :=
+      Relation.ReflTransGen.trans hReach₁
+        (Relation.ReflTransGen.trans hReach₂ hReach₃)
+    have hRootZero : D B.root = 0 := by
+      omega
+    have hCleared : B.Cleared D := by
+      intro v hv
+      by_cases hvr : v = B.root
+      · subst v
+        exact hRootZero
+      · have hvp : v ≠ B.parent := by
+          intro hvp
+          subst v
+          exact B.parent_not_mem_vertices hv
+        calc
+          D v = E₂ v := h3other v hvr hvp
+          _ = E₁ v := h2other v hvp hvr
+          _ = E v := h1other v hvr hvp
+          _ = 0 := hNonroot v hv hvr
+    have hParentNat :
+        D B.parent = E B.parent + (k - 1) := by
+      omega
+    have hParentZ :
+        (D B.parent : ℤ) =
+          (E B.parent : ℤ) + ((k : ℤ) - 1) := by
+      calc
+        (D B.parent : ℤ) =
+            ((E B.parent + (k - 1) : ℕ) : ℤ) := by
+              exact_mod_cast hParentNat
+        _ = (E B.parent : ℤ) + ((k : ℤ) - 1) := by
+              rw [Nat.cast_add, Nat.cast_sub hk]
+              norm_num
+
+    refine ⟨D, hReach, hCleared, ?_⟩
+    rw [hF]
+    exact hParentZ
+  · have hq1 : 1 ≤ E B.parent := Nat.one_le_iff_ne_zero.mpr hq
+    have hEnough1 : 2 * 1 ≤ E B.root := by
+      rw [hRoot]
+      omega
+    rcases BranchReach.repeat_move B B.adj
+        B.root_mem_carrier B.parent_mem_carrier E 1 hEnough1 with
+      ⟨E₁, hReach₁, h1root, h1parent, h1other⟩
+    have hEnough2 : 2 * 1 ≤ E₁ B.parent := by
+      omega
+    rcases BranchReach.repeat_move B B.adj.symm
+        B.parent_mem_carrier B.root_mem_carrier E₁ 1 hEnough2 with
+      ⟨E₂, hReach₂, h2parent, h2root, h2other⟩
+    have hEnough3 : 2 * k ≤ E₂ B.root := by
+      rw [h2root, h1root, hRoot]
+      omega
+    rcases BranchReach.repeat_move B B.adj
+        B.root_mem_carrier B.parent_mem_carrier E₂ k hEnough3 with
+      ⟨D, hReach₃, h3root, h3parent, h3other⟩
+    have hReach :
+        B.BranchReach E D :=
+      Relation.ReflTransGen.trans hReach₁
+        (Relation.ReflTransGen.trans hReach₂ hReach₃)
+    have hRootZero : D B.root = 0 := by
+      omega
+    have hCleared : B.Cleared D := by
+      intro v hv
+      by_cases hvr : v = B.root
+      · subst v
+        exact hRootZero
+      · have hvp : v ≠ B.parent := by
+          intro hvp
+          subst v
+          exact B.parent_not_mem_vertices hv
+        calc
+          D v = E₂ v := h3other v hvr hvp
+          _ = E₁ v := h2other v hvp hvr
+          _ = E v := h1other v hvr hvp
+          _ = 0 := hNonroot v hv hvr
+    have hParentNat :
+        D B.parent = E B.parent + (k - 1) := by
+      omega
+    have hParentZ :
+        (D B.parent : ℤ) =
+          (E B.parent : ℤ) + ((k : ℤ) - 1) := by
+      calc
+        (D B.parent : ℤ) =
+            ((E B.parent + (k - 1) : ℕ) : ℤ) := by
+              exact_mod_cast hParentNat
+        _ = (E B.parent : ℤ) + ((k : ℤ) - 1) := by
+              rw [Nat.cast_add, Nat.cast_sub hk]
+              norm_num
+    refine ⟨D, hReach, hCleared, ?_⟩
+    rw [hF]
+    exact hParentZ
+
+/-- Root/boundary attainment for every effective root pile at least two. -/
+theorem attainRootTransfer_ge_two
+    (B : OrientedBranch T) (E : Configuration V)
+    (hRootTwo : 2 ≤ E B.root)
+    (hNonroot :
+      ∀ v ∈ B.vertices, v ≠ B.root → E v = 0)
+    (hPos :
+      0 < (E B.parent : ℤ) + F (E B.root : ℤ)) :
+    ∃ D : Configuration V,
+      B.BranchReach E D ∧
+      B.Cleared D ∧
+      (D B.parent : ℤ) =
+        (E B.parent : ℤ) + F (E B.root : ℤ) := by
+  classical
+  by_cases hEven : Even (E B.root)
+  · rcases hEven with ⟨k, hkEq⟩
+    have hRoot : E B.root = 2 * k := by
+      omega
+    have hk : 1 ≤ k := by
+      omega
+    exact B.attainRootTransfer_even E k hk hRoot hNonroot
+  · have hOdd : Odd (E B.root) :=
+      Nat.not_even_iff_odd.mp hEven
+    rcases hOdd with ⟨k, hkEq⟩
+    have hRoot : E B.root = 2 * k + 1 := by
+      omega
+    have hk : 1 ≤ k := by
+      omega
+    exact B.attainRootTransfer_odd E k hk hRoot hNonroot hPos
 
 theorem MoveSignature.zero_supportedOn (B : OrientedBranch T) :
     MoveSignature.SupportedOn (MoveSignature.zero T) B := by
@@ -1558,6 +2448,205 @@ theorem ClearOutcome.no_positive_boundary_of_message_nonpos
     exact_mod_cast hPos
   omega
 
+/-- Constructive half of the exact boundary invariant.  For every occupied
+branch, whenever the requested final boundary value q+d is positive, there is
+a legal branch-local clearing that attains it exactly.  The recursion is on
+strict child-branch cardinality. -/
+theorem boundary_attainment
+    (C : Configuration V) (B : OrientedBranch T)
+    (hOcc : B.Occupied C) :
+    ∀ d : ℤ, branchMessage C B = some d →
+      ∀ q : ℕ, 0 < (q : ℤ) + d →
+        ∃ D : Configuration V,
+          B.ClearOutcome C q D ∧
+            (D B.parent : ℤ) = (q : ℤ) + d := by
+  classical
+  intro d hMsg q hPos
+  have hCanonical :=
+    branchMessage_eq_some_of_occupied C B hOcc
+  have hd : d = F (effectiveInput C B) := by
+    rw [hCanonical] at hMsg
+    exact (Option.some.inj hMsg).symm
+  have hFinalF :
+      0 < (q : ℤ) + F (effectiveInput C B) := by
+    simpa [hd] using hPos
+  have hChildAttain :
+      ∀ (c : B.Child) (E : Configuration V) (d' : ℤ) (q' : ℕ),
+        (B.childBranch c).Occupied E →
+        branchMessage E (B.childBranch c) = some d' →
+        0 < (q' : ℤ) + d' →
+        ∃ D : Configuration V,
+          (B.childBranch c).ClearOutcome E q' D ∧
+            (D B.root : ℤ) = (q' : ℤ) + d' := by
+    intro c E d' q' hOcc' hMsg' hPos'
+    exact boundary_attainment E (B.childBranch c)
+      hOcc' d' hMsg' q' hPos'
+  by_cases hy : effectiveInput C B ≤ 1
+  · have hF :
+        F (effectiveInput C B) =
+          2 * effectiveInput C B - 3 :=
+      F_of_le_one hy
+    have hbNonneg :
+        0 ≤ 2 - effectiveInput C B := by
+      omega
+    let b : ℕ := (2 - effectiveInput C B).toNat
+    have hbCast :
+        (b : ℤ) = 2 - effectiveInput C B := by
+      change (((2 - effectiveInput C B).toNat : ℕ) : ℤ) =
+        2 - effectiveInput C B
+      rw [Int.toNat_of_nonneg hbNonneg]
+    have hqEnoughZ :
+        2 * (b : ℤ) ≤ (q : ℤ) := by
+      rw [hF] at hFinalF
+      rw [hbCast]
+      omega
+    have hqEnough : 2 * b ≤ q := by
+      exact_mod_cast hqEnoughZ
+    have hPreEnough :
+        2 * b ≤ (B.withBoundary C q) B.parent := by
+      simpa using hqEnough
+    rcases BranchReach.repeat_move B B.adj.symm
+        B.parent_mem_carrier B.root_mem_carrier
+        (B.withBoundary C q) b hPreEnough with
+      ⟨Epre, hPreReach, hPreParent, hPreRoot, hPreOther⟩
+    have hPreRootNat :
+        Epre B.root = C B.root + b := by
+      simpa [B.withBoundary_of_mem_vertices C q
+        B.root_mem_vertices] using hPreRoot
+    have hPreRootZ :
+        (Epre B.root : ℤ) =
+          (C B.root : ℤ) + (b : ℤ) := by
+      exact_mod_cast hPreRootNat
+    have hScheduleFinal :
+        (Epre B.root : ℤ) + childMessageSum C B = 2 := by
+      calc
+        (Epre B.root : ℤ) + childMessageSum C B =
+            (C B.root : ℤ) + (b : ℤ) +
+              childMessageSum C B := by rw [hPreRootZ]
+        _ = effectiveInput C B + (b : ℤ) := by
+              rw [effectiveInput]
+              ring
+        _ = 2 := by
+              rw [hbCast]
+              ring
+    have hSamePre :
+        ∀ v ∈ B.vertices, v ≠ B.root → Epre v = C v := by
+      intro v hv hvRoot
+      have hvParent : v ≠ B.parent := by
+        intro hvp
+        subst v
+        exact B.parent_not_mem_vertices hv
+      calc
+        Epre v = B.withBoundary C q v :=
+          hPreOther v hvParent hvRoot
+        _ = C v := B.withBoundary_of_mem_vertices C q hv
+    have hSafe :
+        TaskScheduleSafe
+          (fun t : B.OccupiedChild C => t.gain)
+          (Epre B.root : ℤ)
+          (orderedTasks
+            (fun t : B.OccupiedChild C => t.gain)
+            (B.occupiedChildTasks C)) := by
+      apply orderedTasks_safe
+      · positivity
+      · rw [taskGainSum_occupiedChildTasks]
+        omega
+    rcases B.executeAllOccupiedChildren C Epre hChildAttain
+        hSamePre hSafe with
+      ⟨E₁, hChildReach, hChildRoot, hChildParent, hNonroot⟩
+    have hE₁RootZ : (E₁ B.root : ℤ) = 2 := by
+      calc
+        (E₁ B.root : ℤ) =
+            (Epre B.root : ℤ) + childMessageSum C B :=
+          hChildRoot
+        _ = 2 := hScheduleFinal
+    have hE₁Root : E₁ B.root = 2 := by
+      exact_mod_cast hE₁RootZ
+    rcases B.attainRootTransfer_even E₁ 1 (by omega)
+        hE₁Root hNonroot with
+      ⟨D, hRootReach, hCleared, hDParent⟩
+    have hPreParentNat :
+        Epre B.parent = q - 2 * b := by
+      simpa [B.withBoundary_parent C q] using hPreParent
+    have hPreParentZ :
+        (Epre B.parent : ℤ) =
+          (q : ℤ) - 2 * (b : ℤ) := by
+      calc
+        (Epre B.parent : ℤ) = ((q - 2 * b : ℕ) : ℤ) := by
+          exact_mod_cast hPreParentNat
+        _ = (q : ℤ) - 2 * (b : ℤ) := by
+          rw [Nat.cast_sub hqEnough]
+          norm_num
+    have hParentFinal :
+        (D B.parent : ℤ) = (q : ℤ) + d := by
+      rw [hDParent, hChildParent, hE₁RootZ, F_two,
+        hPreParentZ, hd, hF, hbCast]
+      ring
+    have hReach :
+        B.BranchReach (B.withBoundary C q) D :=
+      Relation.ReflTransGen.trans hPreReach
+        (Relation.ReflTransGen.trans hChildReach hRootReach)
+    exact ⟨D, ⟨hReach, hCleared⟩, hParentFinal⟩
+  · have hyTwo : 2 ≤ effectiveInput C B := by
+      omega
+    have hyPos : 0 < effectiveInput C B := by
+      omega
+    have hSafe :
+        TaskScheduleSafe
+          (fun t : B.OccupiedChild C => t.gain)
+          ((B.withBoundary C q) B.root : ℤ)
+          (orderedTasks
+            (fun t : B.OccupiedChild C => t.gain)
+            (B.occupiedChildTasks C)) := by
+      apply orderedTasks_safe
+      · positivity
+      · rw [taskGainSum_occupiedChildTasks,
+          B.withBoundary_of_mem_vertices C q B.root_mem_vertices]
+        simpa [effectiveInput] using hyPos
+    have hSame :
+        ∀ v ∈ B.vertices, v ≠ B.root →
+          B.withBoundary C q v = C v := by
+      intro v hv hvr
+      exact B.withBoundary_of_mem_vertices C q hv
+    rcases B.executeAllOccupiedChildren C (B.withBoundary C q)
+        hChildAttain hSame hSafe with
+      ⟨E₁, hChildReach, hChildRoot, hChildParent, hNonroot⟩
+    have hE₁RootZ :
+        (E₁ B.root : ℤ) = effectiveInput C B := by
+      calc
+        (E₁ B.root : ℤ) =
+            ((B.withBoundary C q) B.root : ℤ) +
+              childMessageSum C B := hChildRoot
+        _ = effectiveInput C B := by
+              rw [B.withBoundary_of_mem_vertices C q
+                B.root_mem_vertices]
+              rfl
+    have hE₁RootTwo : 2 ≤ E₁ B.root := by
+      have hz : (2 : ℤ) ≤ (E₁ B.root : ℤ) := by
+        rw [hE₁RootZ]
+        exact hyTwo
+      exact_mod_cast hz
+    have hE₁Parent : E₁ B.parent = q := by
+      rw [hChildParent, B.withBoundary_parent C q]
+    have hTransferPos :
+        0 < (E₁ B.parent : ℤ) + F (E₁ B.root : ℤ) := by
+      rw [hE₁Parent, hE₁RootZ]
+      exact hFinalF
+    rcases B.attainRootTransfer_ge_two E₁ hE₁RootTwo
+        hNonroot hTransferPos with
+      ⟨D, hRootReach, hCleared, hDParent⟩
+    have hParentFinal :
+        (D B.parent : ℤ) = (q : ℤ) + d := by
+      rw [hDParent, hE₁Parent, hE₁RootZ, hd]
+    have hReach :
+        B.BranchReach (B.withBoundary C q) D :=
+      Relation.ReflTransGen.trans hChildReach hRootReach
+    exact ⟨D, ⟨hReach, hCleared⟩, hParentFinal⟩
+termination_by B.card
+decreasing_by
+  exact B.childBranch_card_lt c
+
+
 /-- The exact boundary theorem in the form targeted by the Phase 1 induction.
 This is a proposition/target definition; later proofs must establish it from
 legal move sequences and the recursive message.
@@ -1579,6 +2668,22 @@ def ExactBoundaryInvariant (C : Configuration V) (B : OrientedBranch T) : Prop :
         ((q : ℤ) + d ≤ 0 →
           ¬ ∃ D : Configuration V,
             B.ClearOutcome C q D ∧ 0 < D B.parent)
+
+/-- Full machine-checkable exact boundary invariant: constructive exact
+attainment, universal upper bound, and nonpositive impossibility. -/
+theorem exactBoundaryInvariant
+    (C : Configuration V) (B : OrientedBranch T) :
+    ExactBoundaryInvariant C B := by
+  intro hOcc d hMsg q
+  refine ⟨?_, ?_, ?_⟩
+  · intro hPos
+    exact boundary_attainment C B hOcc d hMsg q hPos
+  · intro D hClear
+    exact ClearOutcome.boundary_le_message
+      B C q hOcc hMsg hClear
+  · intro hNonpos
+    exact ClearOutcome.no_positive_boundary_of_message_nonpos
+      B C q hOcc hMsg hNonpos
 
 end LegalSequences
 

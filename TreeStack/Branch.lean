@@ -90,6 +90,18 @@ structure Child (B : OrientedBranch T) where
   adj : T.graph.Adj B.root vertex
   ne_parent : vertex ≠ B.parent
 
+/-- A child choice is determined by its vertex; the remaining fields are
+propositions and hence proof-irrelevant. -/
+theorem Child.eq_of_vertex_eq {B : OrientedBranch T} {c d : B.Child}
+    (h : c.vertex = d.vertex) : c = d := by
+  cases c with
+  | mk cv ca cn =>
+      cases d with
+      | mk dv da dn =>
+          simp only at h
+          subst dv
+          rfl
+
 /-- The oriented branch hanging below a chosen child. -/
 def childBranch (B : OrientedBranch T) (c : B.Child) : OrientedBranch T where
   root := c.vertex
@@ -203,6 +215,66 @@ theorem eq_root_of_mem_vertices_adj_parent (B : OrientedBranch T)
   rcases hEdge with h | h
   · exact h.1
   · exact (B.root_ne_parent h.2.symm).elim
+
+
+/-- Every non-root vertex of an oriented branch lies in one of the genuine
+child branches at the branch root.  This is the existence half of the child
+decomposition used by the constructive boundary induction; sibling
+disjointness supplies uniqueness. -/
+theorem exists_childBranch_mem_of_mem_vertices_ne_root
+    (B : OrientedBranch T) {x : V}
+    (hx : x ∈ B.vertices) (hxr : x ≠ B.root) :
+    ∃ c : B.Child, x ∈ (B.childBranch c).vertices := by
+  classical
+  have hxComp : x ∈ B.component.supp := by
+    simpa [vertices] using hx
+  have hrComp : B.root ∈ B.component.supp :=
+    SimpleGraph.ConnectedComponent.connectedComponentMk_mem
+  have hreach : B.deletedGraph.Reachable B.root x :=
+    B.component.reachable_of_mem_supp hrComp hxComp
+  rcases hreach.exists_isPath with ⟨p, hp⟩
+  rcases SimpleGraph.Walk.exists_eq_cons_of_ne hxr.symm p with
+    ⟨v, hrv, p', hpEq⟩
+  rw [hpEq] at hp
+  have hpData :=
+    (SimpleGraph.Walk.cons_isPath_iff hrv p').mp hp
+  have hrootNot : B.root ∉ p'.support := hpData.2
+  have hrvData := hrv
+  rw [deletedGraph, SimpleGraph.deleteEdges_adj] at hrvData
+  rcases hrvData with ⟨hrvT, hedge⟩
+  have hvne : v ≠ B.parent := by
+    intro hvp
+    subst v
+    simp at hedge
+  let c : B.Child :=
+    { vertex := v
+      adj := hrvT
+      ne_parent := hvne }
+  have hle : B.deletedGraph ≤ T.graph := by
+    intro a b hab
+    rw [deletedGraph, SimpleGraph.deleteEdges_adj] at hab
+    exact hab.1
+  let q : T.graph.Walk v x := p'.mapLe hle
+  have havoid : s(v, B.root) ∉ q.edges := by
+    intro he
+    have he' : s(v, B.root) ∈ p'.edges := by
+      simpa [q, SimpleGraph.Walk.edges_mapLe_eq_edges] using he
+    exact hrootNot (p'.snd_mem_support_of_mem_edges he')
+  let q' : (T.graph.deleteEdges {s(v, B.root)}).Walk v x :=
+    q.toDeleteEdges {s(v, B.root)} (by
+      intro e he
+      simp only [Set.mem_singleton_iff]
+      intro heq
+      subst e
+      exact havoid he)
+  have hreachChild :
+      (B.childBranch c).deletedGraph.Reachable c.vertex x := by
+    change (T.graph.deleteEdges {s(v, B.root)}).Reachable v x
+    exact ⟨q'⟩
+  refine ⟨c, ?_⟩
+  rw [vertices, Set.mem_toFinset,
+    SimpleGraph.ConnectedComponent.mem_supp_iff, component]
+  exact (SimpleGraph.ConnectedComponent.sound hreachChild).symm
 
 end OrientedBranch
 
