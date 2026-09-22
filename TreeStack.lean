@@ -9,3 +9,4 @@ import TreeStack.RootScore
 import TreeStack.Obstruction
 import TreeStack.Defect
 import TreeStack.Support
+import TreeStack.ForestOwner
