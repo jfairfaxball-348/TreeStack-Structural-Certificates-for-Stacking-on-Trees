@@ -312,27 +312,27 @@ theorem orderedTasks_nodup (gain : α → ℤ) {tasks : List α}
       exact ⟨hz, hn, by
         intro a ha b hb hab
         subst b
-        have hZero : gain a = 0 := by
-          have h := ha
-          simpa [zeroTasks] using h
-        have hNeg : gain a < 0 := by
-          have h := hb
-          simpa [negativeTasks] using h
+        have hZeroData : a ∈ tasks ∧ gain a = 0 := by
+          simpa [zeroTasks] using ha
+        have hNegData : a ∈ tasks ∧ gain a < 0 := by
+          simpa [negativeTasks] using hb
+        have hZero : gain a = 0 := hZeroData.2
+        have hNeg : gain a < 0 := hNegData.2
         omega⟩
     · intro a ha b hb hab
       subst b
-      have hPos : 0 < gain a := by
-        have h := ha
-        simpa [positiveTasks] using h
+      have hPosData : a ∈ tasks ∧ 0 < gain a := by
+        simpa [positiveTasks] using ha
+      have hPos : 0 < gain a := hPosData.2
       simp only [List.mem_append] at hb
       rcases hb with hZeroMem | hNegMem
-      · have hZero : gain a = 0 := by
-          have h := hZeroMem
-          simpa [zeroTasks] using h
+      · have hZeroData : a ∈ tasks ∧ gain a = 0 := by
+          simpa [zeroTasks] using hZeroMem
+        have hZero : gain a = 0 := hZeroData.2
         omega
-      · have hNeg : gain a < 0 := by
-          have h := hNegMem
-          simpa [negativeTasks] using h
+      · have hNegData : a ∈ tasks ∧ gain a < 0 := by
+          simpa [negativeTasks] using hNegMem
+        have hNeg : gain a < 0 := hNegData.2
         omega
 
 /-- Positive/zero/negative scheduling lemma from the audited construction.
@@ -1405,6 +1405,7 @@ theorem attainRootTransfer_odd
               exact_mod_cast hParentNat
         _ = (E B.parent : ℤ) + ((k : ℤ) - 1) := by
               rw [Nat.cast_add, Nat.cast_sub hk]
+              norm_num
 
     refine ⟨D, hReach, hCleared, ?_⟩
     rw [hF]
@@ -1459,6 +1460,7 @@ theorem attainRootTransfer_odd
               exact_mod_cast hParentNat
         _ = (E B.parent : ℤ) + ((k : ℤ) - 1) := by
               rw [Nat.cast_add, Nat.cast_sub hk]
+              norm_num
     refine ⟨D, hReach, hCleared, ?_⟩
     rw [hF]
     exact hParentZ
@@ -2574,7 +2576,7 @@ theorem boundary_attainment
           exact_mod_cast hPreParentNat
         _ = (q : ℤ) - 2 * (b : ℤ) := by
           rw [Nat.cast_sub hqEnough]
-          push_cast
+          norm_num
     have hParentFinal :
         (D B.parent : ℤ) = (q : ℤ) + d := by
       rw [hDParent, hChildParent, hE₁RootZ, F_two,
