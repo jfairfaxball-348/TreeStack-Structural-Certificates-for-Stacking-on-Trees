@@ -413,7 +413,8 @@ theorem rootEstimate_eq_one_add_ambientLeafCount_add_rootedInternalPotential
     have hLeafCount :
         ambientLeafCount (T := T) = leafCount T r + 1 := by
       unfold ambientLeafCount leafCount
-      rw [hLeaves, Finset.card_insert hrNotLeaf]
+      rw [hLeaves]
+      simp [hrNotLeaf]
     have hNotInternal : ¬ 1 < T.graph.degree r := by
       omega
     have hInternal :=
