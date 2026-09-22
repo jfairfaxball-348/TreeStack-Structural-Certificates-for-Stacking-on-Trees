@@ -261,6 +261,48 @@ theorem taskGainSum_orderedTasks (gain : α → ℤ) (tasks : List α) :
   rw [orderedTasks, taskGainSum_append, taskGainSum_append]
   linarith [taskGainSum_partition gain tasks]
 
+theorem mem_orderedTasks_iff (gain : α → ℤ) (tasks : List α) (t : α) :
+    t ∈ orderedTasks gain tasks ↔ t ∈ tasks := by
+  simp only [orderedTasks, positiveTasks, zeroTasks, negativeTasks,
+    List.mem_append, List.mem_filter]
+  constructor
+  · rintro (h | h)
+    · exact h.1
+    · rcases h with h | h <;> exact h.1
+  · intro ht
+    by_cases hp : 0 < gain t
+    · exact Or.inl ⟨ht, hp⟩
+    · by_cases hz : gain t = 0
+      · exact Or.inr (Or.inl ⟨ht, hz⟩)
+      · have hn : gain t < 0 := by omega
+        exact Or.inr (Or.inr ⟨ht, hn⟩)
+
+theorem orderedTasks_nodup (gain : α → ℤ) {tasks : List α}
+    (h : tasks.Nodup) :
+    (orderedTasks gain tasks).Nodup := by
+  rw [orderedTasks]
+  have hp := h.filter (fun t => 0 < gain t)
+  have hz := h.filter (fun t => gain t = 0)
+  have hn := h.filter (fun t => gain t < 0)
+  rw [List.nodup_append]
+  constructor
+  · exact hp
+  · constructor
+    · rw [List.nodup_append]
+      exact ⟨hz, hn, by
+        intro t htZero htNeg
+        simp only [zeroTasks, List.mem_filter] at htZero
+        simp only [negativeTasks, List.mem_filter] at htNeg
+        omega⟩
+    · intro t htPos htRest
+      simp only [positiveTasks, List.mem_filter] at htPos
+      simp only [List.mem_append] at htRest
+      rcases htRest with htZero | htNeg
+      · simp only [zeroTasks, List.mem_filter] at htZero
+        omega
+      · simp only [negativeTasks, List.mem_filter] at htNeg
+        omega
+
 /-- Positive/zero/negative scheduling lemma from the audited construction.
 If the starting pile is nonnegative and the final total is positive, placing
 positive tasks first, zero tasks next, and negative tasks last makes every
