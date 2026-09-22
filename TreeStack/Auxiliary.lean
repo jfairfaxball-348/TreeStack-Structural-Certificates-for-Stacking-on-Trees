@@ -82,14 +82,16 @@ theorem not_twoNegativeOwnerArrow_reverse
     simpa [rootedOwner_reverse] using h
   exact B.root_ne_parent (hRootOwner.trans hParentOwner.symm)
 
-/-- Combined auxiliary orientation on defective support edges.  Oriented-type
-edges keep their forced defect-arrow direction.  Two-negative defective edges
-are directed toward the fixed rooted owner. -/
+/-- Combined auxiliary orientation on retained support edges.  Every
+oriented-type edge keeps its forced defect-arrow direction, including the
+zero-excess states needed for the powers-of-two baseline estimate.
+Two-negative edges are directed only when defective, toward the fixed rooted
+owner. -/
 def AuxArrow
     (C : Configuration V) (ambientRoot : V) (u v : V) : Prop :=
   ∃ h : T.graph.Adj u v,
     let B := incidentBranch T v u h
-    (B.DefectiveSupportEdge C ∧ B.DefectArrow C) ∨
+    B.DefectArrow C ∨
       B.TwoNegativeOwnerArrow C ambientRoot
 
 /-- Rebuilding an oriented branch from its own endpoints and adjacency proof
@@ -122,8 +124,8 @@ theorem auxArrow_or_reverse_of_defectiveSupportEdge
   · left
     refine ⟨B.adj, ?_⟩
     simpa using
-      (Or.inl ⟨hDef, hForward⟩ :
-        (B.DefectiveSupportEdge C ∧ B.DefectArrow C) ∨
+      (Or.inl hForward :
+        B.DefectArrow C ∨
           B.TwoNegativeOwnerArrow C ambientRoot)
   · right
     have hDefReverse :
@@ -135,12 +137,11 @@ theorem auxArrow_or_reverse_of_defectiveSupportEdge
           B.reverseBranch := by
       exact incidentBranch_reverse_self B
     change
-      ((incidentBranch T B.root B.parent B.adj.symm).DefectiveSupportEdge C ∧
-          (incidentBranch T B.root B.parent B.adj.symm).DefectArrow C) ∨
+      (incidentBranch T B.root B.parent B.adj.symm).DefectArrow C ∨
         (incidentBranch T B.root B.parent B.adj.symm).TwoNegativeOwnerArrow
           C ambientRoot
     rw [hInc]
-    exact Or.inl ⟨hDefReverse, hReverse⟩
+    exact Or.inl hReverse
   · rcases B.rootedOwner_eq_root_or_parent ambientRoot with
       hOwnerRoot | hOwnerParent
     · right
@@ -161,8 +162,7 @@ theorem auxArrow_or_reverse_of_defectiveSupportEdge
             B.reverseBranch := by
         exact incidentBranch_reverse_self B
       change
-        ((incidentBranch T B.root B.parent B.adj.symm).DefectiveSupportEdge C ∧
-            (incidentBranch T B.root B.parent B.adj.symm).DefectArrow C) ∨
+        (incidentBranch T B.root B.parent B.adj.symm).DefectArrow C ∨
           (incidentBranch T B.root B.parent B.adj.symm).TwoNegativeOwnerArrow
             C ambientRoot
       rw [hInc]
@@ -174,7 +174,7 @@ theorem auxArrow_or_reverse_of_defectiveSupportEdge
       refine ⟨B.adj, ?_⟩
       simpa using
         (Or.inr hTwo :
-          (B.DefectiveSupportEdge C ∧ B.DefectArrow C) ∨
+          B.DefectArrow C ∨
             B.TwoNegativeOwnerArrow C ambientRoot)
 
 /-- Every auxiliary arrow is an ambient tree edge. -/
@@ -185,17 +185,48 @@ theorem auxArrow_adj
   rcases hArrow with ⟨h, _⟩
   exact h
 
-/-- Every auxiliary arrow lies in the defective retained-edge forest. -/
-theorem auxArrow_defectiveGraph
+/-- Every auxiliary arrow lies on a retained support edge. -/
+theorem auxArrow_supportEdge
     (C : Configuration V) (ambientRoot : V) {u v : V}
     (hArrow : AuxArrow (T := T) C ambientRoot u v) :
-    defectiveGraph (T := T) C |>.Adj u v := by
+    (incidentBranch T v u (auxArrow_adj C ambientRoot hArrow)).SupportEdge C := by
   rcases hArrow with ⟨h, hState⟩
-  refine ⟨h, ?_⟩
   dsimp only at hState
+  have hp : h = auxArrow_adj C ambientRoot ⟨h, hState⟩ :=
+    Subsingleton.elim _ _
+  subst h
   rcases hState with hOriented | hTwo
   · exact hOriented.1
-  · exact hTwo.1
+  · exact hTwo.1.1
+
+/-- No auxiliary arrow can enter the root of a configuration-empty oriented
+branch.  An arrow across the boundary would retain the empty side, while an
+arrow from a genuine child would retain an occupied subbranch inside it. -/
+theorem no_auxArrow_to_root_of_not_occupied
+    (C : Configuration V) (ambientRoot : V)
+    (B : OrientedBranch T) (hEmpty : ¬ B.Occupied C) (u : V) :
+    ¬ AuxArrow (T := T) C ambientRoot u B.root := by
+  intro hArrow
+  have hAdj := auxArrow_adj C ambientRoot hArrow
+  have hSupport := auxArrow_supportEdge C ambientRoot hArrow
+  by_cases hup : u = B.parent
+  · subst u
+    have hBranch :
+        incidentBranch T B.root B.parent hAdj = B.reverseBranch := by
+      cases B
+      rfl
+    rw [hBranch] at hSupport
+    exact hEmpty hSupport.2
+  · let c : B.Child :=
+      { vertex := u
+        adj := hAdj.symm
+        ne_parent := hup }
+    have hBranch :
+        incidentBranch T B.root u hAdj = B.childBranch c := by
+      rfl
+    rw [hBranch] at hSupport
+    rcases hSupport.1 with ⟨x, hx, hxPos⟩
+    exact hEmpty ⟨x, B.childBranch_vertices_subset c hx, hxPos⟩
 
 /-- Under all-nonpositive rooted scores, the combined orientation never places
 both directions on the same defective edge. -/
@@ -216,20 +247,20 @@ theorem not_auxArrow_reverse
     rfl
   dsimp only at hForwardState hReverseState
   change
-    (B.DefectiveSupportEdge C ∧ B.DefectArrow C) ∨
+    B.DefectArrow C ∨
       B.TwoNegativeOwnerArrow C ambientRoot at hForwardState
   rw [hRevBranch] at hReverseState
   rcases hForwardState with hForward | hForward
   · rcases hReverseState with hReverse | hReverse
     · exact
-        (B.not_defectArrow_reverse C hForward.2 hScores)
-          hReverse.2
+        (B.not_defectArrow_reverse C hForward hScores)
+          hReverse
     · exact
-        (not_lt_of_ge hForward.2.2)
+        (not_lt_of_ge hForward.2)
           hReverse.2.2.1
   · rcases hReverseState with hReverse | hReverse
     · exact
-        (not_lt_of_ge hReverse.2.2)
+        (not_lt_of_ge hReverse.2)
           hForward.2.2.1
     · exact
         (B.not_twoNegativeOwnerArrow_reverse C ambientRoot hForward)
@@ -383,6 +414,27 @@ theorem auxHeight_succ_le_of_auxArrow
           0)
       (Finset.mem_univ u)
   simpa [hArrow] using hLe
+
+/-- A vertex with no incoming auxiliary arrow has auxiliary height zero. -/
+theorem auxHeight_eq_zero_of_no_incoming
+    (C : Configuration V) (ambientRoot : V)
+    (hScores : ∀ v, score T C v ≤ 0)
+    (v : V)
+    (hNo : ∀ u, ¬ AuxArrow (T := T) C ambientRoot u v) :
+    auxHeight C ambientRoot hScores v = 0 := by
+  rw [auxHeight]
+  simp [hNo]
+
+/-- The root of an empty branch has unit auxiliary weight. -/
+theorem auxWeightInt_eq_one_of_not_occupied
+    (C : Configuration V) (ambientRoot : V)
+    (hScores : ∀ v, score T C v ≤ 0)
+    (B : OrientedBranch T) (hEmpty : ¬ B.Occupied C) :
+    auxWeightInt C ambientRoot hScores B.root = 1 := by
+  have hHeight : auxHeight C ambientRoot hScores B.root = 0 :=
+    auxHeight_eq_zero_of_no_incoming C ambientRoot hScores B
+      (no_auxArrow_to_root_of_not_occupied C ambientRoot B hEmpty)
+  simp [auxWeightInt, auxWeight, hHeight]
 
 /-- Powers-of-two auxiliary weights attached to longest-path heights. -/
 noncomputable def auxWeight
