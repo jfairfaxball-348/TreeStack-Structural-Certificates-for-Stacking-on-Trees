@@ -77,24 +77,19 @@ affiliation, date, or quotation is recorded in the repository, so the metadata
 records only the fact of completed external human review and explicitly avoids
 inventing those details.
 
-## Legal gate
+## Licence
 
-TreeStack currently has no recorded root licence decision. Palomar requires
-exactly one mechanically detectable root licence and an identical SPDX value in
-`project.license`.
-
-No licence is asserted by this packaging branch until the maintainer makes that
-legal choice. This is intentionally expected to block the official Palomar
-preflight at the licence/metadata gate. Once a licence is selected, add exactly
-one accepted root licence file, set `project.license` to the matching SPDX
-identifier, rerun the full preflight, and only then freeze the submission
+The repository uses Apache-2.0. The packaging branch contains exactly one root
+`LICENSE` file and `formalization.yaml` records
+`project.license: "Apache-2.0"`. The licence gate is therefore resolved; the
+remaining acceptance criterion is a green full Palomar preflight at the exact
 candidate commit.
 
 ## Final freeze checklist
 
 1. ordinary TreeStack CI green;
 2. statement-surface workflow green;
-3. exact root licence chosen and metadata synchronized;
+3. Apache-2.0 root licence and metadata remain synchronized;
 4. official Palomar full preflight green, including Comparator, protected
    Challenge compilation, Lean kernel export, and NanoDa replay;
 5. packaging PR merged;
