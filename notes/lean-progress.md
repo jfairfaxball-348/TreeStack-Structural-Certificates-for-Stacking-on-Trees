@@ -1,10 +1,10 @@
 # Lean formalization progress
 
 Status: **the exact branch-boundary invariant, rooted score characterization,
-and explicit estimator obstruction are merged on `main`; the local
-arbitrary-defect edge classification for the upper bound is now machine-checked
-in PR #13.**  The authoritative pre-PR #13 baseline is merge commit
-`525e4568017856bd3db87128bd0039de22ae68f3`.
+explicit estimator obstruction, and local arbitrary-defect edge classification
+are merged on `main`; PR #14 adds an in-place support-reduction core for the
+global upper bound.**  The authoritative pre-PR #14 baseline is merge commit
+`693f1d72974b9193cd9cf6818a1a0ecba8bc05ce`.
 
 ## Pinned environment
 
@@ -239,6 +239,77 @@ owner assignment, auxiliary orientation/height, weighted defect cancellation,
 occupied-leaf slack, and connected-partition consolidation remain to be
 formalized.
 
+## In-place support-reduction core
+
+PR #14 introduces `TreeStack/Support.lean`.  Rather than transporting
+configurations, recursive messages, rooted scores, and estimators to a subtype
+of vertices, the development keeps the original finite vertex type and
+characterizes the retained support core directly by occupied edge sides.
+
+For every oriented tree edge, the two deleted-edge components are now proved to
+be disjoint and exhaustive:
+
+```text
+OrientedBranch.vertices_disjoint_reverseBranch
+OrientedBranch.mem_vertices_or_mem_reverseBranch
+OrientedBranch.vertices_union_reverseBranch
+```
+
+The symmetric retained-edge predicate is
+
+```text
+OrientedBranch.SupportEdge C B :=
+  B.Occupied C ∧ B.reverseBranch.Occupied C
+
+OrientedBranch.supportEdge_reverse_iff
+```
+
+so every retained edge satisfies exactly the two-sided occupation hypothesis
+needed by the merged defect classification.  The direct bridge is
+
+```text
+OrientedBranch.defectEdgeState_of_supportEdge
+```
+
+under all-nonpositive rooted scores.
+
+Empty exterior support retains the message-level EMPTY semantics.  In
+particular,
+
+```text
+OrientedBranch.score_eq_effectiveInput_of_reverse_not_occupied
+```
+
+uses `branchMessage = EMPTY`; no `some 0` surrogate is introduced.
+
+Two further pruning facts are machine-checked.  A configuration whose positive
+support is contained in one vertex has rooted score equal to the pile at that
+vertex,
+
+```text
+score_eq_of_support_subset_singleton
+```
+
+and therefore an all-nonpositive-score configuration with a positive pile has
+a second distinct occupied vertex:
+
+```text
+exists_other_occupied_of_all_scores_nonpos
+```
+
+Finally, a retained support edge whose root has no retained child edge must
+have an occupied root:
+
+```text
+OrientedBranch.root_pos_of_supportEdge_of_no_child_supportEdge
+```
+
+This is the in-place leaf-occupancy statement needed for the later leaf-slack
+argument.  It gives the key pruning semantics without introducing subtype
+transport obligations.  A remaining structural packaging step is to organize
+the retained `SupportEdge` edges as the connected support core (or prove the
+equivalent path/forest facts directly) before the global defect-flow argument.
+
 ## Validation and trust
 
 There are no permitted `sorry`, `admit`, project axioms, weakened
@@ -256,19 +327,22 @@ lake build
 lake env lean Audit.lean
 ```
 
-The lower-bound obstruction is complete on `main`.  PR #13 adds the
-machine-checked local arbitrary-defect classification needed by the upper
-bound.
+The lower-bound obstruction and local arbitrary-defect classification are
+complete on `main`.  PR #14 adds the machine-checked in-place support core
+needed to pass from arbitrary support to retained two-sided-occupied edges.
 
 ## Next formal frontier
 
 The explicit estimator obstruction supplies the machine-checked lower bound,
-and the local arbitrary-defect edge states are now classified.  The remaining
-Lean work is the global upper-bound layer: support pruning and estimator
-monotonicity under adjoining leaves; defective-edge owner assignment;
-auxiliary orientations and heights; weighted defect cancellation;
-occupied-leaf slack; connected-partition consolidation; and finally the
-global bound `mass C ≤ estim T - 1` for every non-stackable configuration.
+the local arbitrary-defect edge states are classified, and the first
+support-reduction layer is now in place without subtype transport.  The
+remaining Lean work is the global upper-bound layer: package the retained
+support edges into the connected support core (and establish any estimator
+comparison still needed by the chosen in-place architecture); defective-edge
+forest/owner assignment; auxiliary orientations and heights; weighted defect
+cancellation; occupied-leaf slack; connected-partition consolidation; and
+finally the global bound `mass C ≤ estim T - 1` for every non-stackable
+configuration.
 
 The Csernák–Soukup tree-stacking conjecture is therefore **not yet fully
 formalized in Lean**, but the lower-bound obstruction is no longer an open
