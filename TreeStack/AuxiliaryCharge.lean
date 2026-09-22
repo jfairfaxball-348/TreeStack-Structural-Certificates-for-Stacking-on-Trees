@@ -30,6 +30,7 @@ display the underlying edge. -/
     auxEdgeContribution C ambientRoot hScores B.reverseBranch =
       auxEdgeContribution C ambientRoot hScores B := by
   simp [auxEdgeContribution]
+  ring
 
 /-- A defective forced arrow has its weighted edge excess payable by its tail
 defect. -/
@@ -293,6 +294,7 @@ theorem nondefectiveSupportEdge_auxEdgeContribution_le_baseline
     unfold auxEdgeContribution
     rw [ha, hb, hrZero, hqZero]
     ring_nf
+    exact le_rfl
 
 /-- Every defective retained edge has its weighted contribution bounded by
 the endpoint baseline plus the charge at its injective rooted owner. -/
@@ -466,8 +468,12 @@ theorem auxEdgeContribution_le_endpoint_add_owner_charge
           C ambientRoot hScores B.reverseBranch hRevOcc hEmpty
       have hOwner' : B.rootedOwner ambientRoot = B.root := by
         simpa [rootedOwner_reverse] using hOwner
-      rw [← auxEdgeContribution_reverse C ambientRoot hScores B, hEq,
-        hOwner']
+      have hEq' :
+          auxEdgeContribution C ambientRoot hScores B =
+            auxWeightInt C ambientRoot hScores B.root *
+              scoreDefect T C B.root := by
+        simpa using hEq
+      rw [hEq', hOwner']
       have hRootWeight :=
         auxWeightInt_nonneg C ambientRoot hScores B.root
       have hParentWeight :=
