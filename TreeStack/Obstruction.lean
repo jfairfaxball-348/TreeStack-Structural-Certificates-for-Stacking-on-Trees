@@ -256,7 +256,8 @@ theorem obstruction_branchMessage (r : V) (B : OrientedBranch T)
     ring
 termination_by B.card
 decreasing_by
-  exact B.childBranch_card_lt c
+  all_goals
+    exact B.childBranch_card_lt _
 
 end OrientedBranch
 
