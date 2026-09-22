@@ -376,7 +376,8 @@ theorem executeRootTaskSchedule
         calc
           OrientedBranch.branchMessage E t.branch =
               OrientedBranch.branchMessage C t.branch :=
-            (t.branchMessage_congr_vertices C E hCE).symm
+            (OrientedBranch.branchMessage_congr_vertices
+              C E t.branch hCE).symm
           _ = some t.gain := hMsgC
       rcases OrientedBranch.boundary_attainment
           E t.branch hOccE t.gain hMsgE (E r) hSafe.1 with
@@ -389,7 +390,7 @@ theorem executeRootTaskSchedule
         rw [hStart] at hReachRaw
         exact hReachRaw
       have hReachGlobal : Reach T.graph E E₁ :=
-        hReachBranch.toReach t.branch
+        OrientedBranch.BranchReach.toReach t.branch hReachBranch
       have hRoot₁' :
           (E₁ r : ℤ) = (E r : ℤ) + t.gain := by
         simpa using hRoot₁
