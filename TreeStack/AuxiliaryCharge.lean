@@ -411,11 +411,35 @@ theorem rootedOwner_eq_emptySide_of_root_pos
     · exact (hNotReverse h).elim
   exact B.rootedOwner_eq_parent_of_mem_vertices ambientRoot hMem
 
-/-- Uniform estimate for every ambient tree edge.  Retained defective edges
-use their owner-paid excess; retained nondefective edges need no excess; and a
-nonretained edge contributes exactly the defect at its empty-side endpoint,
-which is also its rooted owner. -/
-theorem auxEdgeContribution_le_endpoint_add_owner_charge
+/-- Owner-paid defect excess for a retained edge.  This term is nonzero only
+when the retained edge is genuinely defective. -/
+noncomputable def retainedDefectCharge
+    (C : Configuration V) (ambientRoot : V)
+    (hScores : ∀ v, score T C v ≤ 0)
+    (B : OrientedBranch T) : ℤ :=
+  if B.DefectiveSupportEdge C then
+    auxWeightInt C ambientRoot hScores (B.rootedOwner ambientRoot) *
+      scoreDefect T C (B.rootedOwner ambientRoot)
+  else
+    0
+
+/-- Cancellation term created by a nonretained edge whose opposite branch is
+literally `EMPTY`.  This is deliberately kept separate from retained-edge
+defect charging. -/
+noncomputable def emptyBoundaryCharge
+    (C : Configuration V) (ambientRoot : V)
+    (hScores : ∀ v, score T C v ≤ 0)
+    (B : OrientedBranch T) : ℤ :=
+  if B.SupportEdge C then
+    0
+  else
+    auxWeightInt C ambientRoot hScores (B.rootedOwner ambientRoot) *
+      scoreDefect T C (B.rootedOwner ambientRoot)
+
+/-- Uniform ambient-edge estimate with the two cancellation mechanisms kept
+separate: only genuinely defective retained edges receive owner-paid defect
+charge, while nonretained edges use their distinct `EMPTY`-boundary term. -/
+theorem auxEdgeContribution_le_endpoint_add_separated_charges
     (C : Configuration V) (ambientRoot : V)
     (hRootPos : 0 < C ambientRoot)
     (hScores : ∀ v, score T C v ≤ 0)
@@ -423,62 +447,62 @@ theorem auxEdgeContribution_le_endpoint_add_owner_charge
     auxEdgeContribution C ambientRoot hScores B ≤
       auxWeightInt C ambientRoot hScores B.root +
         auxWeightInt C ambientRoot hScores B.parent +
-        auxWeightInt C ambientRoot hScores (B.rootedOwner ambientRoot) *
-          scoreDefect T C (B.rootedOwner ambientRoot) := by
+        retainedDefectCharge C ambientRoot hScores B +
+        emptyBoundaryCharge C ambientRoot hScores B := by
   by_cases hEdge : B.SupportEdge C
-  · by_cases hDef : B.DefectiveSupportEdge C
-    · exact
-        defectiveSupportEdge_auxEdgeContribution_le_owner_charge
-          C ambientRoot hScores B hDef
-    · have hBase :=
-        nondefectiveSupportEdge_auxEdgeContribution_le_baseline
-          C ambientRoot hScores B hEdge hDef
-      have hCharge :
-          0 ≤
+  · have h :=
+      supportEdge_auxEdgeContribution_le
+        C ambientRoot hScores B hEdge
+    simpa [retainedDefectCharge, emptyBoundaryCharge, hEdge, add_assoc] using h
+  · have hNondef : ¬ B.DefectiveSupportEdge C := by
+      intro hDef
+      exact hEdge hDef.1
+    have hOwnerBound :
+        auxEdgeContribution C ambientRoot hScores B ≤
+          auxWeightInt C ambientRoot hScores B.root +
+            auxWeightInt C ambientRoot hScores B.parent +
             auxWeightInt C ambientRoot hScores (B.rootedOwner ambientRoot) *
-              scoreDefect T C (B.rootedOwner ambientRoot) :=
-        mul_nonneg
-          (auxWeightInt_nonneg C ambientRoot hScores _)
-          ((scoreDefect_nonneg_iff T C _).2 (hScores _))
-      linarith
-  · rcases B.occupied_or_reverse_occupied C hRootPos with hOcc | hRevOcc
-    · have hEmpty : ¬ B.reverseBranch.Occupied C := by
-        intro hRev
-        exact hEdge ⟨hOcc, hRev⟩
-      have hOwner :=
-        rootedOwner_eq_emptySide_of_root_pos
-          C ambientRoot B hRootPos hEmpty
-      have hEq :=
-        auxEdgeContribution_eq_emptySide_charge
-          C ambientRoot hScores B hOcc hEmpty
-      rw [hEq, hOwner]
-      have hRootWeight :=
-        auxWeightInt_nonneg C ambientRoot hScores B.root
-      have hParentWeight :=
-        auxWeightInt_nonneg C ambientRoot hScores B.parent
-      linarith
-    · have hEmpty : ¬ B.Occupied C := by
-        intro hOcc
-        exact hEdge ⟨hOcc, hRevOcc⟩
-      have hOwner :=
-        rootedOwner_eq_emptySide_of_root_pos
-          C ambientRoot B.reverseBranch hRootPos hEmpty
-      have hEq :=
-        auxEdgeContribution_eq_emptySide_charge
-          C ambientRoot hScores B.reverseBranch hRevOcc hEmpty
-      have hOwner' : B.rootedOwner ambientRoot = B.root := by
-        simpa [rootedOwner_reverse] using hOwner
-      have hEq' :
-          auxEdgeContribution C ambientRoot hScores B =
-            auxWeightInt C ambientRoot hScores B.root *
-              scoreDefect T C B.root := by
-        simpa using hEq
-      rw [hEq', hOwner']
-      have hRootWeight :=
-        auxWeightInt_nonneg C ambientRoot hScores B.root
-      have hParentWeight :=
-        auxWeightInt_nonneg C ambientRoot hScores B.parent
-      linarith
+              scoreDefect T C (B.rootedOwner ambientRoot) := by
+      rcases B.occupied_or_reverse_occupied C hRootPos with hOcc | hRevOcc
+      · have hEmpty : ¬ B.reverseBranch.Occupied C := by
+          intro hRev
+          exact hEdge ⟨hOcc, hRev⟩
+        have hOwner :=
+          rootedOwner_eq_emptySide_of_root_pos
+            C ambientRoot B hRootPos hEmpty
+        have hEq :=
+          auxEdgeContribution_eq_emptySide_charge
+            C ambientRoot hScores B hOcc hEmpty
+        rw [hEq, hOwner]
+        have hRootWeight :=
+          auxWeightInt_nonneg C ambientRoot hScores B.root
+        have hParentWeight :=
+          auxWeightInt_nonneg C ambientRoot hScores B.parent
+        linarith
+      · have hEmpty : ¬ B.Occupied C := by
+          intro hOcc
+          exact hEdge ⟨hOcc, hRevOcc⟩
+        have hOwner :=
+          rootedOwner_eq_emptySide_of_root_pos
+            C ambientRoot B.reverseBranch hRootPos hEmpty
+        have hEq :=
+          auxEdgeContribution_eq_emptySide_charge
+            C ambientRoot hScores B.reverseBranch hRevOcc hEmpty
+        have hOwner' : B.rootedOwner ambientRoot = B.root := by
+          simpa [rootedOwner_reverse] using hOwner
+        have hEq' :
+            auxEdgeContribution C ambientRoot hScores B =
+              auxWeightInt C ambientRoot hScores B.root *
+                scoreDefect T C B.root := by
+          simpa using hEq
+        rw [hEq', hOwner']
+        have hRootWeight :=
+          auxWeightInt_nonneg C ambientRoot hScores B.root
+        have hParentWeight :=
+          auxWeightInt_nonneg C ambientRoot hScores B.parent
+        linarith
+    simpa [retainedDefectCharge, emptyBoundaryCharge, hEdge, hNondef,
+      add_assoc] using hOwnerBound
 
 end OrientedBranch
 
