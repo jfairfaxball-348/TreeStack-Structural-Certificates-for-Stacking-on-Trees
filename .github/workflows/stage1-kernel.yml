@@ -33,7 +33,9 @@ jobs:
         uses: leanprover/lean-action@38fbc41a8c28c4cbaec22d7f7de508ec2e7c0dd9
         with:
           build: true
-      - name: Compile Palomar Challenge and Solution
+      - name: Build Palomar Challenge and Solution targets
+        run: lake build Challenge Solution
+      - name: Compile Palomar surfaces and audit
         run: |
           lake env lean Challenge.lean
           lake env lean Solution.lean
