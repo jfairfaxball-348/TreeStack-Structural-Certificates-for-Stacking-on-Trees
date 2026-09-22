@@ -327,7 +327,10 @@ noncomputable def childVertexEquivProper (B : OrientedBranch T) :
       (Subtype.heq_iff_coe_eq
         (by
           intro y
-          simpa [hc])).2
+          change
+            y ∈ (B.childBranch (chosen x)).vertices ↔
+              y ∈ (B.childBranch z.1).vertices
+          rw [hc])).2
     rfl
   · intro x
     apply Subtype.ext
@@ -1044,7 +1047,10 @@ noncomputable def rootBranchVertexEquivProper
       (Subtype.heq_iff_coe_eq
         (by
           intro y
-          simpa [hn])).2
+          change
+            y ∈ (chosen x).branch.vertices ↔
+              y ∈ z.1.branch.vertices
+          rw [hn])).2
     rfl
   · intro x
     apply Subtype.ext
