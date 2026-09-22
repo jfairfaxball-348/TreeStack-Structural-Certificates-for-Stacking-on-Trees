@@ -18,3 +18,4 @@ import TreeStack.LeafSlack
 import TreeStack.HeightSource
 import TreeStack.Consolidation
 import TreeStack.UpperBound
+import TreeStack.Stacking
