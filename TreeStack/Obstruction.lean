@@ -58,8 +58,8 @@ theorem mass_obstruction (T : FiniteTree V) (r : V) :
               have hvr : v ≠ r := by
                 exact (Finset.mem_erase.mp hv).1
               simp [obstruction, hvr]
-      _ = ((Finset.univ : Finset V).erase r).filter
-            (fun v => v ∈ leafVertices T r) |>.card := by
+      _ = (((Finset.univ : Finset V).erase r).filter
+            (fun v => v ∈ leafVertices T r)).card := by
               simpa using
                 (Finset.sum_boole (R := ℕ)
                   (fun v : V => v ∈ leafVertices T r)
