@@ -41,7 +41,7 @@ Solution declaration.
 ## Official full Palomar preflight
 
 `.github/workflows/palomar-preflight.yml` calls the current audited
-PalomarSubmission reusable workflow in `mode: full`. This is predictive
+PalomarSubmission reusable workflow in `mode: full` using the approved `palomar-standard-v1` GitHub-hosted execution profile. This is predictive
 mechanical verification only; it does not register the result.
 
 The full preflight is expected to exercise repository preparation, dependency
