@@ -175,8 +175,7 @@ theorem auxArrow_no_reflTransGen_reverse
         simpa [B] using B.parent_not_mem_vertices
     | tail hReach hStep ih =>
         intro hxIn
-        have hAdj :
-            T.graph.Adj x _ :=
+        have hAdj :=
           (auxArrow_adj C ambientRoot hStep).symm
         have hEdge :=
           B.edge_leaving_vertices_eq_boundary hxIn ih hAdj
@@ -184,9 +183,8 @@ theorem auxArrow_no_reflTransGen_reverse
         rcases hEdge with hEdge | hEdge
         · have hReverse :
               AuxArrow (T := T) C ambientRoot v u := by
-            subst x
-            rename_i y
-            subst y
+            rcases hEdge with ⟨hRoot, hParent⟩
+            subst_vars
             simpa [B] using hStep
           exact
             (not_auxArrow_reverse C ambientRoot hScores hArrow)
