@@ -1,4 +1,5 @@
 import Mathlib
+import TreeStack.Estimator
 import TreeStack.RootScore
 
 namespace TreeStack
