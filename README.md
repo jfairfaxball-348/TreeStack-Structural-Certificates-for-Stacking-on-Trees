@@ -138,8 +138,7 @@ configuration, v0.4 metadata draft, verification documentation, and pinned full
 preflight workflow are prepared on the Palomar packaging branch. Registration
 has **not** been performed.
 
-One non-formal prerequisite remains before a Palomar preflight can pass:
-TreeStack has no recorded repository licence choice. Palomar requires exactly
-one accepted root licence whose SPDX identifier matches `project.license` in
-`formalization.yaml`. No licence is inferred from another project. See
-`docs/PALOMAR_PLAN.md` for the freeze protocol.
+The repository now uses the Apache-2.0 licence, with a single root `LICENSE`
+file and matching `project.license` metadata. The remaining Palomar gate is
+purely mechanical: the full preflight must pass at the exact candidate commit.
+See `docs/PALOMAR_PLAN.md` for the freeze protocol.
