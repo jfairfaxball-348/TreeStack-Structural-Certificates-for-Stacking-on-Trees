@@ -244,6 +244,83 @@ theorem dist_root_eq_child_dist_add_one
   simpa [q, p, SimpleGraph.Walk.length_cons,
     SimpleGraph.Walk.length_mapLe, hpdist] using hqdist
 
+
+/-- Child choices form a finite type because a child is determined by its
+underlying vertex. -/
+noncomputable instance childFintype (B : OrientedBranch T) :
+    Fintype B.Child :=
+  Fintype.ofInjective
+    (fun c : B.Child => c.vertex)
+    (fun _ _ h => Child.eq_of_vertex_eq h)
+
+/-- A child vertex, tagged by the unique genuine child branch containing it. -/
+abbrev ChildVertex (B : OrientedBranch T) :=
+  Σ c : B.Child, {x : V // x ∈ (B.childBranch c).vertices}
+
+/-- The non-root vertices of an oriented branch. -/
+abbrev ProperVertex (B : OrientedBranch T) :=
+  {x : V // x ∈ B.vertices.erase B.root}
+
+/-- The child branches partition the non-root vertices of an oriented branch. -/
+noncomputable def childVertexEquivProper (B : OrientedBranch T) :
+    B.ChildVertex ≃ B.ProperVertex := by
+  classical
+  let chosen : B.ProperVertex → B.Child := fun x =>
+    Classical.choose
+      (B.exists_childBranch_mem_of_mem_vertices_ne_root
+        (Finset.mem_erase.mp x.2).2
+        (by
+          intro h
+          exact (Finset.mem_erase.mp x.2).1 h))
+  have hchosen :
+      ∀ x : B.ProperVertex,
+        x.1 ∈ (B.childBranch (chosen x)).vertices := by
+    intro x
+    exact
+      Classical.choose_spec
+        (B.exists_childBranch_mem_of_mem_vertices_ne_root
+          (Finset.mem_erase.mp x.2).2
+          (by
+            intro h
+            exact (Finset.mem_erase.mp x.2).1 h))
+  refine
+    { toFun := fun z =>
+        ⟨z.2.1, Finset.mem_erase.mpr ⟨?_, B.childBranch_vertices_subset z.1 z.2.2⟩⟩
+      invFun := fun x =>
+        ⟨chosen x, ⟨x.1, hchosen x⟩⟩
+      left_inv := ?_
+      right_inv := ?_ }
+  · intro h
+    subst h
+    exact (B.childBranch z.1).parent_not_mem_vertices z.2.2
+  · intro z
+    apply Sigma.ext
+    · apply Child.eq_of_vertex_eq
+      by_contra hne
+      have hdisj :=
+        B.childBranch_vertices_disjoint z.1 (chosen ⟨z.2.1,
+          Finset.mem_erase.mpr
+            ⟨by
+              intro h
+              subst h
+              exact (B.childBranch z.1).parent_not_mem_vertices z.2.2,
+             B.childBranch_vertices_subset z.1 z.2.2⟩⟩) hne
+      exact
+        (Finset.disjoint_left.mp hdisj) z.2.2
+          (hchosen
+            ⟨z.2.1,
+              Finset.mem_erase.mpr
+                ⟨by
+                  intro h
+                  subst h
+                  exact (B.childBranch z.1).parent_not_mem_vertices z.2.2,
+                 B.childBranch_vertices_subset z.1 z.2.2⟩⟩)
+    · apply Subtype.ext
+      rfl
+  · intro x
+    apply Subtype.ext
+    rfl
+
 /-- Every descendant branch of the selected root is occupied by the explicit
 obstruction, and its exact recursive message is the negative obstruction
 height.  The hypothesis says precisely that the selected root lies outside
