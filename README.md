@@ -133,12 +133,12 @@ boundary, trust statement, and validation status.
 
 ## Palomar packaging status
 
-The protected Palomar statement surface, Solution surface, Comparator
-configuration, v0.4 metadata draft, verification documentation, and pinned full
-preflight workflow are prepared on the Palomar packaging branch. Registration
-has **not** been performed.
+Palomar packaging is complete. The protected Mathlib-only statement surface,
+Solution surface, Comparator configuration, v0.4 metadata, Apache-2.0 licence,
+verification documentation, and pinned full-preflight workflow are merged.
+The official Palomar full mechanical preflight has passed, including Comparator,
+Lean kernel export, and independent NanoDa replay.
 
-The repository now uses the Apache-2.0 licence, with a single root `LICENSE`
-file and matching `project.license` metadata. The remaining Palomar gate is
-purely mechanical: the full preflight must pass at the exact candidate commit.
-See `docs/PALOMAR_PLAN.md` for the freeze protocol.
+Palomar registration has **not** been performed. Registration remains a separate
+maintainer action against the final immutable commit. See
+`docs/PALOMAR_PLAN.md` for the submission coordinates and freeze protocol.
