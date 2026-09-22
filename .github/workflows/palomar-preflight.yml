@@ -16,6 +16,6 @@ jobs:
       repository: ${{ github.repository }}
       commit: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
       pipeline_commit: a09f5c38ee58bf92c459b974b174ff4063ebea5f
-      request_id: treestackpreflight
+      request_id: treestackchk
       mode: full
       options: '{"comparator_config_path":"comparator.json","authorization_relationship":"I am a responsible author or maintainer"}'
