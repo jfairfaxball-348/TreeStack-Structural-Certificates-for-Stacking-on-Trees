@@ -310,26 +310,28 @@ theorem orderedTasks_nodup (gain : α → ℤ) {tasks : List α}
   · constructor
     · rw [List.nodup_append]
       exact ⟨hz, hn, by
-        intro t htZero htNeg
-        have hZero : gain t = 0 := by
-          have h := htZero
+        intro a ha b hb hab
+        subst b
+        have hZero : gain a = 0 := by
+          have h := ha
           simpa [zeroTasks] using h
-        have hNeg : gain t < 0 := by
-          have h := htNeg
+        have hNeg : gain a < 0 := by
+          have h := hb
           simpa [negativeTasks] using h
         omega⟩
-    · intro t htPos htRest
-      have hPos : 0 < gain t := by
-        have h := htPos
+    · intro a ha b hb hab
+      subst b
+      have hPos : 0 < gain a := by
+        have h := ha
         simpa [positiveTasks] using h
-      simp only [List.mem_append] at htRest
-      rcases htRest with htZero | htNeg
-      · have hZero : gain t = 0 := by
-          have h := htZero
+      simp only [List.mem_append] at hb
+      rcases hb with hZeroMem | hNegMem
+      · have hZero : gain a = 0 := by
+          have h := hZeroMem
           simpa [zeroTasks] using h
         omega
-      · have hNeg : gain t < 0 := by
-          have h := htNeg
+      · have hNeg : gain a < 0 := by
+          have h := hNegMem
           simpa [negativeTasks] using h
         omega
 
