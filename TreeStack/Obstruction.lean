@@ -943,6 +943,309 @@ theorem obstruction_score_root_of_parent_score_zero
     rw [hFHeight, hInput] at hRootDecomp
     linarith
 
+
 end OrientedBranch
+
+/-- A neighbor of a selected root, oriented toward that root. -/
+abbrev RootNeighbor (T : FiniteTree V) (r : V) :=
+  {u : V // T.graph.Adj u r}
+
+namespace RootNeighbor
+
+noncomputable def branch {T : FiniteTree V} {r : V}
+    (n : RootNeighbor T r) : OrientedBranch T :=
+  incidentBranch T r n.1 n.2
+
+@[simp] theorem branch_root {T : FiniteTree V} {r : V}
+    (n : RootNeighbor T r) :
+    n.branch.root = n.1 := rfl
+
+@[simp] theorem branch_parent {T : FiniteTree V} {r : V}
+    (n : RootNeighbor T r) :
+    n.branch.parent = r := rfl
+
+end RootNeighbor
+
+/-- A vertex tagged by the unique incident root branch containing it. -/
+abbrev RootBranchVertex (T : FiniteTree V) (r : V) :=
+  Σ n : RootNeighbor T r,
+    {x : V // x ∈ n.branch.vertices}
+
+/-- A non-root vertex. -/
+abbrev RootProperVertex (r : V) :=
+  {x : V // x ∈ (Finset.univ : Finset V).erase r}
+
+/-- Incident branches at a root partition all vertices other than the root. -/
+noncomputable def rootBranchVertexEquivProper
+    (T : FiniteTree V) (r : V) :
+    RootBranchVertex T r ≃ RootProperVertex r := by
+  classical
+  have hex :
+      ∀ x : RootProperVertex r,
+        ∃ n : RootNeighbor T r, x.1 ∈ n.branch.vertices := by
+    intro x
+    have hxr : x.1 ≠ r := (Finset.mem_erase.mp x.2).1
+    rcases exists_incidentBranch_mem_of_ne_root (T := T) r hxr with
+      ⟨u, h, hx⟩
+    exact ⟨⟨u, h⟩, hx⟩
+  let chosen : RootProperVertex r → RootNeighbor T r :=
+    fun x => Classical.choose (hex x)
+  have hchosen :
+      ∀ x : RootProperVertex r,
+        x.1 ∈ (chosen x).branch.vertices := by
+    intro x
+    exact Classical.choose_spec (hex x)
+  refine
+    { toFun := fun z =>
+        ⟨z.2.1, Finset.mem_erase.mpr ⟨?_, Finset.mem_univ _⟩⟩
+      invFun := fun x =>
+        ⟨chosen x, ⟨x.1, hchosen x⟩⟩
+      left_inv := ?_
+      right_inv := ?_ }
+  · intro h
+    subst h
+    exact z.1.branch.parent_not_mem_vertices z.2.2
+  · intro z
+    apply Sigma.ext
+    · apply Subtype.ext
+      by_contra hne
+      let x : RootProperVertex r :=
+        ⟨z.2.1,
+          Finset.mem_erase.mpr
+            ⟨by
+              intro h
+              subst h
+              exact z.1.branch.parent_not_mem_vertices z.2.2,
+             Finset.mem_univ _⟩⟩
+      have hdisj :=
+        incidentBranch_vertices_disjoint
+          (T := T) r z.1.2 (chosen x).2 hne
+      exact
+        (Finset.disjoint_left.mp hdisj)
+          z.2.2 (hchosen x)
+    · apply Subtype.ext
+      rfl
+  · intro x
+    apply Subtype.ext
+    rfl
+
+/-- A dependent sum over root neighbors agrees with the corresponding sum over
+the finite subtype of actual neighbors. -/
+theorem sum_dite_rootNeighbors {M : Type*} [AddCommMonoid M]
+    (T : FiniteTree V) (r : V) (f : RootNeighbor T r → M) :
+    (∑ u : V,
+      if h : T.graph.Adj u r then
+        f ⟨u, h⟩
+      else
+        0) =
+      ∑ n : RootNeighbor T r, f n := by
+  classical
+  let term : V → M := fun u =>
+    if h : T.graph.Adj u r then f ⟨u, h⟩ else 0
+  have hrestrict :
+      (∑ u ∈ T.graph.neighborFinset r, term u) =
+        ∑ u : V, term u := by
+    apply Finset.sum_subset (Finset.subset_univ _)
+    intro u huUniv huNot
+    have hnot : ¬ T.graph.Adj u r := by
+      intro h
+      exact huNot (by simpa using h.symm)
+    simp [term, hnot]
+  rw [← hrestrict]
+  change
+    (∑ u ∈ T.graph.neighborFinset r, term u) =
+      ∑ n ∈ (Finset.univ : Finset (RootNeighbor T r)), f n
+  apply Finset.sum_bij
+    (fun u hu =>
+      ⟨u, by simpa using
+        (T.graph.mem_neighborFinset.mp hu).symm⟩)
+  · intro u hu
+    exact Finset.mem_univ _
+  · intro u₁ hu₁ u₂ hu₂ hEq
+    exact congrArg Subtype.val hEq
+  · intro n hn
+    refine ⟨n.1, ?_, ?_⟩
+    · exact T.graph.mem_neighborFinset.mpr n.2.symm
+    · apply Subtype.ext
+      rfl
+  · intro u hu
+    have h : T.graph.Adj u r := by
+      simpa using (T.graph.mem_neighborFinset.mp hu).symm
+    simp [term, h]
+
+/-- The number of root neighbors is the degree of the root. -/
+theorem card_rootNeighbor (T : FiniteTree V) (r : V) :
+    Fintype.card (RootNeighbor T r) = T.graph.degree r := by
+  classical
+  calc
+    Fintype.card (RootNeighbor T r) =
+        ∑ _n : RootNeighbor T r, (1 : ℕ) := by simp
+    _ = ∑ u : V,
+        if T.graph.Adj u r then (1 : ℕ) else 0 := by
+          symm
+          simpa using
+            sum_dite_rootNeighbors T r
+              (fun _ : RootNeighbor T r => (1 : ℕ))
+    _ = T.graph.degree r := by
+          simpa [SimpleGraph.degree_eq_sum_if_adj, adj_comm]
+
+/-- Summing over all incident branch interiors is exactly summing over all
+non-root vertices. -/
+theorem sum_rootBranch_vertices
+    (T : FiniteTree V) (r : V) (f : V → ℕ) :
+    (∑ n : RootNeighbor T r, ∑ x ∈ n.branch.vertices, f x) =
+      ∑ x ∈ (Finset.univ : Finset V).erase r, f x := by
+  classical
+  calc
+    (∑ n : RootNeighbor T r, ∑ x ∈ n.branch.vertices, f x) =
+        ∑ n : RootNeighbor T r,
+          ∑ x : {x : V // x ∈ n.branch.vertices}, f x.1 := by
+            apply Finset.sum_congr rfl
+            intro n _
+            rw [Finset.sum_subtype
+              n.branch.vertices
+              (fun _ => Iff.rfl) f]
+    _ = ∑ z : RootBranchVertex T r, f z.2.1 := by
+          rw [Fintype.sum_sigma]
+    _ = ∑ x : RootProperVertex r, f x.1 := by
+          exact
+            Fintype.sum_equiv
+              (rootBranchVertexEquivProper T r)
+              (fun z : RootBranchVertex T r => f z.2.1)
+              (fun x : RootProperVertex r => f x.1)
+              (fun _ => rfl)
+    _ = ∑ x ∈ (Finset.univ : Finset V).erase r, f x := by
+          symm
+          exact
+            Finset.sum_subtype
+              ((Finset.univ : Finset V).erase r)
+              (fun _ => Iff.rfl) f
+
+/-- Doubling all incident branch potentials recovers the root-distance
+potential of every non-root internal vertex. -/
+theorem two_mul_sum_root_internalPotential
+    (T : FiniteTree V) (r : V) :
+    2 * (∑ n : RootNeighbor T r, n.branch.internalPotential) =
+      ∑ x ∈ (Finset.univ : Finset V).erase r,
+        if 1 < T.graph.degree x then
+          T.graph.degree x * 2 ^ T.graph.dist r x
+        else
+          0 := by
+  classical
+  calc
+    2 * (∑ n : RootNeighbor T r, n.branch.internalPotential) =
+        ∑ n : RootNeighbor T r, 2 * n.branch.internalPotential := by
+          rw [Finset.mul_sum]
+    _ = ∑ n : RootNeighbor T r,
+        ∑ x ∈ n.branch.vertices,
+          if 1 < T.graph.degree x then
+            T.graph.degree x * 2 ^ T.graph.dist r x
+          else
+            0 := by
+          apply Finset.sum_congr rfl
+          intro n _
+          rw [OrientedBranch.internalPotential, Finset.mul_sum]
+          apply Finset.sum_congr rfl
+          intro x hx
+          by_cases hInt : 1 < T.graph.degree x
+          · have hdist :=
+              n.branch.dist_parent_eq_root_dist_add_one hx
+            simp [RootNeighbor.branch, hInt] at hdist ⊢
+            rw [hdist, pow_succ]
+            ring
+          · simp [hInt]
+    _ = ∑ x ∈ (Finset.univ : Finset V).erase r,
+        if 1 < T.graph.degree x then
+          T.graph.degree x * 2 ^ T.graph.dist r x
+        else
+          0 := by
+          exact
+            sum_rootBranch_vertices T r
+              (fun x =>
+                if 1 < T.graph.degree x then
+                  T.graph.degree x * 2 ^ T.graph.dist r x
+                else
+                  0)
+
+/-- The incident obstruction heights at a selected root sum to exactly
+\`sigma T r - 1\`. -/
+theorem sum_root_obstructionHeight_eq_sigma_sub_one
+    (T : FiniteTree V) (r : V) :
+    (∑ n : RootNeighbor T r, n.branch.obstructionHeight) =
+      sigma T r - 1 := by
+  classical
+  have hHeights :
+      (∑ n : RootNeighbor T r, n.branch.obstructionHeight) =
+        Fintype.card (RootNeighbor T r) +
+          2 * (∑ n : RootNeighbor T r, n.branch.internalPotential) := by
+    calc
+      (∑ n : RootNeighbor T r, n.branch.obstructionHeight) =
+          ∑ n : RootNeighbor T r,
+            (1 + 2 * n.branch.internalPotential) := by
+              apply Finset.sum_congr rfl
+              intro n _
+              rw [OrientedBranch.obstructionHeight_eq_one_add_two_mul_internalPotential]
+      _ = Fintype.card (RootNeighbor T r) +
+          2 * (∑ n : RootNeighbor T r, n.branch.internalPotential) := by
+            rw [Finset.sum_add_distrib]
+            simp [← Finset.mul_sum]
+  have hPotential :=
+    two_mul_sum_root_internalPotential T r
+  have hInternal :
+      (∑ x ∈ (Finset.univ : Finset V).erase r,
+        if 1 < T.graph.degree x then
+          T.graph.degree x * 2 ^ T.graph.dist r x
+        else
+          0) =
+        ∑ x ∈ nonRootInternalVertices T r,
+          T.graph.degree x * 2 ^ T.graph.dist r x := by
+    rw [← Finset.sum_filter]
+    congr 1
+    ext x
+    simp [nonRootInternalVertices, and_left_comm, and_comm]
+  rw [hHeights, card_rootNeighbor T r, hPotential, hInternal,
+    sigma_corrected_expansion]
+  omega
+
+/-- At the selected root itself, the obstruction score is exactly zero. -/
+theorem obstruction_score_selected_root
+    (T : FiniteTree V) (r : V) :
+    score T (obstruction T r) r = 0 := by
+  classical
+  have hTerms :
+      rootMessageSum T (obstruction T r) r =
+        -((sigma T r - 1 : ℕ) : ℤ) := by
+    rw [rootMessageSum]
+    calc
+      (∑ u : V, rootMessageTerm T (obstruction T r) r u) =
+          ∑ u : V,
+            if h : T.graph.Adj u r then
+              -((incidentBranch T r u h).obstructionHeight : ℤ)
+            else
+              0 := by
+                apply Finset.sum_congr rfl
+                intro u _
+                by_cases h : T.graph.Adj u r
+                · let B : OrientedBranch T := incidentBranch T r u h
+                  have hAway : r ∉ B.vertices := by
+                    simpa [B, incidentBranch] using B.parent_not_mem_vertices
+                  have hMsg :=
+                    (B.obstruction_branchMessage r hAway).2
+                  simp [rootMessageTerm, h, B, hMsg]
+                · simp [rootMessageTerm, h]
+      _ = ∑ n : RootNeighbor T r,
+            -((n.branch.obstructionHeight : ℕ) : ℤ) := by
+              exact
+                sum_dite_rootNeighbors T r
+                  (fun n : RootNeighbor T r =>
+                    -((n.branch.obstructionHeight : ℕ) : ℤ))
+      _ = -((∑ n : RootNeighbor T r,
+            n.branch.obstructionHeight : ℕ) : ℤ) := by
+              push_cast
+              rw [Finset.sum_neg_distrib]
+      _ = -((sigma T r - 1 : ℕ) : ℤ) := by
+              rw [sum_root_obstructionHeight_eq_sigma_sub_one]
+  rw [score, obstruction_root, hTerms]
+  ring
 
 end TreeStack
