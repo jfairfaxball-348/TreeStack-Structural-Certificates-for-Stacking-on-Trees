@@ -22,7 +22,7 @@ project:
 
 classification:
   arxiv: ["math.CO"]
-  msc2020: ["05C57", "05C05"]
+  msc2020: ["05C05"]
 
 sources:
   - title: "Stacking and clearing in graph pebbling"
