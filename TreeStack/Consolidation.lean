@@ -325,6 +325,108 @@ theorem exists_heightDominatingRoot_union_of_adj
       omega
     · exact hBHeight v hvB
 
+/-- A deterministic version of the two-part merge root.  The left root
+is kept exactly when its boundary depth is sufficient to dominate the right
+root's depth; otherwise the right root is kept. -/
+noncomputable def boundaryMergeRoot
+    (r s a b : V) : V :=
+  if T.graph.dist s b ≤ T.graph.dist r a + 1 then r else s
+
+theorem boundaryMergeRoot_eq_left_or_right
+    (r s a b : V) :
+    boundaryMergeRoot (T := T) r s a b = r ∨
+      boundaryMergeRoot (T := T) r s a b = s := by
+  unfold boundaryMergeRoot
+  split <;> simp
+
+/-- The deterministic boundary merge root dominates the union. -/
+theorem heightDominated_boundaryMergeRoot_union_of_adj
+    (h : V → ℕ)
+    {A B : Finset V}
+    (hAConn : TreePathConnected (T := T) A)
+    (hBConn : TreePathConnected (T := T) B)
+    (hDisj : Disjoint A B)
+    {a b r s : V}
+    (ha : a ∈ A) (hb : b ∈ B)
+    (hadj : T.graph.Adj a b)
+    (hADom : HeightDominated (T := T) h A r)
+    (hBDom : HeightDominated (T := T) h B s) :
+    HeightDominated (T := T) h (A ∪ B)
+      (boundaryMergeRoot (T := T) r s a b) := by
+  rcases hADom with ⟨hrA, hAHeight⟩
+  rcases hBDom with ⟨hsB, hBHeight⟩
+  unfold boundaryMergeRoot
+  split
+  next hDepth =>
+    refine ⟨Finset.mem_union_left _ hrA, ?_⟩
+    intro v hv
+    rw [Finset.mem_union] at hv
+    rcases hv with hvA | hvB
+    · exact hAHeight v hvA
+    · have hCross :=
+        dist_eq_dist_add_one_add_dist_of_adj_disjoint_carriers
+          hAConn hBConn hDisj ha hb hadj hrA hvB
+      have hTri :
+          T.graph.dist s v ≤
+            T.graph.dist s b + T.graph.dist b v :=
+        T.isTree.connected.dist_triangle
+      have hBase := hBHeight v hvB
+      rw [hCross]
+      omega
+  next hDepth =>
+    have hDepth' :
+        T.graph.dist r a ≤ T.graph.dist s b + 1 := by
+      omega
+    refine ⟨Finset.mem_union_right _ hsB, ?_⟩
+    intro v hv
+    rw [Finset.mem_union] at hv
+    rcases hv with hvA | hvB
+    · have hCross :=
+        dist_eq_dist_add_one_add_dist_of_adj_disjoint_carriers
+          hBConn hAConn hDisj.symm hb ha hadj.symm hsB hvA
+      have hTri :
+          T.graph.dist r v ≤
+            T.graph.dist r a + T.graph.dist a v :=
+        T.isTree.connected.dist_triangle
+      have hBase := hAHeight v hvA
+      rw [hCross]
+      omega
+    · exact hBHeight v hvB
+
+/-- Fibre of an arbitrary root assignment.  This generic layer lets us merge
+the canonical source fibres without changing the ambient vertex type. -/
+noncomputable def assignmentFiber
+    (ρ : V → V) (r : V) : Finset V :=
+  (Finset.univ : Finset V).filter fun v => ρ v = r
+
+@[simp] theorem mem_assignmentFiber
+    (ρ : V → V) (r v : V) :
+    v ∈ assignmentFiber ρ r ↔ ρ v = r := by
+  simp [assignmentFiber]
+
+/-- Invariants carried by the ambient-tree consolidation process:
+root labels are fixed points, every fibre is tree-path-connected, and the
+current root of each vertex dominates its target height. -/
+def RootAssignmentValid
+    (h : V → ℕ) (ρ : V → V) : Prop :=
+  (∀ v, ρ (ρ v) = ρ v) ∧
+  (∀ r, TreePathConnected (T := T) (assignmentFiber ρ r)) ∧
+  (∀ v, h v ≤ T.graph.dist (ρ v) v)
+
+/-- Merge the two fibres labelled `r` and `s` and relabel their union by
+`t`.  All other fibres are left unchanged. -/
+noncomputable def mergeAssignment
+    (ρ : V → V) (r s t : V) (v : V) : V :=
+  if ρ v = r ∨ ρ v = s then t else ρ v
+
+theorem mergeAssignment_eq_of_old_eq
+    (ρ : V → V) (r s t x y : V)
+    (hxy : ρ x = ρ y) :
+    mergeAssignment ρ r s t x =
+      mergeAssignment ρ r s t y := by
+  unfold mergeAssignment
+  rw [hxy]
+
 /-- Across an edge joining two distinct source fibres, tree distance splits
 exactly at that boundary edge. -/
 theorem dist_eq_dist_add_one_add_dist_of_adj_sourceFibers
