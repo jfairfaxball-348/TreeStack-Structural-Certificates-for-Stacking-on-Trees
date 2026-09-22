@@ -340,6 +340,212 @@ decreasing_by
   all_goals
     exact B.childBranch_card_lt _
 
+
+/-- The same tree edge with its orientation reversed. -/
+def reverseBranch (B : OrientedBranch T) : OrientedBranch T where
+  root := B.parent
+  parent := B.root
+  adj := B.adj.symm
+
+@[simp] theorem reverseBranch_root (B : OrientedBranch T) :
+    B.reverseBranch.root = B.parent := rfl
+
+@[simp] theorem reverseBranch_parent (B : OrientedBranch T) :
+    B.reverseBranch.parent = B.root := rfl
+
+@[simp] theorem reverseBranch_reverse (B : OrientedBranch T) :
+    B.reverseBranch.reverseBranch = B := by
+  cases B
+  rfl
+
+/-- A rooted score at the root of an oriented branch splits into the branch's
+effective input from its genuine children plus the message from the reverse
+(parent-side) branch. -/
+theorem score_eq_effectiveInput_add_reverse
+    (C : Configuration V) (B : OrientedBranch T) :
+    score T C B.root =
+      B.effectiveInput C +
+        messageContribution (branchMessage C B.reverseBranch) := by
+  classical
+  have hTerm (u : V) :
+      rootMessageTerm T C B.root u =
+        (if h : T.graph.Adj B.root u ∧ u ≠ B.parent then
+          messageContribution
+            (branchMessage C
+              (B.childBranch
+                { vertex := u
+                  adj := h.1
+                  ne_parent := h.2 }))
+        else
+          0) +
+        if u = B.parent then
+          messageContribution (branchMessage C B.reverseBranch)
+        else
+          0 := by
+    by_cases hup : u = B.parent
+    · subst u
+      simp [rootMessageTerm, reverseBranch, incidentBranch, B.adj]
+    · by_cases hadj : T.graph.Adj B.root u
+      · have hadj' : T.graph.Adj u B.root := hadj.symm
+        simp [rootMessageTerm, reverseBranch, incidentBranch, childBranch,
+          hadj, hadj', hup]
+      · have hadj' : ¬ T.graph.Adj u B.root := by
+          intro h
+          exact hadj h.symm
+        simp [rootMessageTerm, hadj, hadj', hup]
+  rw [score, rootMessageSum, effectiveInput, childMessageSum]
+  simp_rw [hTerm]
+  rw [Finset.sum_add_distrib]
+  simp
+  ring
+
+/-- If an oriented branch is configuration-empty, its effective input is zero.
+This does not identify the branch message with integer zero: its message is
+still the separate value \`EMPTY\`. -/
+theorem effectiveInput_eq_zero_of_not_occupied
+    (C : Configuration V) (B : OrientedBranch T)
+    (hEmpty : ¬ B.Occupied C) :
+    B.effectiveInput C = 0 := by
+  classical
+  have hZero :=
+    (B.not_occupied_iff_zero_on_vertices C).1 hEmpty
+  have hRoot : C B.root = 0 :=
+    hZero B.root B.root_mem_vertices
+  rw [effectiveInput, childMessageSum, hRoot]
+  simp only [Nat.cast_zero, zero_add]
+  apply Finset.sum_eq_zero
+  intro v hv
+  by_cases h : T.graph.Adj B.root v ∧ v ≠ B.parent
+  · let c : B.Child :=
+      { vertex := v
+        adj := h.1
+        ne_parent := h.2 }
+    have hChildEmpty : ¬ (B.childBranch c).Occupied C := by
+      intro hOcc
+      rcases hOcc with ⟨w, hw, hpos⟩
+      exact hEmpty
+        ⟨w, B.childBranch_vertices_subset c hw, hpos⟩
+    rw [dif_pos h]
+    change
+      messageContribution
+          (branchMessage C (B.childBranch c)) = 0
+    rw [branchMessage_eq_empty_of_not_occupied C (B.childBranch c) hChildEmpty]
+    rfl
+  · simp [h]
+
+/-- Zero score propagates from the parent of a descendant obstruction branch
+to that branch root.  The proof uses the exact reverse-side effective input,
+so no executable task is ever introduced for an empty branch. -/
+theorem obstruction_score_root_of_parent_score_zero
+    (r : V) (B : OrientedBranch T)
+    (hAway : r ∉ B.vertices)
+    (hParent :
+      score T (obstruction T r) B.parent = 0) :
+    score T (obstruction T r) B.root = 0 := by
+  classical
+  let C : Configuration V := obstruction T r
+  let R : OrientedBranch T := B.reverseBranch
+  have hData := obstruction_branchMessage r B hAway
+  have hOccB : B.Occupied C := by
+    simpa [C] using hData.1
+  have hMsgB :
+      branchMessage C B =
+        some (-(B.obstructionHeight : ℤ)) := by
+    simpa [C] using hData.2
+  have hFEff :
+      F (B.effectiveInput C) =
+        -(B.obstructionHeight : ℤ) := by
+    have hDef :=
+      branchMessage_eq_some_of_occupied C B hOccB
+    rw [hMsgB] at hDef
+    exact Option.some.inj hDef.symm
+  have hParentDecomp :=
+    score_eq_effectiveInput_add_reverse C R
+  have hRevRev : R.reverseBranch = B := by
+    simp [R]
+  have hEffR :
+      R.effectiveInput C = (B.obstructionHeight : ℤ) := by
+    rw [hParent, hRevRev, hMsgB] at hParentDecomp
+    simp only [messageContribution_some] at hParentDecomp
+    linarith
+  have hOccR : R.Occupied C := by
+    by_contra hEmpty
+    have hZero :=
+      effectiveInput_eq_zero_of_not_occupied C R hEmpty
+    rw [hZero] at hEffR
+    have hPos : 0 < (B.obstructionHeight : ℤ) := by
+      exact_mod_cast B.obstructionHeight_pos
+    linarith
+  have hMsgR :
+      branchMessage C R =
+        some (F (B.obstructionHeight : ℤ)) := by
+    rw [branchMessage_eq_some_of_occupied C R hOccR, hEffR]
+  have hRootDecomp :=
+    score_eq_effectiveInput_add_reverse C B
+  change
+    score T C B.root =
+      B.effectiveInput C +
+        messageContribution (branchMessage C R) at hRootDecomp
+  rw [hMsgR] at hRootDecomp
+  simp only [messageContribution_some] at hRootDecomp
+  by_cases hLeaf : T.graph.degree B.root = 1
+  · have hHeight : B.obstructionHeight = 1 :=
+      B.obstructionHeight_leaf hLeaf
+    have hFEff' :
+        F (B.effectiveInput C) = -(2 * (0 : ℤ) + 1) := by
+      simpa [hHeight] using hFEff
+    have hInput :
+        B.effectiveInput C = 1 := by
+      exact
+        (F_eq_neg_odd_iff (z := B.effectiveInput C) (r := (0 : ℤ))
+          (by omega)).1 hFEff'
+    rw [hHeight] at hRootDecomp
+    norm_num [F] at hRootDecomp
+    linarith
+  · have hPosDegree : 0 < T.graph.degree B.root := by
+      rw [T.graph.degree_pos_iff_exists_adj B.root]
+      exact ⟨B.parent, B.adj⟩
+    have hInternal : 1 < T.graph.degree B.root := by
+      omega
+    let H : ℕ :=
+      ∑ v : V,
+        if h : T.graph.Adj B.root v ∧ v ≠ B.parent then
+          obstructionHeight
+            (B.childBranch
+              { vertex := v
+                adj := h.1
+                ne_parent := h.2 })
+        else
+          0
+    have hHeight :
+        B.obstructionHeight = 3 + 2 * H := by
+      simpa [H] using B.obstructionHeight_internal hInternal
+    have hFEff' :
+        F (B.effectiveInput C) =
+          -(2 * ((H : ℤ) + 1) + 1) := by
+      rw [hHeight] at hFEff
+      push_cast at hFEff
+      linarith
+    have hInput :
+        B.effectiveInput C = -(H : ℤ) := by
+      have hInv :=
+        (F_eq_neg_odd_iff
+          (z := B.effectiveInput C)
+          (r := (H : ℤ) + 1) (by positivity)).1 hFEff'
+      linarith
+    have hFHeight :
+        F (B.obstructionHeight : ℤ) = (H : ℤ) := by
+      apply
+        (F_eq_nonneg_iff
+          (z := (B.obstructionHeight : ℤ))
+          (k := (H : ℤ)) (by positivity)).2
+      right
+      rw [hHeight]
+      push_cast
+      ring
+    rw [hFHeight, hInput] at hRootDecomp
+    linarith
+
 end OrientedBranch
 
 end TreeStack
