@@ -163,6 +163,37 @@ theorem child_nonempty_of_internal (B : OrientedBranch T)
     (SimpleGraph.degree_eq_one_iff_existsUnique_adj).mpr huniq
   omega
 
+
+/-- In a tree, every path is the unique shortest path between its endpoints. -/
+theorem tree_path_length_eq_dist {u v : V} (p : T.graph.Walk u v)
+    (hp : p.IsPath) :
+    p.length = T.graph.dist u v := by
+  obtain ⟨q, hq, hqdist⟩ :=
+    T.isTree.connected.preconnected.exists_path_of_dist u v
+  have hEq :
+      (⟨p, hp⟩ : T.graph.Path u v) =
+        ⟨q, hq⟩ :=
+    T.isTree.isAcyclic.subsingleton_path u v |>.elim _ _
+  have hpq : p = q := congrArg Subtype.val hEq
+  rw [hpq, hqdist]
+
+/-- A degree-one oriented branch consists only of its root. -/
+theorem vertices_eq_singleton_of_degree_one (B : OrientedBranch T)
+    (hLeaf : T.graph.degree B.root = 1) :
+    B.vertices = {B.root} := by
+  classical
+  apply Finset.Subset.antisymm
+  · intro x hx
+    by_cases hxr : x = B.root
+    · simpa [hxr]
+    · rcases B.exists_childBranch_mem_of_mem_vertices_ne_root hx hxr with
+        ⟨c, hc⟩
+      exact
+        (B.no_child_of_degree_one hLeaf c.vertex
+          ⟨c.adj, c.ne_parent⟩).elim
+  · intro x hx
+    simpa using hx
+
 /-- Every descendant branch of the selected root is occupied by the explicit
 obstruction, and its exact recursive message is the negative obstruction
 height.  The hypothesis says precisely that the selected root lies outside
