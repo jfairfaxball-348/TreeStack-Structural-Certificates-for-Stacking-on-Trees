@@ -475,6 +475,168 @@ theorem two_mul_sum_child_internalPotential (B : OrientedBranch T) :
                 else
                   0)
 
+
+/-- Closed form for the recursive obstruction height. -/
+theorem obstructionHeight_eq_one_add_two_mul_internalPotential
+    (B : OrientedBranch T) :
+    B.obstructionHeight = 1 + 2 * B.internalPotential := by
+  classical
+  by_cases hLeaf : T.graph.degree B.root = 1
+  · rw [B.obstructionHeight_leaf hLeaf, internalPotential,
+      B.vertices_eq_singleton_of_degree_one hLeaf]
+    simp [hLeaf]
+  · have hPos : 0 < T.graph.degree B.root := by
+      rw [T.graph.degree_pos_iff_exists_adj B.root]
+      exact ⟨B.parent, B.adj⟩
+    have hInternal : 1 < T.graph.degree B.root := by
+      omega
+    let H : ℕ :=
+      ∑ v : V,
+        if h : T.graph.Adj B.root v ∧ v ≠ B.parent then
+          obstructionHeight
+            (B.childBranch
+              { vertex := v
+                adj := h.1
+                ne_parent := h.2 })
+        else
+          0
+    let P : ℕ :=
+      ∑ c : B.Child, (B.childBranch c).internalPotential
+    have hRec :
+        H =
+          ∑ v : V,
+            if h : T.graph.Adj B.root v ∧ v ≠ B.parent then
+              1 + 2 *
+                (B.childBranch
+                  { vertex := v
+                    adj := h.1
+                    ne_parent := h.2 }).internalPotential
+            else
+              0 := by
+      dsimp [H]
+      apply Finset.sum_congr rfl
+      intro v _
+      by_cases h : T.graph.Adj B.root v ∧ v ≠ B.parent
+      · simp [h,
+          obstructionHeight_eq_one_add_two_mul_internalPotential
+            (B.childBranch
+              { vertex := v
+                adj := h.1
+                ne_parent := h.2 })]
+      · simp [h]
+    have hCount :
+        (∑ v : V,
+          if T.graph.Adj B.root v ∧ v ≠ B.parent then
+            (1 : ℕ)
+          else
+            0) =
+          B.childFinset.card := by
+      calc
+        (∑ v : V,
+          if T.graph.Adj B.root v ∧ v ≠ B.parent then
+            (1 : ℕ)
+          else
+            0) =
+            ((Finset.univ : Finset V).filter
+              (fun v => T.graph.Adj B.root v ∧ v ≠ B.parent)).card := by
+                simpa using
+                  (Finset.sum_boole (R := ℕ)
+                    (fun v : V =>
+                      T.graph.Adj B.root v ∧ v ≠ B.parent)
+                    (Finset.univ : Finset V))
+        _ = B.childFinset.card := by
+              congr 1
+              ext v
+              simp [childFinset, and_left_comm, and_comm]
+    have hPSum :
+        (∑ v : V,
+          if h : T.graph.Adj B.root v ∧ v ≠ B.parent then
+            (B.childBranch
+              { vertex := v
+                adj := h.1
+                ne_parent := h.2 }).internalPotential
+          else
+            0) = P := by
+      dsimp [P]
+      exact
+        B.sum_dite_children
+          (fun c : B.Child => (B.childBranch c).internalPotential)
+    have hH :
+        H = B.childFinset.card + 2 * P := by
+      rw [hRec]
+      calc
+        (∑ v : V,
+          if h : T.graph.Adj B.root v ∧ v ≠ B.parent then
+            1 + 2 *
+              (B.childBranch
+                { vertex := v
+                  adj := h.1
+                  ne_parent := h.2 }).internalPotential
+          else
+            0) =
+            (∑ v : V,
+              if T.graph.Adj B.root v ∧ v ≠ B.parent then
+                (1 : ℕ)
+              else
+                0) +
+              2 *
+                (∑ v : V,
+                  if h : T.graph.Adj B.root v ∧ v ≠ B.parent then
+                    (B.childBranch
+                      { vertex := v
+                        adj := h.1
+                        ne_parent := h.2 }).internalPotential
+                  else
+                    0) := by
+                      rw [Finset.mul_sum, ← Finset.sum_add_distrib]
+                      apply Finset.sum_congr rfl
+                      intro v _
+                      by_cases h :
+                          T.graph.Adj B.root v ∧ v ≠ B.parent
+                      · simp [h]
+                      · simp [h]
+        _ = B.childFinset.card + 2 * P := by
+              rw [hCount, hPSum]
+    let Q : ℕ :=
+      ∑ x ∈ B.vertices.erase B.root,
+        if 1 < T.graph.degree x then
+          T.graph.degree x * 2 ^ T.graph.dist B.root x
+        else
+          0
+    have hQ : 2 * P = Q := by
+      dsimp [P, Q]
+      exact B.two_mul_sum_child_internalPotential
+    have hPot :
+        B.internalPotential = Q + T.graph.degree B.root := by
+      let weight : V → ℕ := fun x =>
+        if 1 < T.graph.degree x then
+          T.graph.degree x * 2 ^ T.graph.dist B.root x
+        else
+          0
+      rw [internalPotential]
+      change
+        (∑ x ∈ B.vertices, weight x) =
+          Q + T.graph.degree B.root
+      calc
+        (∑ x ∈ B.vertices, weight x) =
+            (∑ x ∈ B.vertices.erase B.root, weight x) +
+              weight B.root := by
+                symm
+                exact
+                  Finset.sum_erase_add B.vertices weight
+                    B.root_mem_vertices
+        _ = Q + T.graph.degree B.root := by
+              dsimp [Q, weight]
+              simp [hInternal]
+    rw [B.obstructionHeight_internal hInternal]
+    change 3 + 2 * H = 1 + 2 * B.internalPotential
+    have hCard := B.card_childFinset_add_one
+    omega
+termination_by B.card
+decreasing_by
+  all_goals
+    exact B.childBranch_card_lt _
+
 /-- Every descendant branch of the selected root is occupied by the explicit
 obstruction, and its exact recursive message is the negative obstruction
 height.  The hypothesis says precisely that the selected root lies outside
