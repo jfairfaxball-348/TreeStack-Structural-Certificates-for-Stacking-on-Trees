@@ -502,6 +502,21 @@ theorem childBranch_carrier_subset
     rw [carrier]
     exact Finset.mem_insert.mpr (Or.inr hvB)
 
+/-- The external parent of a branch is outside every genuine child carrier. -/
+theorem parent_not_mem_childBranch_carrier
+    (B : OrientedBranch T) (c : B.Child) :
+    B.parent ∉ (B.childBranch c).carrier := by
+  classical
+  intro hp
+  have hpCases :
+      B.parent = B.root ∨
+        B.parent ∈ (B.childBranch c).vertices := by
+    simpa [carrier, childBranch] using hp
+  rcases hpCases with hroot | hpChild
+  · exact B.root_ne_parent hroot.symm
+  · exact B.parent_not_mem_vertices
+      (B.childBranch_vertices_subset c hpChild)
+
 /-- Distinct genuine child branches of the same oriented branch have disjoint
 vertex sets.  A common vertex would give a path in one child component that
 crosses the other's unique boundary edge and hence reaches the deleted parent
