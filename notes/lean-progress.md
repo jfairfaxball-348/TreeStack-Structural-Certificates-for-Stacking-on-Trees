@@ -1,14 +1,15 @@
 # Lean formalization progress
 
-Status: **through PR #15, the exact branch-boundary invariant, rooted score
-characterization, explicit estimator obstruction, arbitrary-defect edge
-classification, in-place support reduction/path closure, defective-edge forest,
-injective ambient-root owners, and local weighted defect inequalities are
-merged on `main`.  PR #16 adds the combined auxiliary orientation, direct
-ambient-tree acyclicity, longest-directed-path heights, powers-of-two doubling,
-and concrete owner-paid weighted defect bounds.**  The authoritative baseline
-for PR #16 is the PR #15 merge commit
-`b6ce6bca47069dc1f8848cf2ce8372f548142a36`.
+Status: **PR #17 now contains the complete Lean proof through the exact
+Csernák–Soukup stacking equality.**  The branch starts from the merged PR #16
+baseline on `main` and adds global weighted defect cancellation, occupied-leaf
+slack, ambient-tree height consolidation, the arbitrary-defect estimator upper
+bound, exact-size universality at `estim T`, and the final stacking-number
+equality.  Draft development workflow run #228 compiled the full imported Lean
+tree successfully at branch head
+`482eff2eff834edb27a51e058aa88723c7cac0b5`.  The complete ready-PR validation
+and post-merge `main` validation remain required before this milestone is
+recorded as merged.
 
 ## Pinned environment
 
@@ -530,25 +531,99 @@ The lower-bound obstruction and all structural/local charging layers through
 PR #15 are complete on `main`.  PR #16 supplies the auxiliary orientation,
 acyclic height/weight construction, and concrete weighted owner-charge layer.
 
-## Next formal frontier
+## PR #17 global upper bound and exact equality
 
-The explicit estimator obstruction supplies the machine-checked lower bound,
-the local arbitrary-defect edge states are classified, and retained
-`SupportEdge` edges now have an in-place connected/path-closure interface.
-Forced oriented-type edges and an injective incident-owner assignment are also
-available.
+The ambient-tree global proof is now implemented without subtype transport.
+The critical charging architecture is:
 
-The remaining Lean work is now concentrated in the global upper bound.  First
-sum the local owner-paid inequalities over the ambient tree, using injectivity
-of `rootedOwner` to prove global weighted defect cancellation and proving the
-baseline bounds for neutral/nondefective/nonretained edges.  Then prove the
-ambient-tree leaf-slack step (weights are one off the directed defective
-structure), formalize connected-partition consolidation for the positive-height
-parts, derive `mass C ≤ estim T - 1` for every all-nonpositive-score
-configuration, combine with `not_stackable_iff_all_scores_nonpos`, and finish
-the stacking equality using the already-merged explicit obstruction lower
-bound.
+```text
+OrientedBranch.AuxArrow
+OrientedBranch.retainedDefectCharge
+OrientedBranch.emptyBoundaryCharge
+OrientedBranch.sum_edgeSeparatedCharge_le_auxDefectBudget
+OrientedBranch.auxWeightedMass_le_auxDegreePotential
+```
 
-The Csernák–Soukup tree-stacking conjecture is therefore **not yet fully
-formalized in Lean**, but the lower-bound obstruction is no longer an open
-formal obligation.
+Every forced `DefectArrow` participates in `AuxArrow`, including oriented
+states with zero positive excess.  Only genuinely defective retained edges
+receive `retainedDefectCharge`.  Nonretained edges are handled separately by
+`emptyBoundaryCharge`, which is derived from the literal message-level
+`EMPTY = none` case; it is never replaced by `some 0`.
+
+The ordinary-mass conversion and ambient leaf slack are checked through:
+
+```text
+OrientedBranch.auxWeightedMass_sub_configurationSlack_eq_mass
+OrientedBranch.auxLeafSlack_le_auxConfigurationSlack
+OrientedBranch.mass_le_auxCompactPotential
+OrientedBranch.rootEstimate_eq_one_add_ambientLeafCount_add_rootedInternalPotential
+```
+
+The last theorem explicitly separates the degree-one-root and internal-root
+cases, so the source root convention is preserved.
+
+Connected-partition consolidation remains entirely on the ambient vertex type.
+Canonical height-zero source fibres are path connected; adjacent carriers can
+be merged while preserving pointwise height domination.  The main declarations
+are:
+
+```text
+OrientedBranch.exists_heightDominatingRoot_union_of_adj
+OrientedBranch.exists_global_heightDominatingRoot_from_sourceCarrier
+OrientedBranch.exists_root_auxHeight_le_dist
+OrientedBranch.exists_root_auxCompactPotential_le_rootEstimate_sub_one
+```
+
+These feed the global estimator upper bound and exact-size universality:
+
+```text
+mass_add_one_le_estim_of_all_scores_nonpos
+mass_le_estim_sub_one_of_all_scores_nonpos
+nonstackable_mass_le_estim_sub_one
+universalStackable_estim
+```
+
+Finally, `TreeStack/Stacking.lean` defines the exact-size source stacking
+number as the least `t >= 2` satisfying `UniversalStackable T.graph t`, proves
+upward exact-size closure, combines the upper bound with the already-checked
+`estim T - 1` obstruction, and proves:
+
+```text
+universal_stackable_mono
+estim_stackingCandidate
+stack_stackingCandidate
+estim_le_of_stackingCandidate
+stack_eq_estim
+stack_eq_estim_of_two_le_card
+```
+
+The headline theorem is
+
+```text
+stack_eq_estim_of_two_le_card
+    (T : FiniteTree V)
+    (hcard : 2 <= Fintype.card V) :
+    stack T = estim T
+```
+
+which explicitly excludes the one-vertex source-convention exception.
+
+The final equality was introduced in commit
+`16ad6a26b717346c759e5bdbd923f32542eb3772`; global theorem audits were
+expanded through commit `274f17bc061b5c5e46441177a4e809f845f90925`;
+the final draft compile repair is
+`482eff2eff834edb27a51e058aa88723c7cac0b5`.  Draft workflow run #228 passed
+the proof-hole guard and `lake build`.
+
+## Remaining work
+
+No mathematical Lean proof obligation remains on the PR #17 branch once the
+headline theorem above compiles.  Before merge, the complete ready-PR workflow
+must still pass the Python regression suite, bounded verifier, `compileall`,
+`lake build`, and `lake env lean Audit.lean`.  After merge, the corresponding
+`main` workflow must also pass.
+
+After those validation gates, the remaining project work is non-formal:
+external mathematical review, the prior-art/originality audit, Palomar
+packaging/verification, and research-paper preparation.  No novelty claim is
+made by the Lean development itself.
