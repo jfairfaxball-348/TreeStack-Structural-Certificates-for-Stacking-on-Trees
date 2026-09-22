@@ -321,6 +321,37 @@ noncomputable def childVertexEquivProper (B : OrientedBranch T) :
     apply Subtype.ext
     rfl
 
+
+/-- Summing over every child interior is exactly summing over the non-root
+vertices of the parent branch. -/
+theorem sum_childBranch_vertices (B : OrientedBranch T) (f : V → ℕ) :
+    (∑ c : B.Child, ∑ x ∈ (B.childBranch c).vertices, f x) =
+      ∑ x ∈ B.vertices.erase B.root, f x := by
+  classical
+  calc
+    (∑ c : B.Child, ∑ x ∈ (B.childBranch c).vertices, f x) =
+        ∑ c : B.Child,
+          ∑ x : {x : V // x ∈ (B.childBranch c).vertices}, f x.1 := by
+            apply Finset.sum_congr rfl
+            intro c _
+            rw [Finset.sum_subtype
+              (B.childBranch c).vertices
+              (fun _ => Iff.rfl) f]
+    _ = ∑ z : B.ChildVertex, f z.2.1 := by
+          rw [Fintype.sum_sigma]
+    _ = ∑ x : B.ProperVertex, f x.1 := by
+          exact
+            Fintype.sum_equiv B.childVertexEquivProper
+              (fun z : B.ChildVertex => f z.2.1)
+              (fun x : B.ProperVertex => f x.1)
+              (fun _ => rfl)
+    _ = ∑ x ∈ B.vertices.erase B.root, f x := by
+          symm
+          exact
+            Finset.sum_subtype
+              (B.vertices.erase B.root)
+              (fun _ => Iff.rfl) f
+
 /-- Every descendant branch of the selected root is occupied by the explicit
 obstruction, and its exact recursive message is the negative obstruction
 height.  The hypothesis says precisely that the selected root lies outside
