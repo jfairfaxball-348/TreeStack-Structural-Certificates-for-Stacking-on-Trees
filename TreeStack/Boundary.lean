@@ -1110,6 +1110,119 @@ theorem executeOccupiedTaskSchedule
         ⟨D, hReachAll, hRootAll, hParentAll,
           hClearedAll, hUntouchedAll⟩
 
+/-- Execute every occupied genuine child in the audited order.  The resulting
+configuration has accumulated exactly childMessageSum at the root, leaves the
+external parent unchanged, and clears every non-root vertex of the branch.
+Configuration-empty children are never tasks and remain untouched. -/
+theorem executeAllOccupiedChildren
+    (B : OrientedBranch T) (C E : Configuration V)
+    (hChildAttain :
+      ∀ (c : B.Child) (E' : Configuration V) (d : ℤ) (q : ℕ),
+        (B.childBranch c).Occupied E' →
+        branchMessage E' (B.childBranch c) = some d →
+        0 < (q : ℤ) + d →
+        ∃ D : Configuration V,
+          (B.childBranch c).ClearOutcome E' q D ∧
+            (D B.root : ℤ) = (q : ℤ) + d)
+    (hSame :
+      ∀ v ∈ B.vertices, v ≠ B.root → E v = C v)
+    (hSafe :
+      TaskScheduleSafe
+        (fun t : B.OccupiedChild C => t.gain)
+        (E B.root : ℤ)
+        (orderedTasks
+          (fun t : B.OccupiedChild C => t.gain)
+          (B.occupiedChildTasks C))) :
+    ∃ D : Configuration V,
+      B.BranchReach E D ∧
+      (D B.root : ℤ) =
+        (E B.root : ℤ) + childMessageSum C B ∧
+      D B.parent = E B.parent ∧
+      (∀ v ∈ B.vertices, v ≠ B.root → D v = 0) := by
+  classical
+  let gain : B.OccupiedChild C → ℤ := fun t => t.gain
+  let baseTasks : List (B.OccupiedChild C) := B.occupiedChildTasks C
+  let scheduled : List (B.OccupiedChild C) :=
+    orderedTasks gain baseTasks
+  have hNodupBase : baseTasks.Nodup := by
+    simpa [baseTasks] using B.occupiedChildTasks_nodup C
+  have hNodupScheduled : scheduled.Nodup := by
+    exact orderedTasks_nodup gain hNodupBase
+  have hSameScheduled :
+      ∀ t ∈ scheduled, ∀ v ∈ (B.childBranch t.child).vertices,
+        E v = C v := by
+    intro t ht v hv
+    have hvB : v ∈ B.vertices :=
+      B.childBranch_vertices_subset t.child hv
+    have hvRoot : v ≠ B.root := by
+      intro hvr
+      subst v
+      exact (B.childBranch t.child).parent_not_mem_vertices
+        (by simpa using hv)
+    exact hSame v hvB hvRoot
+  have hSafe' :
+      TaskScheduleSafe gain (E B.root : ℤ) scheduled := by
+    simpa [gain, baseTasks, scheduled] using hSafe
+  rcases executeOccupiedTaskSchedule B C hChildAttain
+      scheduled E hNodupScheduled hSameScheduled hSafe' with
+    ⟨D, hReach, hRoot, hParent, hCleared, hUntouched⟩
+  have hRoot' :
+      (D B.root : ℤ) =
+        (E B.root : ℤ) + childMessageSum C B := by
+    calc
+      (D B.root : ℤ) =
+          (E B.root : ℤ) + taskGainSum gain scheduled := hRoot
+      _ =
+          (E B.root : ℤ) + taskGainSum gain baseTasks := by
+            rw [scheduled, taskGainSum_orderedTasks]
+      _ = (E B.root : ℤ) + childMessageSum C B := by
+            rw [baseTasks, taskGainSum_occupiedChildTasks]
+  have hNonroot :
+      ∀ v ∈ B.vertices, v ≠ B.root → D v = 0 := by
+    intro v hvB hvRoot
+    rcases B.exists_childBranch_mem_of_mem_vertices_ne_root hvB hvRoot with
+      ⟨c, hvc⟩
+    by_cases hOcc : (B.childBranch c).Occupied C
+    · let hcv : B.IsChildVertex c.vertex := ⟨c.adj, c.ne_parent⟩
+      have hcEq : B.childOfVertex c.vertex hcv = c :=
+        Child.eq_of_vertex_eq rfl
+      let t : B.OccupiedChild C :=
+        ⟨c.vertex, ⟨hcv, by
+          rw [hcEq]
+          exact hOcc⟩⟩
+      have htChild : t.child = c := by
+        apply Child.eq_of_vertex_eq
+        simp [t]
+      have htBase : t ∈ baseTasks := by
+        simpa [baseTasks] using B.mem_occupiedChildTasks C t
+      have htScheduled : t ∈ scheduled := by
+        rw [scheduled, mem_orderedTasks_iff]
+        exact htBase
+      have htClear := hCleared t htScheduled
+      rw [htChild] at htClear
+      exact htClear v hvc
+    · have hNoTask :
+          ∀ t ∈ scheduled, t.1 ≠ c.vertex := by
+        intro t ht hEq
+        have htc : t.child = c := by
+          apply Child.eq_of_vertex_eq
+          simpa using hEq
+        have htOcc := t.occupied
+        rw [htc] at htOcc
+        exact hOcc htOcc
+      have hPres : D v = E v :=
+        hUntouched c hNoTask v hvc
+      have hEC : E v = C v :=
+        hSame v hvB hvRoot
+      have hC0 : C v = 0 := by
+        by_contra hne
+        exact hOcc ⟨v, hvc, Nat.pos_of_ne_zero hne⟩
+      calc
+        D v = E v := hPres
+        _ = C v := hEC
+        _ = 0 := hC0
+  exact ⟨D, hReach, hRoot', hParent, hNonroot⟩
+
 theorem MoveSignature.zero_supportedOn (B : OrientedBranch T) :
     MoveSignature.SupportedOn (MoveSignature.zero T) B := by
   intro u v h
