@@ -98,6 +98,42 @@ theorem exists_walk_within_auxSourceFiber
         (by simpa [py] using hzy)
     simpa [hsy] using hzsrc
 
+/-- Distinct canonical sources have disjoint fibres. -/
+theorem auxSourceFiber_disjoint_of_ne
+    (C : Configuration V) (ambientRoot : V)
+    (hScores : ∀ v, score T C v ≤ 0)
+    {r s : V} (hrs : r ≠ s) :
+    Disjoint
+      (auxSourceFiber C ambientRoot hScores r)
+      (auxSourceFiber C ambientRoot hScores s) := by
+  rw [Finset.disjoint_left]
+  intro v hvr hvs
+  have hr : auxSource C ambientRoot hScores v = r := by
+    simpa using hvr
+  have hs : auxSource C ambientRoot hScores v = s := by
+    simpa using hvs
+  exact hrs (hr.symm.trans hs)
+
+/-- A source fibre is path-connected by a simple ambient-tree path whose
+support remains entirely inside the fibre. -/
+theorem exists_path_within_auxSourceFiber
+    (C : Configuration V) (ambientRoot : V)
+    (hScores : ∀ v, score T C v ≤ 0)
+    (r x y : V)
+    (hx : x ∈ auxSourceFiber C ambientRoot hScores r)
+    (hy : y ∈ auxSourceFiber C ambientRoot hScores r) :
+    ∃ p : T.graph.Walk x y,
+      p.IsPath ∧
+        ∀ z ∈ p.support,
+          z ∈ auxSourceFiber C ambientRoot hScores r := by
+  rcases
+      exists_walk_within_auxSourceFiber
+        C ambientRoot hScores r x y hx hy with
+    ⟨w, hw⟩
+  refine ⟨w.toPath, w.toPath.2, ?_⟩
+  intro z hz
+  exact hw z (w.support_toPath_subset_support hz)
+
 /-- On a source fibre, the auxiliary weight is exactly the power of two of
 ambient-tree distance from that fibre's height-zero source. -/
 theorem auxWeight_eq_two_pow_dist_of_mem_sourceFiber
