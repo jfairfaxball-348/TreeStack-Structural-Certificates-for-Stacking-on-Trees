@@ -123,3 +123,25 @@ import TreeStack
 #check TreeStack.exists_other_occupied_of_all_scores_nonpos
 
 #print axioms TreeStack.OrientedBranch.root_pos_of_supportEdge_of_no_child_supportEdge
+
+-- Retained support-core path closure and forced defect orientations (PR #15)
+#print axioms TreeStack.OrientedBranch.reverse_child_occupied_of_supportEdge
+#print axioms TreeStack.OrientedBranch.child_supportEdge_iff_occupied_of_supportEdge
+#check TreeStack.OrientedBranch.SupportDescent
+#print axioms TreeStack.OrientedBranch.supportDescent_of_mem_pos
+#print axioms TreeStack.OrientedBranch.exists_child_supportEdge_of_supportEdge_of_root_not_pos
+#check TreeStack.OrientedBranch.DefectArrow
+#print axioms TreeStack.OrientedBranch.reverse_message_neg_of_defectArrow
+#print axioms TreeStack.OrientedBranch.not_defectArrow_reverse
+#print axioms TreeStack.OrientedBranch.defectArrow_tail_budget
+#print axioms TreeStack.OrientedBranch.supportEdge_defectArrow_or_reverse_or_both_neg
+
+-- Ambient-root incident-owner assignment for arbitrary tree-edge subsets
+#check TreeStack.OrientedBranch.rootedOwner
+#check TreeStack.OrientedBranch.rootedOther
+#print axioms TreeStack.OrientedBranch.rootedOther_adj_rootedOwner
+#print axioms TreeStack.OrientedBranch.rootedOwner_dist_eq_rootedOther_add_one
+#print axioms TreeStack.OrientedBranch.rootedOwner_other_edge
+#print axioms TreeStack.OrientedBranch.eq_of_adj_owner_of_dist
+#print axioms TreeStack.OrientedBranch.edge_eq_of_rootedOwner_eq
+#print axioms TreeStack.OrientedBranch.rootedOwner_reverse
