@@ -322,7 +322,12 @@ noncomputable def childVertexEquivProper (B : OrientedBranch T) :
         B.childBranch_vertices_disjoint z.1 (chosen x) hne'
       exact
         (Finset.disjoint_left.mp hdisj) z.2.2 (hchosen x)
-    cases hc
+    apply Sigma.ext hc
+    apply
+      (Subtype.heq_iff_coe_eq
+        (by
+          intro y
+          simpa [hc])).2
     rfl
   · intro x
     apply Subtype.ext
@@ -1034,7 +1039,12 @@ noncomputable def rootBranchVertexEquivProper
       exact
         (Finset.disjoint_left.mp hdisj)
           z.2.2 (hchosen x)
-    cases hn
+    apply Sigma.ext hn
+    apply
+      (Subtype.heq_iff_coe_eq
+        (by
+          intro y
+          simpa [hn])).2
     rfl
   · intro x
     apply Subtype.ext
