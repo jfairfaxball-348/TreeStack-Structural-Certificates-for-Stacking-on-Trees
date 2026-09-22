@@ -122,11 +122,17 @@ theorem auxArrow_or_reverse_of_defectiveSupportEdge
         B.reverseBranch.DefectiveSupportEdge C :=
       (B.defectiveSupportEdge_reverse_iff C).2 hDef
     refine ⟨B.adj.symm, ?_⟩
-    simpa using
-      (Or.inl ⟨hDefReverse, hReverse⟩ :
-        (B.reverseBranch.DefectiveSupportEdge C ∧
-            B.reverseBranch.DefectArrow C) ∨
-          B.reverseBranch.TwoNegativeOwnerArrow C ambientRoot)
+    have hInc :
+        incidentBranch T B.root B.parent B.adj.symm =
+          B.reverseBranch := by
+      simpa only [incidentBranch_reverse, incidentBranch_self]
+    change
+      ((incidentBranch T B.root B.parent B.adj.symm).DefectiveSupportEdge C ∧
+          (incidentBranch T B.root B.parent B.adj.symm).DefectArrow C) ∨
+        (incidentBranch T B.root B.parent B.adj.symm).TwoNegativeOwnerArrow
+          C ambientRoot
+    rw [hInc]
+    exact Or.inl ⟨hDefReverse, hReverse⟩
   · rcases B.rootedOwner_eq_root_or_parent ambientRoot with
       hOwnerRoot | hOwnerParent
     · right
@@ -142,11 +148,17 @@ theorem auxArrow_or_reverse_of_defectiveSupportEdge
         refine ⟨hDefReverse, hBothNeg.2, ?_, hOwnerReverse⟩
         simpa using hBothNeg.1
       refine ⟨B.adj.symm, ?_⟩
-      simpa using
-        (Or.inr hTwoReverse :
-          (B.reverseBranch.DefectiveSupportEdge C ∧
-              B.reverseBranch.DefectArrow C) ∨
-            B.reverseBranch.TwoNegativeOwnerArrow C ambientRoot)
+      have hInc :
+          incidentBranch T B.root B.parent B.adj.symm =
+            B.reverseBranch := by
+        simpa only [incidentBranch_reverse, incidentBranch_self]
+      change
+        ((incidentBranch T B.root B.parent B.adj.symm).DefectiveSupportEdge C ∧
+            (incidentBranch T B.root B.parent B.adj.symm).DefectArrow C) ∨
+          (incidentBranch T B.root B.parent B.adj.symm).TwoNegativeOwnerArrow
+            C ambientRoot
+      rw [hInc]
+      exact Or.inr hTwoReverse
     · left
       have hTwo :
           B.TwoNegativeOwnerArrow C ambientRoot :=
