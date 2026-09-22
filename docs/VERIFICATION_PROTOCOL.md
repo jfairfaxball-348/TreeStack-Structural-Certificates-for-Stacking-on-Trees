@@ -55,9 +55,8 @@ The pinned pipeline SHA for this packaging revision is:
 A green ordinary Lean build is not a substitute for a green Palomar full
 preflight.
 
-## Current legal prerequisite
+## Licence check
 
-Before Palomar can pass, the maintainer must select the TreeStack repository
-licence. The final candidate must contain exactly one accepted root licence
-file, and its SPDX identifier must equal `project.license` in
-`formalization.yaml`. No legal choice is inferred from another repository.
+The repository uses Apache-2.0. The final candidate must continue to contain
+exactly one root `LICENSE` file and `project.license: "Apache-2.0"` in
+`formalization.yaml`.
