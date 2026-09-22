@@ -671,6 +671,56 @@ theorem BranchReach.of_child
           B.childBranch_carrier_subset c hu,
           B.childBranch_carrier_subset c hv, rfl⟩
 
+/-- Repeating one legal oriented edge move a prescribed number of times
+gives exact endpoint counts and leaves every other vertex unchanged. -/
+theorem BranchReach.repeat_move
+    (B : OrientedBranch T) {u v : V}
+    (huv : T.graph.Adj u v)
+    (huCarrier : u ∈ B.carrier) (hvCarrier : v ∈ B.carrier) :
+    ∀ (C : Configuration V) (n : ℕ),
+      2 * n ≤ C u →
+      ∃ D : Configuration V,
+        B.BranchReach C D ∧
+        D u = C u - 2 * n ∧
+        D v = C v + n ∧
+        (∀ w : V, w ≠ u → w ≠ v → D w = C w) := by
+  classical
+  intro C n
+  induction n generalizing C with
+  | zero =>
+      intro h
+      refine ⟨C, Relation.ReflTransGen.refl, ?_, ?_, ?_⟩
+      · simp
+      · simp
+      · intro w hwu hwv
+        rfl
+  | succ n ih =>
+      intro hTotal
+      have hLegal : 2 ≤ C u := by omega
+      let E : Configuration V := move C u v
+      have hStep : B.BranchPebbleStep C E :=
+        ⟨u, v, huv, hLegal, huCarrier, hvCarrier, rfl⟩
+      have hReachStep : B.BranchReach C E :=
+        Relation.ReflTransGen.single hStep
+      have hEu : E u = C u - 2 := by
+        simp [E, move, huv.ne]
+      have hEv : E v = C v + 1 := by
+        simp [E, move, huv.ne]
+      have hRemain : 2 * n ≤ E u := by
+        rw [hEu]
+        omega
+      rcases ih E hRemain with ⟨D, hReachRest, hDu, hDv, hOther⟩
+      have hReach : B.BranchReach C D :=
+        Relation.ReflTransGen.trans hReachStep hReachRest
+      refine ⟨D, hReach, ?_, ?_, ?_⟩
+      · rw [hDu, hEu]
+        omega
+      · rw [hDv, hEv]
+        omega
+      · intro w hwu hwv
+        rw [hOther w hwu hwv]
+        simp [E, move, hwu, hwv]
+
 /-- All vertices of the branch have been cleared. -/
 def Cleared (B : OrientedBranch T) (D : Configuration V) : Prop :=
   ∀ v ∈ B.vertices, D v = 0
