@@ -2612,6 +2612,22 @@ def ExactBoundaryInvariant (C : Configuration V) (B : OrientedBranch T) : Prop :
           ¬ ∃ D : Configuration V,
             B.ClearOutcome C q D ∧ 0 < D B.parent)
 
+/-- Full machine-checkable exact boundary invariant: constructive exact
+attainment, universal upper bound, and nonpositive impossibility. -/
+theorem exactBoundaryInvariant
+    (C : Configuration V) (B : OrientedBranch T) :
+    ExactBoundaryInvariant C B := by
+  intro hOcc d hMsg q
+  refine ⟨?_, ?_, ?_⟩
+  · intro hPos
+    exact boundary_attainment C B hOcc d hMsg q hPos
+  · intro D hClear
+    exact ClearOutcome.boundary_le_message
+      B C q hOcc hMsg hClear
+  · intro hNonpos
+    exact ClearOutcome.no_positive_boundary_of_message_nonpos
+      B C q hOcc hMsg hNonpos
+
 end LegalSequences
 
 end OrientedBranch
