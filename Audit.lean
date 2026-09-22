@@ -55,3 +55,19 @@ import TreeStack
 #check TreeStack.OrientedBranch.ExactBoundaryInvariant
 #check TreeStack.OrientedBranch.boundary_attainment
 #check TreeStack.OrientedBranch.exactBoundaryInvariant
+
+#print axioms TreeStack.incidentBranch_vertices_disjoint
+#print axioms TreeStack.exists_incidentBranch_mem_of_ne_root
+#print axioms TreeStack.taskGainSum_rootTasks
+#print axioms TreeStack.Reach.exists_moveSignature
+#print axioms TreeStack.executeRootTaskSchedule
+#print axioms TreeStack.executeAllRootTasks
+#print axioms TreeStack.stackableAt_of_score_pos
+#print axioms TreeStack.score_pos_of_stackableAt
+#print axioms TreeStack.stackableAt_iff_score_pos
+#print axioms TreeStack.not_stackable_iff_all_scores_nonpos
+
+#check TreeStack.score
+#check TreeStack.stackableAt_iff_score_pos
+#check TreeStack.not_stackable_iff_all_scores_nonpos
+
