@@ -17,3 +17,4 @@ import TreeStack.GlobalCharge
 import TreeStack.LeafSlack
 import TreeStack.HeightSource
 import TreeStack.Consolidation
+import TreeStack.UpperBound
