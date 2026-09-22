@@ -88,6 +88,21 @@ theorem rootedOwner_dist_eq_rootedOther_add_one
     · exact (h hForward).elim
     · exact hReverse
 
+/-- If the ambient root lies on the displayed root side of an edge, the
+farther endpoint (and hence the rooted owner) is the displayed parent. -/
+theorem rootedOwner_eq_parent_of_mem_vertices
+    (r : V) (B : OrientedBranch T) (hr : r ∈ B.vertices) :
+    B.rootedOwner r = B.parent := by
+  classical
+  have hdist := B.dist_parent_eq_root_dist_add_one hr
+  have hdist' :
+      T.graph.dist r B.parent = T.graph.dist r B.root + 1 := by
+    simpa only [T.graph.dist_comm] using hdist
+  simp only [rootedOwner]
+  split
+  · next h => omega
+  · rfl
+
 /-- Reordering an edge as owner/other does not change its underlying
 undirected edge. -/
 theorem rootedOwner_other_edge

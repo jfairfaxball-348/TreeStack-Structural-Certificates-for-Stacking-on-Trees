@@ -165,7 +165,7 @@ import TreeStack
 #check TreeStack.OrientedBranch.TwoNegativeOwnerArrow
 #check TreeStack.OrientedBranch.AuxArrow
 #print axioms TreeStack.OrientedBranch.auxArrow_or_reverse_of_defectiveSupportEdge
-#print axioms TreeStack.OrientedBranch.auxArrow_defectiveGraph
+#print axioms TreeStack.OrientedBranch.auxArrow_supportEdge
 #print axioms TreeStack.OrientedBranch.not_auxArrow_reverse
 #print axioms TreeStack.OrientedBranch.auxArrow_no_reflTransGen_reverse
 #print axioms TreeStack.OrientedBranch.auxArrow_transGen_irrefl
@@ -184,3 +184,31 @@ import TreeStack
 #print axioms TreeStack.OrientedBranch.defectArrow_auxEdgeContribution_le_head_charge
 #print axioms TreeStack.OrientedBranch.twoNegativeOwnerArrow_auxEdgeContribution_le_owner_charge
 #print axioms TreeStack.OrientedBranch.auxiliaryState_auxEdgeContribution_le_rootedOwner_charge
+
+
+-- Global weighted cancellation, leaf slack, consolidation, and final formula
+#print axioms TreeStack.OrientedBranch.sum_edgeSeparatedCharge_le_auxDefectBudget
+#print axioms TreeStack.OrientedBranch.auxWeightedMass_eq_edges_sub_defect
+#print axioms TreeStack.OrientedBranch.sum_auxEdgeContribution_le_degree_add_defect
+#print axioms TreeStack.OrientedBranch.auxWeightedMass_sub_configurationSlack_eq_mass
+#print axioms TreeStack.OrientedBranch.auxLeafSlack_le_auxConfigurationSlack
+#print axioms TreeStack.OrientedBranch.auxDegreePotential_sub_leafSlack_eq_auxCompactPotential
+#print axioms TreeStack.OrientedBranch.exists_heightDominatingRoot_union_of_adj
+#print axioms TreeStack.OrientedBranch.exists_global_heightDominatingRoot_from_sourceCarrier
+#print axioms TreeStack.OrientedBranch.auxInternalDegreePotential_le_rootedInternalPotential
+#print axioms TreeStack.OrientedBranch.rootEstimate_eq_one_add_ambientLeafCount_add_rootedInternalPotential
+#print axioms TreeStack.OrientedBranch.auxWeightedMass_le_auxDegreePotential
+#print axioms TreeStack.OrientedBranch.mass_le_auxCompactPotential
+#print axioms TreeStack.OrientedBranch.exists_root_auxHeight_le_dist
+#print axioms TreeStack.OrientedBranch.exists_root_auxCompactPotential_le_rootEstimate_sub_one
+#print axioms TreeStack.mass_add_one_le_estim_of_all_scores_nonpos
+#print axioms TreeStack.mass_le_estim_sub_one_of_all_scores_nonpos
+#print axioms TreeStack.nonstackable_mass_le_estim_sub_one
+#print axioms TreeStack.universalStackable_estim
+#print axioms TreeStack.universal_stackable_mono
+#print axioms TreeStack.estim_le_of_stackingCandidate
+#print axioms TreeStack.stack_eq_estim
+#print axioms TreeStack.stack_eq_estim_of_two_le_card
+
+#check TreeStack.stack
+#check TreeStack.stack_eq_estim_of_two_le_card

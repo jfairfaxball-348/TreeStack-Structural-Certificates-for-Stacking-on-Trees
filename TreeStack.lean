@@ -13,3 +13,9 @@ import TreeStack.ForestOwner
 import TreeStack.DefectCharge
 import TreeStack.Auxiliary
 import TreeStack.AuxiliaryCharge
+import TreeStack.GlobalCharge
+import TreeStack.LeafSlack
+import TreeStack.HeightSource
+import TreeStack.Consolidation
+import TreeStack.UpperBound
+import TreeStack.Stacking
