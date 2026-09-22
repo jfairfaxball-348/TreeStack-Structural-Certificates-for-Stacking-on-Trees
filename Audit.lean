@@ -90,22 +90,3 @@ import TreeStack
 #check TreeStack.obstruction_not_stackable
 #check TreeStack.exists_nonstackable_mass_estim_sub_one
 
-
-#print axioms TreeStack.mass_obstruction
-#print axioms TreeStack.OrientedBranch.obstructionHeight_eq_one_add_two_mul_internalPotential
-#print axioms TreeStack.OrientedBranch.obstruction_branchMessage
-#print axioms TreeStack.OrientedBranch.score_eq_effectiveInput_add_reverse
-#print axioms TreeStack.OrientedBranch.obstruction_score_root_of_parent_score_zero
-#print axioms TreeStack.sum_root_obstructionHeight_eq_sigma_sub_one
-#print axioms TreeStack.obstruction_score_selected_root
-#print axioms TreeStack.OrientedBranch.obstruction_scores_zero_on_vertices
-#print axioms TreeStack.obstruction_score_eq_zero
-#print axioms TreeStack.obstruction_not_stackable
-#print axioms TreeStack.exists_rootEstimate_eq_estim
-#print axioms TreeStack.exists_nonstackable_mass_estim_sub_one
-
-#check TreeStack.obstruction
-#check TreeStack.OrientedBranch.obstructionHeight
-#check TreeStack.obstruction_score_eq_zero
-#check TreeStack.obstruction_not_stackable
-#check TreeStack.exists_nonstackable_mass_estim_sub_one
