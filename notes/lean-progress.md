@@ -3,8 +3,9 @@
 Status: **the exact branch-boundary invariant, rooted score characterization,
 explicit estimator obstruction, local arbitrary-defect edge classification,
 and the in-place support-reduction core are merged on `main`.  PR #15 extends
-that core with retained path closure, forced defect-edge orientations, and an
-injective incident-owner assignment for arbitrary tree-edge subsets.**  The
+that core with retained path closure, forced defect-edge orientations, an
+explicit defective-edge forest, an injective incident-owner assignment, and
+the first weighted defect-charging inequalities.**  The
 authoritative baseline for PR #15 is the PR #14 merge commit
 `53a57b2b21a9e2a8c714a9574587382b07c2d620`.
 
@@ -386,9 +387,37 @@ OrientedBranch.rootedOwner_reverse
 ```
 
 The key theorem `edge_eq_of_rootedOwner_eq` proves injectivity on underlying
-undirected tree edges.  Therefore its restriction to any later-defined
-defective-edge subset is already the required injective incident-owner
-assignment; no separate forest-component rooting theorem is needed.
+undirected tree edges.  Therefore its restriction to any defective-edge subset
+is the required injective incident-owner assignment; no separate
+forest-component rooting theorem is needed.
+
+The defective subset is now explicit and orientation invariant:
+
+```text
+OrientedBranch.DefectiveSupportEdge
+OrientedBranch.defectiveSupportEdge_reverse_iff
+OrientedBranch.defectiveGraph
+OrientedBranch.defectiveGraph_le_tree
+OrientedBranch.defectiveGraph_isAcyclic
+```
+
+`defectiveGraph_isAcyclic` proves the defective retained edges form a forest
+simply because their graph is a spanning subgraph of the ambient tree.
+
+A new file `TreeStack/DefectCharge.lean` also formalizes the local weighted
+edge estimates that the future auxiliary-height construction will feed:
+
+```text
+oriented_edge_excess_bound
+oriented_excess_le_tail_budget
+oriented_excess_le_head_budget
+two_negative_edge_excess_eq
+two_negative_excess_le_owner_budget
+```
+
+Thus, once a directed auxiliary edge supplies the doubling relation between
+endpoint weights, oriented-type excess can be paid by either endpoint and a
+two-negative edge oriented toward its owner can be paid by that owner's defect.
 
 This in-place architecture removes the need to transport configurations,
 messages, scores, and defect states to a subtype-valued support tree.  It does
@@ -430,15 +459,15 @@ the local arbitrary-defect edge states are classified, and retained
 Forced oriented-type edges and an injective incident-owner assignment are also
 available.
 
-The remaining Lean work is the global upper-bound layer: define the exact
-defective retained-edge subset and connect its two-negative states to the owner
-choice; establish the support-core estimator comparison still required by the
-current proof architecture (or replace it with an equivalent ambient-tree
-bound); orient owner-charged two-negative edges; define longest-directed-path
-heights and prove the powers-of-two doubling inequality; formalize weighted
-defect cancellation; prove occupied-leaf slack; formalize connected-partition
-consolidation; and finally derive `mass C ≤ estim T - 1` for every non-stackable
-configuration.
+The remaining Lean work is the global upper-bound layer: connect the
+two-negative defective states to the rooted owner choice; establish the
+support-core estimator comparison still required by the current proof
+architecture (or replace it with an equivalent ambient-tree bound); build the
+combined auxiliary orientation; define longest-directed-path heights and prove
+the powers-of-two doubling inequality; sum the now-formalized local charging
+bounds into global weighted defect cancellation; prove occupied-leaf slack;
+formalize connected-partition consolidation; and finally derive
+`mass C ≤ estim T - 1` for every non-stackable configuration.
 
 The Csernák–Soukup tree-stacking conjecture is therefore **not yet fully
 formalized in Lean**, but the lower-bound obstruction is no longer an open
