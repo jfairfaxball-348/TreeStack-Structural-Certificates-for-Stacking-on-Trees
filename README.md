@@ -7,8 +7,9 @@ Csernák–Soukup conjecture
 |V(T)|\ge2\implies \operatorname{stack}(T)=\operatorname{estim}(T).
 \]
 
-The project currently has three structural results, all pending external review
-and a complete prior-art audit:
+The project has three principal structural results. The completed mathematical
+argument has now received external human review; the prior-art/originality audit
+remains deliberately conservative and no unsupported priority claim is made:
 
 1. an exact rooted branch-message theorem characterizing stackability at a
    prescribed vertex by the sign of one integer score;
@@ -34,9 +35,10 @@ the project that
 \operatorname{stack}(T)=\operatorname{estim}(T)
 \]
 
-for every finite tree with at least two vertices.  The proof has not yet
-received external mathematical review, and the originality audit is still
-preliminary.  The repository therefore does not claim a new theorem of record.
+for every finite tree with at least two vertices. External human mathematical
+review of the completed result has been completed. The originality/prior-art
+audit remains preliminary, so the repository does not infer a priority claim
+from mechanization or review alone.
 
 ## Reproduce the bounded checks
 
@@ -108,10 +110,10 @@ TreeStack.stack_eq_estim_of_two_le_card :
 ```
 
 The one-vertex case is intentionally excluded because of the source convention
-that the stacking threshold is at least two.  As elsewhere in this repository,
-the formal proof is still pending external mathematical review and a complete
-prior-art/originality audit; the repository does not claim a new theorem of
-record on the basis of mechanization alone.
+that the stacking threshold is at least two. External human mathematical review
+of the completed result has been completed. The prior-art/originality audit
+remains conservative; the repository does not claim priority merely from
+mechanization or review.
 
 The Lean environment is pinned by `lean-toolchain` and
 `lake-manifest.json`. To reproduce the complete validation path:
@@ -127,3 +129,17 @@ lake env lean Audit.lean
 
 See `notes/lean-progress.md` for the exact proved theorem list, dependency
 boundary, trust statement, and validation status.
+
+
+## Palomar packaging status
+
+The protected Palomar statement surface, Solution surface, Comparator
+configuration, v0.4 metadata draft, verification documentation, and pinned full
+preflight workflow are prepared on the Palomar packaging branch. Registration
+has **not** been performed.
+
+One non-formal prerequisite remains before a Palomar preflight can pass:
+TreeStack has no recorded repository licence choice. Palomar requires exactly
+one accepted root licence whose SPDX identifier matches `project.license` in
+`formalization.yaml`. No licence is inferred from another project. See
+`docs/PALOMAR_PLAN.md` for the freeze protocol.
