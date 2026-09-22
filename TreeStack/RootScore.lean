@@ -316,6 +316,33 @@ theorem taskGainSum_rootTasks
 
 
 
+/-- A branch-local legal reach is in particular a global legal reach. -/
+theorem OrientedBranch.BranchReach.toReach
+    [DecidableEq V] (B : OrientedBranch T) {C D : Configuration V}
+    (hreach : B.BranchReach C D) :
+    Reach T.graph C D := by
+  induction hreach with
+  | refl =>
+      exact Relation.ReflTransGen.refl
+  | tail hCE hED ih =>
+      apply Relation.ReflTransGen.tail ih
+      rcases hED with ⟨u, v, huv, hlegal, huCarrier, hvCarrier, rfl⟩
+      exact ⟨u, v, huv, hlegal, rfl⟩
+
+/-- A vertex in one rooted task interior lies outside the carrier of every
+distinct rooted task. -/
+theorem RootTask.mem_vertices_not_mem_sibling_carrier
+    {T : FiniteTree V} {C : Configuration V} {r : V}
+    (s t : RootTask T C r) (hst : s.1 ≠ t.1) {v : V}
+    (hv : v ∈ s.branch.vertices) :
+    v ∉ t.branch.carrier := by
+  change
+    v ∈ (incidentBranch T r s.1 (Classical.choose s.2)).vertices at hv
+  change
+    v ∉ (incidentBranch T r t.1 (Classical.choose t.2)).carrier
+  exact mem_incidentBranch_vertices_not_mem_sibling_carrier
+    (T := T) r (Classical.choose s.2) (Classical.choose t.2) hst hv
+
 /-- Execute a safe list of occupied incident branches toward one target root.
 Every task attains its exact branch message gain; distinct incident interiors
 are preserved by locality. -/
@@ -402,12 +429,8 @@ theorem executeRootTaskSchedule
           have hObj : s = t := Subtype.ext hEq
           subst s
           exact htNot hs
-        have hOutside : v ∉ t.branch.carrier := by
-          have h :=
-            mem_incidentBranch_vertices_not_mem_sibling_carrier
-              (T := T) r s.branch.adj t.branch.adj hst hv
-          simpa [s.branch_eq_incident s.branch.adj,
-            t.branch_eq_incident t.branch.adj] using h
+        have hOutside : v ∉ t.branch.carrier :=
+          s.mem_vertices_not_mem_sibling_carrier t hst hv
         have hEqStep :=
           OrientedBranch.BranchReach.eq_of_not_mem_carrier
             t.branch hReachBranch hOutside
@@ -441,9 +464,12 @@ theorem executeRootTaskSchedule
       have hHeadPres :
           ∀ v ∈ t.branch.vertices, D v = E₁ v := by
         intro v hv
-        have h :=
-          hUntouchedTail t.1 t.branch.adj hHeadNotTail v
-        simpa [t.branch_eq_incident t.branch.adj] using h
+        have hv' :
+            v ∈ (incidentBranch T r t.1 (Classical.choose t.2)).vertices := by
+          simpa [RootTask.branch] using hv
+        exact
+          hUntouchedTail t.1 (Classical.choose t.2)
+            hHeadNotTail v hv'
       have hClearedHead : t.branch.Cleared D := by
         intro v hv
         rw [hHeadPres v hv]
@@ -465,10 +491,10 @@ theorem executeRootTaskSchedule
           intro s hs
           exact hnot s (by simp [hs])
         have hOutside : v ∉ t.branch.carrier := by
-          have hOut :=
-            mem_incidentBranch_vertices_not_mem_sibling_carrier
-              (T := T) r h t.branch.adj hnotHead.symm hv
-          simpa [t.branch_eq_incident t.branch.adj] using hOut
+          change
+            v ∉ (incidentBranch T r t.1 (Classical.choose t.2)).carrier
+          exact mem_incidentBranch_vertices_not_mem_sibling_carrier
+            (T := T) r h (Classical.choose t.2) hnotHead.symm hv
         have hStep :=
           OrientedBranch.BranchReach.eq_of_not_mem_carrier
             t.branch hReachBranch hOutside
@@ -595,19 +621,6 @@ theorem stackableAt_of_score_pos
     exact_mod_cast hPosZ
   · exact hOffRoot
 
-/-- A branch-local legal reach is in particular a global legal reach. -/
-theorem OrientedBranch.BranchReach.toReach
-    [DecidableEq V] (B : OrientedBranch T) {C D : Configuration V}
-    (hreach : B.BranchReach C D) :
-    Reach T.graph C D := by
-  induction hreach with
-  | refl =>
-      exact Relation.ReflTransGen.refl
-  | tail hCE hED ih =>
-      apply Relation.ReflTransGen.tail ih
-      rcases hED with ⟨u, v, huv, hlegal, huCarrier, hvCarrier, rfl⟩
-      exact ⟨u, v, huv, hlegal, rfl⟩
-
 /-- A global legal reach has an exact move-count signature.  Moreover, if an
 oriented branch starts occupied and its outward boundary count is zero, then
 that branch remains occupied. -/
@@ -682,7 +695,7 @@ supported on an actual tree edge. -/
 noncomputable def rootSignatureFluxSum
     (m : MoveSignature T) (r : V) : ℤ :=
   ∑ u : V,
-    (m.count u r : ℤ) - 2 * (m.count r u : ℤ)
+    ((m.count u r : ℤ) - 2 * (m.count r u : ℤ))
 
 theorem rootSignatureFluxSum_eq
     (m : MoveSignature T) (r : V) :
@@ -753,7 +766,12 @@ theorem score_pos_of_stackableAt
               F (OrientedBranch.effectiveInput C B) := by
           rw [rootMessageTerm]
           simp only [dif_pos hAdj]
-          simpa [B, incidentBranch, hMsg]
+          change
+            OrientedBranch.messageContribution
+                (OrientedBranch.branchMessage C B) =
+              F (OrientedBranch.effectiveInput C B)
+          rw [hMsg]
+          rfl
         rw [hTermEq]
         exact hBound
       · rcases hBounds.2 hOcc with ⟨k, hk⟩
@@ -762,9 +780,13 @@ theorem score_pos_of_stackableAt
         have hTermZero : rootMessageTerm T C r u = 0 := by
           rw [rootMessageTerm]
           simp only [dif_pos hAdj]
-          simpa [B, incidentBranch, hMsg]
+          change
+            OrientedBranch.messageContribution
+                (OrientedBranch.branchMessage C B) = 0
+          rw [hMsg]
+          rfl
         rw [hTermZero, hk]
-        positivity
+        omega
     · have hIn : m.count u r = 0 := by
         apply Nat.eq_zero_of_not_pos
         intro hpos
