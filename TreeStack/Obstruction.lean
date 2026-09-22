@@ -169,7 +169,7 @@ theorem tree_path_length_eq_dist {u v : V} (p : T.graph.Walk u v)
     (hp : p.IsPath) :
     p.length = T.graph.dist u v := by
   obtain ⟨q, hq, hqdist⟩ :=
-    T.isTree.connected.preconnected.exists_path_of_dist u v
+    T.isTree.connected.exists_path_of_dist u v
   have hEq :
       (⟨p, hp⟩ : T.graph.Path u v) =
         ⟨q, hq⟩ :=
@@ -192,7 +192,10 @@ theorem vertices_eq_singleton_of_degree_one (B : OrientedBranch T)
         (B.no_child_of_degree_one hLeaf c.vertex
           ⟨c.adj, c.ne_parent⟩).elim
   · intro x hx
-    simpa using hx
+    have hxr : x = B.root := by
+      simpa using hx
+    subst x
+    exact B.root_mem_vertices
 
 
 
@@ -237,7 +240,7 @@ theorem dist_parent_eq_root_dist_add_one
   have hpdist := tree_path_length_eq_dist (T := T) p hp
   have hqdist := tree_path_length_eq_dist (T := T) q hq
   simpa [q, p, SimpleGraph.Walk.length_cons,
-    SimpleGraph.Walk.length_mapLe, hpdist] using hqdist
+    SimpleGraph.Walk.length_mapLe, hpdist] using hqdist.symm
 
 /-- Distances into a genuine child branch increase by exactly one when
 measured from the parent-branch root. -/
@@ -269,6 +272,12 @@ abbrev ProperVertex (B : OrientedBranch T) :=
 noncomputable def childVertexEquivProper (B : OrientedBranch T) :
     B.ChildVertex ≃ B.ProperVertex := by
   classical
+  have hnotRoot :
+      ∀ (c : B.Child) {x : V},
+        x ∈ (B.childBranch c).vertices → x ≠ B.root := by
+    intro c x hx hxr
+    apply (B.childBranch c).parent_not_mem_vertices
+    simpa [childBranch, hxr] using hx
   let chosen : B.ProperVertex → B.Child := fun x =>
     Classical.choose
       (B.exists_childBranch_mem_of_mem_vertices_ne_root
@@ -289,43 +298,32 @@ noncomputable def childVertexEquivProper (B : OrientedBranch T) :
             exact (Finset.mem_erase.mp x.2).1 h))
   refine
     { toFun := fun z =>
-        ⟨z.2.1, Finset.mem_erase.mpr ⟨?_, B.childBranch_vertices_subset z.1 z.2.2⟩⟩
+        ⟨z.2.1,
+          Finset.mem_erase.mpr
+            ⟨hnotRoot z.1 z.2.2,
+              B.childBranch_vertices_subset z.1 z.2.2⟩⟩
       invFun := fun x =>
         ⟨chosen x, ⟨x.1, hchosen x⟩⟩
       left_inv := ?_
       right_inv := ?_ }
-  · intro h
-    subst h
-    exact (B.childBranch z.1).parent_not_mem_vertices z.2.2
   · intro z
     apply Sigma.ext
     · apply Child.eq_of_vertex_eq
       by_contra hne
-      have hdisj :=
-        B.childBranch_vertices_disjoint z.1 (chosen ⟨z.2.1,
+      let x : B.ProperVertex :=
+        ⟨z.2.1,
           Finset.mem_erase.mpr
-            ⟨by
-              intro h
-              subst h
-              exact (B.childBranch z.1).parent_not_mem_vertices z.2.2,
-             B.childBranch_vertices_subset z.1 z.2.2⟩⟩) hne
+            ⟨hnotRoot z.1 z.2.2,
+              B.childBranch_vertices_subset z.1 z.2.2⟩⟩
+      have hdisj :=
+        B.childBranch_vertices_disjoint z.1 (chosen x) hne
       exact
-        (Finset.disjoint_left.mp hdisj) z.2.2
-          (hchosen
-            ⟨z.2.1,
-              Finset.mem_erase.mpr
-                ⟨by
-                  intro h
-                  subst h
-                  exact (B.childBranch z.1).parent_not_mem_vertices z.2.2,
-                 B.childBranch_vertices_subset z.1 z.2.2⟩⟩)
+        (Finset.disjoint_left.mp hdisj) z.2.2 (hchosen x)
     · apply Subtype.ext
       rfl
   · intro x
     apply Subtype.ext
     rfl
-
-
 
 /-- The finite set of genuine child vertices of an oriented branch. -/
 noncomputable def childFinset (B : OrientedBranch T) : Finset V :=
@@ -384,9 +382,6 @@ theorem sum_dite_children {M : Type*} [AddCommMonoid M]
   · intro v hv
     have h := (B.mem_childFinset v).1 hv
     simp [term, h]
-    congr 1
-    apply Child.eq_of_vertex_eq
-    rfl
 
 /-- Summing over every child interior is exactly summing over the non-root
 vertices of the parent branch. -/
@@ -731,7 +726,7 @@ theorem obstruction_branchMessage (r : V) (B : OrientedBranch T)
     rw [F_of_le_one hle, B.obstructionHeight_internal hInternal]
     dsimp [H]
     push_cast
-    ring
+    ring_nf
 termination_by B.card
 decreasing_by
   all_goals
@@ -781,7 +776,14 @@ theorem score_eq_effectiveInput_add_reverse
           0 := by
     by_cases hup : u = B.parent
     · subst u
-      simp [rootMessageTerm, reverseBranch, incidentBranch, B.adj]
+      have hadj : T.graph.Adj B.parent B.root := B.adj.symm
+      rw [rootMessageTerm]
+      simp only [dif_pos hadj]
+      change
+        messageContribution
+            (branchMessage C (incidentBranch T B.root B.parent hadj)) =
+          messageContribution (branchMessage C B.reverseBranch)
+      congr 2
     · by_cases hadj : T.graph.Adj B.root u
       · have hadj' : T.graph.Adj u B.root := hadj.symm
         simp [rootMessageTerm, reverseBranch, incidentBranch, childBranch,
@@ -856,13 +858,18 @@ theorem obstruction_score_root_of_parent_score_zero
       branchMessage_eq_some_of_occupied C B hOccB
     rw [hMsgB] at hDef
     exact Option.some.inj hDef.symm
-  have hParentDecomp :=
-    score_eq_effectiveInput_add_reverse C R
+  have hParentDecomp :
+      score T C B.parent =
+        R.effectiveInput C +
+          messageContribution (branchMessage C R.reverseBranch) := by
+    simpa [R] using score_eq_effectiveInput_add_reverse C R
   have hRevRev : R.reverseBranch = B := by
     simp [R]
+  have hParentC : score T C B.parent = 0 := by
+    simpa [C] using hParent
   have hEffR :
       R.effectiveInput C = (B.obstructionHeight : ℤ) := by
-    rw [hParent, hRevRev, hMsgB] at hParentDecomp
+    rw [hParentC, hRevRev, hMsgB] at hParentDecomp
     simp only [messageContribution_some] at hParentDecomp
     linarith
   have hOccR : R.Occupied C := by
