@@ -90,6 +90,18 @@ structure Child (B : OrientedBranch T) where
   adj : T.graph.Adj B.root vertex
   ne_parent : vertex ≠ B.parent
 
+/-- A child choice is determined by its vertex; the remaining fields are
+propositions and hence proof-irrelevant. -/
+theorem Child.eq_of_vertex_eq {B : OrientedBranch T} {c d : B.Child}
+    (h : c.vertex = d.vertex) : c = d := by
+  cases c with
+  | mk cv ca cn =>
+      cases d with
+      | mk dv da dn =>
+          simp only at h
+          subst dv
+          rfl
+
 /-- The oriented branch hanging below a chosen child. -/
 def childBranch (B : OrientedBranch T) (c : B.Child) : OrientedBranch T where
   root := c.vertex
