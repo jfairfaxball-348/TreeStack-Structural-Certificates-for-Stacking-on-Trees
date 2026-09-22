@@ -305,4 +305,85 @@ theorem taskGainSum_rootTasks
           exact rootMessageTerm_eq_zero_of_not_occupied T C r huNotOcc
     _ = rootMessageSum T C r := rfl
 
+
+/-- A branch-local legal reach is in particular a global legal reach. -/
+theorem OrientedBranch.BranchReach.toReach
+    [DecidableEq V] (B : OrientedBranch T) {C D : Configuration V}
+    (hreach : B.BranchReach C D) :
+    Reach T.graph C D := by
+  induction hreach with
+  | refl =>
+      exact Relation.ReflTransGen.refl
+  | tail hCE hED ih =>
+      apply Relation.ReflTransGen.tail ih
+      rcases hED with ⟨u, v, huv, hlegal, huCarrier, hvCarrier, rfl⟩
+      exact ⟨u, v, huv, hlegal, rfl⟩
+
+/-- A global legal reach has an exact move-count signature.  Moreover, if an
+oriented branch starts occupied and its outward boundary count is zero, then
+that branch remains occupied. -/
+theorem Reach.exists_moveSignature
+    [DecidableEq V] {C D : Configuration V}
+    (hreach : Reach T.graph C D) :
+    ∃ m : MoveSignature T,
+      (∀ w : V,
+        (D w : ℤ) =
+          (C w : ℤ) + (m.incoming w : ℤ) -
+            2 * (m.outgoing w : ℤ)) ∧
+      (∀ A : OrientedBranch T,
+        A.Occupied C →
+        m.count A.root A.parent = 0 →
+        A.Occupied D) := by
+  induction hreach with
+  | refl =>
+      refine ⟨MoveSignature.zero T, ?_, ?_⟩
+      · intro w
+        simp
+      · intro A hOcc hzero
+        exact hOcc
+  | tail hCE hED ih =>
+      rcases hED with ⟨u, v, huv, hlegal, rfl⟩
+      rcases ih with ⟨m, hmBal, hmPersist⟩
+      let m' : MoveSignature T := m.extend u v huv
+      refine ⟨m', ?_, ?_⟩
+      · intro w
+        rw [OrientedBranch.move_balance_int _ huv.ne hlegal w, hmBal w]
+        simp [m', MoveSignature.incoming_extend, MoveSignature.outgoing_extend]
+        by_cases hwu : w = u <;> simp [hwu] <;> ring
+      · intro A hOcc hzero
+        have hmzero : m.count A.root A.parent = 0 := by
+          have hle :
+              m.count A.root A.parent ≤ m'.count A.root A.parent := by
+            dsimp [m', MoveSignature.extend]
+            omega
+          omega
+        rcases hmPersist A hOcc hmzero with ⟨w, hwA, hwpos⟩
+        by_cases hvA : v ∈ A.vertices
+        · refine ⟨v, hvA, ?_⟩
+          simp [move, huv.ne]
+        · have huA : u ∉ A.vertices := by
+            intro huA
+            have hEdge :=
+              A.edge_leaving_vertices_eq_boundary huA hvA huv
+            rw [Sym2.eq_iff] at hEdge
+            rcases hEdge with h | h
+            · rcases h with ⟨huRoot, hvParent⟩
+              subst u
+              subst v
+              dsimp [m', MoveSignature.extend] at hzero
+              simp at hzero
+            · rcases h with ⟨huParent, hvRoot⟩
+              subst u
+              exact A.parent_not_mem_vertices huA
+        have hwu : w ≠ u := by
+          intro h
+          subst w
+          exact huA hwA
+        have hwv : w ≠ v := by
+          intro h
+          subst w
+          exact hvA hwA
+        refine ⟨w, hwA, ?_⟩
+        simpa [move, hwu, hwv] using hwpos
+
 end TreeStack
