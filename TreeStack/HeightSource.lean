@@ -102,6 +102,32 @@ decreasing_by
       (Nat.pos_of_ne_zero hZero)
   omega
 
+/-- One-step equation for the canonical source walk at height zero. -/
+theorem auxSourceWalk_eq_of_height_zero
+    (C : Configuration V) (ambientRoot : V)
+    (hScores : ∀ v, score T C v ≤ 0)
+    (v : V) (hZero : auxHeight C ambientRoot hScores v = 0) :
+    auxSourceWalk C ambientRoot hScores v =
+      ⟨v, SimpleGraph.Walk.nil⟩ := by
+  rw [auxSourceWalk]
+  simp [hZero]
+
+/-- One-step equation for the canonical source walk at positive height. -/
+theorem auxSourceWalk_eq_of_height_pos
+    (C : Configuration V) (ambientRoot : V)
+    (hScores : ∀ v, score T C v ≤ 0)
+    (v : V) (hPos : 0 < auxHeight C ambientRoot hScores v) :
+    auxSourceWalk C ambientRoot hScores v =
+      let u := auxParent C ambientRoot hScores v
+      let tailCert := auxSourceWalk C ambientRoot hScores u
+      ⟨tailCert.1,
+        SimpleGraph.Walk.cons
+          (auxArrow_adj C ambientRoot
+            (auxParent_arrow_of_pos C ambientRoot hScores v hPos)).symm
+          tailCert.2⟩ := by
+  rw [auxSourceWalk]
+  simp only [dif_neg (Nat.ne_of_gt hPos)]
+
 /-- The height-zero source selected by the canonical predecessor chain. -/
 noncomputable def auxSource
     (C : Configuration V) (ambientRoot : V)
@@ -126,14 +152,12 @@ theorem auxSourceWalk_support_height_le
     (hx : x ∈ (auxSourceWalk C ambientRoot hScores v).2.support) :
     auxHeight C ambientRoot hScores x ≤
       auxHeight C ambientRoot hScores v := by
-  rw [auxSourceWalk] at hx
-  split at hx
-  next hZero =>
+  by_cases hZero : auxHeight C ambientRoot hScores v = 0
+  · rw [auxSourceWalk_eq_of_height_zero C ambientRoot hScores v hZero] at hx
     simp at hx
     subst x
     exact le_rfl
-  next hZero =>
-    let hPos : 0 < auxHeight C ambientRoot hScores v :=
+  · have hPos : 0 < auxHeight C ambientRoot hScores v :=
       Nat.pos_of_ne_zero hZero
     let u := auxParent C ambientRoot hScores v
     have hEq :
@@ -141,6 +165,7 @@ theorem auxSourceWalk_support_height_le
           auxHeight C ambientRoot hScores v := by
       simpa [u] using
         auxParent_height_add_one C ambientRoot hScores v hPos
+    rw [auxSourceWalk_eq_of_height_pos C ambientRoot hScores v hPos] at hx
     simp only [SimpleGraph.Walk.support_cons] at hx
     rcases List.mem_cons.mp hx with hEqX | hxTail
     · subst x
@@ -152,8 +177,7 @@ theorem auxSourceWalk_support_height_le
 termination_by auxHeight C ambientRoot hScores v
 decreasing_by
   have hEq :=
-    auxParent_height_add_one C ambientRoot hScores v
-      (Nat.pos_of_ne_zero hZero)
+    auxParent_height_add_one C ambientRoot hScores v hPos
   omega
 
 /-- The canonical source walk is simple because height strictly decreases
@@ -163,22 +187,21 @@ theorem auxSourceWalk_isPath
     (hScores : ∀ v, score T C v ≤ 0)
     (v : V) :
     (auxSourceWalk C ambientRoot hScores v).2.IsPath := by
-  rw [auxSourceWalk]
-  split
-  next hZero =>
+  by_cases hZero : auxHeight C ambientRoot hScores v = 0
+  · rw [auxSourceWalk_eq_of_height_zero C ambientRoot hScores v hZero]
     simp
-  next hZero =>
-    let hPos : 0 < auxHeight C ambientRoot hScores v :=
+  · have hPos : 0 < auxHeight C ambientRoot hScores v :=
       Nat.pos_of_ne_zero hZero
     let u := auxParent C ambientRoot hScores v
-    let tailCert := auxSourceWalk C ambientRoot hScores u
     have hEq :
         auxHeight C ambientRoot hScores u + 1 =
           auxHeight C ambientRoot hScores v := by
       simpa [u] using
         auxParent_height_add_one C ambientRoot hScores v hPos
-    have hTail : tailCert.2.IsPath := by
-      exact auxSourceWalk_isPath C ambientRoot hScores u
+    rw [auxSourceWalk_eq_of_height_pos C ambientRoot hScores v hPos]
+    have hTail :
+        (auxSourceWalk C ambientRoot hScores u).2.IsPath :=
+      auxSourceWalk_isPath C ambientRoot hScores u
     apply (SimpleGraph.Walk.cons_isPath_iff _ _).2
     refine ⟨hTail, ?_⟩
     intro hvMem
@@ -189,8 +212,7 @@ theorem auxSourceWalk_isPath
 termination_by auxHeight C ambientRoot hScores v
 decreasing_by
   have hEq :=
-    auxParent_height_add_one C ambientRoot hScores v
-      (Nat.pos_of_ne_zero hZero)
+    auxParent_height_add_one C ambientRoot hScores v hPos
   omega
 
 /-- The canonical source walk has exactly the recorded auxiliary height. -/
@@ -200,12 +222,10 @@ theorem auxSourceWalk_length
     (v : V) :
     (auxSourceWalk C ambientRoot hScores v).2.length =
       auxHeight C ambientRoot hScores v := by
-  rw [auxSourceWalk]
-  split
-  next hZero =>
+  by_cases hZero : auxHeight C ambientRoot hScores v = 0
+  · rw [auxSourceWalk_eq_of_height_zero C ambientRoot hScores v hZero]
     simp [hZero]
-  next hZero =>
-    let hPos : 0 < auxHeight C ambientRoot hScores v :=
+  · have hPos : 0 < auxHeight C ambientRoot hScores v :=
       Nat.pos_of_ne_zero hZero
     let u := auxParent C ambientRoot hScores v
     have hEq :
@@ -213,14 +233,14 @@ theorem auxSourceWalk_length
           auxHeight C ambientRoot hScores v := by
       simpa [u] using
         auxParent_height_add_one C ambientRoot hScores v hPos
+    rw [auxSourceWalk_eq_of_height_pos C ambientRoot hScores v hPos]
+    simp only [SimpleGraph.Walk.length_cons]
     rw [auxSourceWalk_length C ambientRoot hScores u]
-    simp
     omega
 termination_by auxHeight C ambientRoot hScores v
 decreasing_by
   have hEq :=
-    auxParent_height_add_one C ambientRoot hScores v
-      (Nat.pos_of_ne_zero hZero)
+    auxParent_height_add_one C ambientRoot hScores v hPos
   omega
 
 /-- Auxiliary height is a genuine tree distance from the canonical source. -/
@@ -254,8 +274,7 @@ theorem auxSource_eq_self_of_height_zero
     (v : V) (hZero : auxHeight C ambientRoot hScores v = 0) :
     auxSource C ambientRoot hScores v = v := by
   unfold auxSource
-  rw [auxSourceWalk]
-  simp [hZero]
+  rw [auxSourceWalk_eq_of_height_zero C ambientRoot hScores v hZero]
 
 /-- At positive height, passing to the canonical predecessor does not change
 the canonical source. -/
@@ -267,9 +286,7 @@ theorem auxSource_auxParent_of_pos
         (auxParent C ambientRoot hScores v) =
       auxSource C ambientRoot hScores v := by
   unfold auxSource
-  rw [auxSourceWalk]
-  simp only [if_neg (Nat.ne_of_gt hPos)]
-  rfl
+  rw [auxSourceWalk_eq_of_height_pos C ambientRoot hScores v hPos]
 
 /-- Every canonical source really has auxiliary height zero. -/
 theorem auxSource_height_zero
@@ -307,14 +324,12 @@ theorem auxSource_eq_of_mem_auxSourceWalk_support
     (hx : x ∈ (auxSourceWalk C ambientRoot hScores v).2.support) :
     auxSource C ambientRoot hScores x =
       auxSource C ambientRoot hScores v := by
-  rw [auxSourceWalk] at hx
-  split at hx
-  next hZero =>
+  by_cases hZero : auxHeight C ambientRoot hScores v = 0
+  · rw [auxSourceWalk_eq_of_height_zero C ambientRoot hScores v hZero] at hx
     simp at hx
     subst x
     rfl
-  next hZero =>
-    have hPos : 0 < auxHeight C ambientRoot hScores v :=
+  · have hPos : 0 < auxHeight C ambientRoot hScores v :=
       Nat.pos_of_ne_zero hZero
     let u := auxParent C ambientRoot hScores v
     have hSource :
@@ -322,6 +337,7 @@ theorem auxSource_eq_of_mem_auxSourceWalk_support
           auxSource C ambientRoot hScores v := by
       simpa [u] using
         auxSource_auxParent_of_pos C ambientRoot hScores v hPos
+    rw [auxSourceWalk_eq_of_height_pos C ambientRoot hScores v hPos] at hx
     simp only [SimpleGraph.Walk.support_cons] at hx
     rcases List.mem_cons.mp hx with hEq | hxTail
     · subst x
