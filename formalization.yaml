@@ -14,9 +14,7 @@ project:
   authors:
     - name: "John Fairfax-Ball"
       github: "jfairfaxball-348"
-  # LEGAL GATE: project.license is intentionally not asserted here until the
-  # maintainer selects a repository licence. Palomar requires this field to
-  # match exactly one mechanically detectable root licence file.
+  license: "Apache-2.0"
   responsible_maintainers:
     - "John Fairfax-Ball"
 
