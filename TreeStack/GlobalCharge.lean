@@ -206,7 +206,11 @@ theorem sum_dart_eq_sum_edge_pair (f : T.graph.Dart → ℤ) :
       apply Fintype.sum_congr
       intro e
       rw [Fintype.sum_bool]
-      simp [edgeBoolEquivDart, dartOfEdgeBool, add_comm]
+      change
+        f (dartOfEdgeBool (T := T) (e, false)) +
+            f (dartOfEdgeBool (T := T) (e, true)) =
+          f (edgeDart (T := T) e) + f (edgeDart (T := T) e).symm
+      simp [dartOfEdgeBool]
 
 /-- Reindex a dart by its head vertex and its tail as a neighbor of that
 head. -/
@@ -289,7 +293,6 @@ theorem auxDartMessageTerm_add_symm
   have hAdjSymm := hAdj.symm
   simp [auxDartMessageTerm, auxEdgeContribution, edgeBranch,
     rootMessageTerm, incidentBranch, reverseBranch, hAdj, hAdjSymm]
-  ring_nf
 
 /-- The sum of undirected weighted edge contributions is the negative
 weighted root-message sum. -/
@@ -374,6 +377,7 @@ theorem sum_edgeEndpointWeight_eq_auxDegreePotential
   exact hGroup.symm
 
 /-- Global sum of the local owner-paid edge inequalities. -/
+set_option maxHeartbeats 800000 in
 theorem sum_auxEdgeContribution_le_degree_add_defect
     (C : Configuration V) (ambientRoot : V)
     (hRootPos : 0 < C ambientRoot)
