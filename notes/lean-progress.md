@@ -1,10 +1,9 @@
 # Lean formalization progress
 
 Status: **the exact branch-boundary invariant and rooted score characterization
-are both merged on `main` and post-merge validated.**  The authoritative
-baseline is merge commit
-`fd6f7a90111f0a6424510792fa7c0b8dcdfcbfab`, the merge of PR #9,
-“Lean: rooted score characterization.”
+are merged on `main`; the explicit estimator obstruction and exact Lean
+lower-bound witness are now formalized in PR #12.**  The merged rooted-score
+baseline is `bea4d6dde1b75322b3db1ca8bee0813930d32ece`.
 
 ## Pinned environment
 
@@ -130,6 +129,60 @@ not_stackable_iff_all_scores_nonpos :
 The rooted proof, its `Audit.lean` axiom checks, the complete repository
 workflow, and the post-merge `main` workflow are all green.
 
+## Explicit estimator obstruction milestone
+
+`TreeStack/Obstruction.lean` now defines the explicit rooted obstruction
+
+```text
+obstruction T r
+```
+
+with `sigma T r - 1` pebbles at the selected root, one pebble at every other
+leaf, and zero elsewhere.  Its mass is checked exactly:
+
+```text
+mass_obstruction :
+  mass (obstruction T r) = rootEstimate T r - 1
+```
+
+For an oriented branch lying away from the selected root, the development
+defines a well-founded recursive obstruction height and proves both its closed
+form and its exact recursive message:
+
+```text
+OrientedBranch.obstructionHeight_eq_one_add_two_mul_internalPotential
+OrientedBranch.obstruction_branchMessage
+```
+
+The incident branches at the selected root are partitioned explicitly, their
+closed-form heights sum to `sigma T r - 1`, and the root score therefore
+cancels exactly.  A reverse-edge score decomposition then propagates score zero
+recursively through every descendant branch.  The main checked statements are
+
+```text
+sum_root_obstructionHeight_eq_sigma_sub_one
+obstruction_score_selected_root
+OrientedBranch.obstruction_scores_zero_on_vertices
+obstruction_score_eq_zero :
+  score T (obstruction T r) v = 0
+
+obstruction_not_stackable :
+  ¬ Stackable T.graph (obstruction T r)
+```
+
+Finally, the finite maximum defining `estim` is shown to be attained and,
+for a nontrivial finite vertex type, the formal lower-bound witness is:
+
+```text
+exists_nonstackable_mass_estim_sub_one :
+  ∃ C : Configuration V,
+    mass C = estim T - 1 ∧
+      ¬ Stackable T.graph C
+```
+
+This closes the explicit-obstruction/lower-bound layer without conflating
+`EMPTY` with integer zero.
+
 ## Validation and trust
 
 There are no permitted `sorry`, `admit`, project axioms, weakened
@@ -152,12 +205,12 @@ from the authoritative merge commit above.
 
 ## Next formal frontier
 
-After PR #9 is fully validated and merged, the next proof layer from the
-roadmap is the explicit estimator obstruction, followed by support pruning and
-the arbitrary-defect estimator bound.
+The explicit estimator obstruction now supplies the machine-checked lower
+bound.  The remaining Lean work is the global upper-bound layer: support
+pruning and the arbitrary-defect estimator bound, followed by the final theorem
+that every configuration of size `estim T` is stackable for every nontrivial
+finite tree.
 
-The Csernák–Soukup tree-stacking conjecture is **not yet formally proved**.
-The strongest merged machine-checked milestone is now the rooted score
-characterization.  The next formal frontier is the explicit estimator
-obstruction, followed by support pruning and the arbitrary-defect estimator
-bound.
+The Csernák–Soukup tree-stacking conjecture is therefore **not yet fully
+formalized in Lean**, but the lower-bound obstruction is no longer an open
+formal obligation.
