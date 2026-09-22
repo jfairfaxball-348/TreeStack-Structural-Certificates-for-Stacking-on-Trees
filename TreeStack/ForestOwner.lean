@@ -15,16 +15,14 @@ noncomputable def defectiveGraph
   Adj u v :=
     ∃ h : T.graph.Adj u v,
       (incidentBranch T v u h).DefectiveSupportEdge C
-  symm := by
-    intro u v huv
+  symm.symm u v huv := by
     rcases huv with ⟨h, hDef⟩
     refine ⟨h.symm, ?_⟩
     have hRev :
         (incidentBranch T v u h).reverseBranch.DefectiveSupportEdge C :=
       ((incidentBranch T v u h).defectiveSupportEdge_reverse_iff C).2 hDef
     simpa [incidentBranch, reverseBranch] using hRev
-  loopless := by
-    intro u huu
+  loopless.irrefl u huu := by
     rcases huu with ⟨h, _⟩
     exact h.ne rfl
 
