@@ -1,13 +1,14 @@
 # Lean formalization progress
 
-Status: **the exact branch-boundary invariant, rooted score characterization,
-explicit estimator obstruction, local arbitrary-defect edge classification,
-and the in-place support-reduction core are merged on `main`.  PR #15 extends
-that core with retained path closure, forced defect-edge orientations, an
-explicit defective-edge forest, an injective incident-owner assignment, and
-the first weighted defect-charging inequalities.**  The
-authoritative baseline for PR #15 is the PR #14 merge commit
-`53a57b2b21a9e2a8c714a9574587382b07c2d620`.
+Status: **through PR #15, the exact branch-boundary invariant, rooted score
+characterization, explicit estimator obstruction, arbitrary-defect edge
+classification, in-place support reduction/path closure, defective-edge forest,
+injective ambient-root owners, and local weighted defect inequalities are
+merged on `main`.  PR #16 adds the combined auxiliary orientation, direct
+ambient-tree acyclicity, longest-directed-path heights, powers-of-two doubling,
+and concrete owner-paid weighted defect bounds.**  The authoritative baseline
+for PR #16 is the PR #15 merge commit
+`b6ce6bca47069dc1f8848cf2ce8372f548142a36`.
 
 ## Pinned environment
 
@@ -420,14 +421,93 @@ endpoint weights, oriented-type excess can be paid by either endpoint and a
 two-negative edge oriented toward its owner can be paid by that owner's defect.
 
 This in-place architecture removes the need to transport configurations,
-messages, scores, and defect states to a subtype-valued support tree.  It does
-**not by itself remove every estimator comparison obligation**.  The current
-mass/leaf-slack proof from `notes/defect-flow.md` still compares the potential
-of the minimal support core with the estimator of the ambient tree.  Unless the
-remaining upper-bound argument is reformulated wholly with ambient-tree
-degrees/leaves, an explicit monotonicity/comparison lemma for the embedded
-connected support core is still needed.  That comparison should be kept purely
-combinatorial and independent of message transport.
+messages, scores, and defect states to a subtype-valued support tree.
+
+The preferred remaining route is now **ambient-tree throughout**.  The
+auxiliary height is defined on every ambient vertex and is zero off the
+directed defective structure, hence its weight there is exactly one.  This
+makes a separate estimator-monotonicity theorem for a subtype support core
+unnecessary provided the next global summation proves the baseline edge bound
+for nondefective/nonretained ambient edges and performs leaf slack only where
+the auxiliary weight exceeds one.  An ambient leaf with weight greater than
+one lies on a directed defective retained edge, so the existing retained-leaf
+occupancy machinery is the relevant source of slack.  The next session should
+therefore pursue this ambient-tree summation first; only revive a separate
+support-core estimator comparison if a concrete Lean obstruction forces it.
+
+
+## Auxiliary orientation and height milestone (PR #16)
+
+PR #16 builds the global directed layer directly on the ambient tree.
+
+The two-negative state is now connected to the fixed rooted owner in precisely
+the orientation required by the charging algebra:
+
+```text
+OrientedBranch.two_negative_parameters_toward_rootedOwner
+OrientedBranch.TwoNegativeOwnerArrow
+```
+
+The combined defective-edge relation is
+
+```text
+OrientedBranch.AuxArrow
+OrientedBranch.auxArrow_or_reverse_of_defectiveSupportEdge
+OrientedBranch.auxArrow_defectiveGraph
+OrientedBranch.not_auxArrow_reverse
+```
+
+A direct deleted-edge cut argument proves that an auxiliary arrow cannot have a
+directed return path across the same ambient tree edge.  Consequently:
+
+```text
+OrientedBranch.auxArrow_no_reflTransGen_reverse
+OrientedBranch.auxArrow_transGen_irrefl
+```
+
+No separate defective-forest component rooting is used.
+
+Finite strict-predecessor sets give a topological recursion measure:
+
+```text
+OrientedBranch.auxPred
+OrientedBranch.auxPred_ssubset_of_auxArrow
+OrientedBranch.auxRank
+OrientedBranch.auxRank_lt_of_auxArrow
+```
+
+The actual longest-directed-path height and powers-of-two weights are then
+defined by well-founded recursion:
+
+```text
+OrientedBranch.auxHeight
+OrientedBranch.auxHeight_succ_le_of_auxArrow
+OrientedBranch.auxWeight
+OrientedBranch.two_mul_auxWeight_le_of_auxArrow
+OrientedBranch.auxWeightInt
+OrientedBranch.two_mul_auxWeightInt_le_of_auxArrow
+```
+
+Thus every auxiliary edge `u → v` has the checked doubling inequality
+`2 * A_u ≤ A_v`.
+
+`TreeStack/AuxiliaryCharge.lean` instantiates the abstract inequalities from
+`DefectCharge.lean` with these actual weights:
+
+```text
+OrientedBranch.auxEdgeContribution
+OrientedBranch.defectArrow_auxEdgeContribution_le_tail_charge
+OrientedBranch.defectArrow_auxEdgeContribution_le_head_charge
+OrientedBranch.twoNegativeOwnerArrow_auxEdgeContribution_le_owner_charge
+OrientedBranch.auxiliaryState_auxEdgeContribution_le_rootedOwner_charge
+```
+
+The last theorem is the local owner-paid form needed before summing globally:
+for either a forced oriented-type edge or a two-negative owner arrow, the
+weighted edge contribution is bounded by the two neutral endpoint weights plus
+the defect charge at the fixed rooted owner.  The remaining global step must
+sum these charges using `edge_eq_of_rootedOwner_eq` and handle neutral and
+nonretained ambient edges.
 
 ## Validation and trust
 
@@ -446,10 +526,9 @@ lake build
 lake env lean Audit.lean
 ```
 
-The lower-bound obstruction, local arbitrary-defect classification, and PR #14
-support-reduction core are complete on `main`.  PR #15 adds the machine-checked
-retained-path closure, forced-orientation interface, and injective ambient-root
-edge-owner mechanism needed for the next charging layer.
+The lower-bound obstruction and all structural/local charging layers through
+PR #15 are complete on `main`.  PR #16 supplies the auxiliary orientation,
+acyclic height/weight construction, and concrete weighted owner-charge layer.
 
 ## Next formal frontier
 
@@ -459,15 +538,16 @@ the local arbitrary-defect edge states are classified, and retained
 Forced oriented-type edges and an injective incident-owner assignment are also
 available.
 
-The remaining Lean work is the global upper-bound layer: connect the
-two-negative defective states to the rooted owner choice; establish the
-support-core estimator comparison still required by the current proof
-architecture (or replace it with an equivalent ambient-tree bound); build the
-combined auxiliary orientation; define longest-directed-path heights and prove
-the powers-of-two doubling inequality; sum the now-formalized local charging
-bounds into global weighted defect cancellation; prove occupied-leaf slack;
-formalize connected-partition consolidation; and finally derive
-`mass C ≤ estim T - 1` for every non-stackable configuration.
+The remaining Lean work is now concentrated in the global upper bound.  First
+sum the local owner-paid inequalities over the ambient tree, using injectivity
+of `rootedOwner` to prove global weighted defect cancellation and proving the
+baseline bounds for neutral/nondefective/nonretained edges.  Then prove the
+ambient-tree leaf-slack step (weights are one off the directed defective
+structure), formalize connected-partition consolidation for the positive-height
+parts, derive `mass C ≤ estim T - 1` for every all-nonpositive-score
+configuration, combine with `not_stackable_iff_all_scores_nonpos`, and finish
+the stacking equality using the already-merged explicit obstruction lower
+bound.
 
 The Csernák–Soukup tree-stacking conjecture is therefore **not yet fully
 formalized in Lean**, but the lower-bound obstruction is no longer an open
