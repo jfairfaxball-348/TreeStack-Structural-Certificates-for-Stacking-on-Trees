@@ -94,6 +94,43 @@ def SupportEdge (C : Configuration V) (B : OrientedBranch T) : Prop :=
     B.reverseBranch.SupportEdge C ↔ B.SupportEdge C := by
   simp [SupportEdge, and_comm]
 
+
+/-- If an edge is retained by the support core and there is no retained child
+edge at its root, then that root is occupied.  This is the in-place form of
+the statement that every leaf of the minimal connected support subtree is
+occupied. -/
+theorem root_pos_of_supportEdge_of_no_child_supportEdge
+    (C : Configuration V) (B : OrientedBranch T)
+    (hEdge : B.SupportEdge C)
+    (hNoChild : ∀ c : B.Child, ¬ (B.childBranch c).SupportEdge C) :
+    0 < C B.root := by
+  classical
+  by_contra hRootPos
+  have hRootZero : C B.root = 0 := Nat.eq_zero_of_not_pos hRootPos
+  rcases hEdge.1 with ⟨x, hxB, hxPos⟩
+  have hxNe : x ≠ B.root := by
+    intro hxr
+    subst x
+    simp [hRootZero] at hxPos
+  rcases B.exists_childBranch_mem_of_mem_vertices_ne_root hxB hxNe with
+    ⟨c, hxChild⟩
+  have hChildOcc : (B.childBranch c).Occupied C :=
+    ⟨x, hxChild, hxPos⟩
+  rcases hEdge.2 with ⟨y, hyReverseB, hyPos⟩
+  have hyNotChild : y ∉ (B.childBranch c).vertices := by
+    intro hyChild
+    have hyB : y ∈ B.vertices :=
+      B.childBranch_vertices_subset c hyChild
+    exact
+      (Finset.disjoint_left.mp B.vertices_disjoint_reverseBranch)
+        hyB hyReverseB
+  have hReverseChildOcc : (B.childBranch c).reverseBranch.Occupied C := by
+    rcases (B.childBranch c).mem_vertices_or_mem_reverseBranch y with
+      hyChild | hyReverseChild
+    · exact (hyNotChild hyChild).elim
+    · exact ⟨y, hyReverseChild, hyPos⟩
+  exact hNoChild c ⟨hChildOcc, hReverseChildOcc⟩
+
 /-- If the exterior side of an oriented edge is empty, its message remains
 literally `EMPTY`, and therefore contributes zero to the rooted score. -/
 theorem score_eq_effectiveInput_of_reverse_not_occupied
