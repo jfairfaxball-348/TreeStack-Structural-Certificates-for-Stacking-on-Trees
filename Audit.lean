@@ -90,3 +90,13 @@ import TreeStack
 #check TreeStack.obstruction_not_stackable
 #check TreeStack.exists_nonstackable_mass_estim_sub_one
 
+
+#print axioms TreeStack.defect_left_nonneg
+#print axioms TreeStack.defect_right_nonneg
+#print axioms TreeStack.defect_not_both_nonneg
+#print axioms TreeStack.defect_two_negative
+#print axioms TreeStack.defect_edge_classification
+#print axioms TreeStack.defect_left_budget
+#print axioms TreeStack.defect_right_budget
+
+#check TreeStack.defect_edge_classification
