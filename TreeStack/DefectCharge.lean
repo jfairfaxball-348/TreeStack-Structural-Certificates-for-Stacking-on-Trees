@@ -81,7 +81,7 @@ theorem two_negative_excess_le_owner_budget
         2 * weightOwner * r + (2 * weightTail) * q := by
           ring
     _ ≤ 2 * weightOwner * r + weightOwner * q := by
-          exact add_le_add_left hqMul _
+          linarith
     _ = weightOwner * (q + 2 * r) := by
           ring
 
