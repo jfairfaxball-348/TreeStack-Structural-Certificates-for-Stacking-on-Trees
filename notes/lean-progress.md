@@ -621,8 +621,7 @@ been reported complete by the maintainer.
 
 The active stage is Palomar packaging and mechanical verification. The
 statement surface and preflight workflow are being prepared without changing
-the mathematical source. A repository licence is still a maintainer legal
-decision and must be selected before Palomar can pass its required root-licence
-check. After a preflight-green immutable commit is frozen, the remaining stages
+the mathematical source. The repository licence has been set to Apache-2.0 with matching Palomar
+metadata. After a preflight-green immutable commit is frozen, the remaining stages
 are the separate Palomar registration decision and research-paper/publication
 work. No unsupported priority claim is made by the Lean development itself.
