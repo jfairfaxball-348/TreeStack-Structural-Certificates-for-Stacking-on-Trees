@@ -192,9 +192,9 @@ theorem auxArrow_supportEdge
     (incidentBranch T v u (auxArrow_adj C ambientRoot hArrow)).SupportEdge C := by
   rcases hArrow with ⟨h, hState⟩
   dsimp only at hState
-  have hp : h = auxArrow_adj C ambientRoot ⟨h, hState⟩ :=
+  have hp : auxArrow_adj C ambientRoot ⟨h, hState⟩ = h :=
     Subsingleton.elim _ _
-  subst h
+  rw [hp]
   rcases hState with hOriented | hTwo
   · exact hOriented.1
   · exact hTwo.1.1
@@ -481,7 +481,7 @@ theorem auxWeightInt_eq_one_of_not_occupied
     (B : OrientedBranch T) (hEmpty : ¬ B.Occupied C) :
     auxWeightInt C ambientRoot hScores B.root = 1 := by
   have hHeight : auxHeight C ambientRoot hScores B.root = 0 :=
-    auxHeight_eq_zero_of_no_incoming C ambientRoot hScores B
+    auxHeight_eq_zero_of_no_incoming C ambientRoot hScores B.root
       (no_auxArrow_to_root_of_not_occupied C ambientRoot B hEmpty)
   simp [auxWeightInt, auxWeight, hHeight]
 
