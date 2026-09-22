@@ -1,5 +1,5 @@
 import Mathlib
-import TreeStack.Transfer
+import TreeStack.Obstruction
 
 namespace TreeStack
 
@@ -170,5 +170,113 @@ theorem defect_right_budget
     (defect_left_budget
       (a := b) (b := a) (δu := δv) (δv := δu)
       hδv hδu hb ha hb0)
+
+
+/-- The nonnegative defect attached to a nonpositive rooted score. -/
+noncomputable def scoreDefect
+    {V : Type*} [Fintype V]
+    (T : FiniteTree V) (C : Configuration V) (v : V) : ℤ :=
+  -score T C v
+
+@[simp] theorem scoreDefect_nonneg_iff
+    {V : Type*} [Fintype V]
+    (T : FiniteTree V) (C : Configuration V) (v : V) :
+    0 ≤ scoreDefect T C v ↔ score T C v ≤ 0 := by
+  simp [scoreDefect]
+
+/-- Reusable predicate packaging the exhaustive local defect-edge states. -/
+def DefectEdgeState (a b δu δv : ℤ) : Prop :=
+  (0 ≤ a ∧
+      b = -2 * (a + δv) - 3 ∧
+      (δu = 2 * δv ∨
+        (0 < a ∧ δu = 2 * δv + 3))) ∨
+    (0 ≤ b ∧
+      a = -2 * (b + δu) - 3 ∧
+      (δv = 2 * δu ∨
+        (0 < b ∧ δv = 2 * δu + 3))) ∨
+    ∃ r q : ℤ,
+      0 ≤ r ∧ 0 ≤ q ∧
+      a = -(2 * r + 1) ∧
+      b = -(2 * q + 1) ∧
+      δu = r + 2 * q ∧
+      δv = q + 2 * r
+
+theorem defectEdgeState_of_equations
+    {a b δu δv : ℤ}
+    (hδu : 0 ≤ δu) (hδv : 0 ≤ δv)
+    (ha : a = F (-δu - b))
+    (hb : b = F (-δv - a)) :
+    DefectEdgeState a b δu δv := by
+  simpa [DefectEdgeState] using
+    (defect_edge_classification hδu hδv ha hb)
+
+namespace OrientedBranch
+
+variable {V : Type*} [Fintype V] {T : FiniteTree V}
+
+/-- On an edge whose two sides are both occupied, the actual recursive branch
+messages satisfy exactly the abstract defect equations used by the global
+defect-flow argument. -/
+theorem defect_equations_of_both_occupied
+    (C : Configuration V) (B : OrientedBranch T)
+    (hB : B.Occupied C)
+    (hR : B.reverseBranch.Occupied C) :
+    let a :=
+      messageContribution (branchMessage C B)
+    let b :=
+      messageContribution (branchMessage C B.reverseBranch)
+    let δu := scoreDefect T C B.root
+    let δv := scoreDefect T C B.parent
+    a = F (-δu - b) ∧
+      b = F (-δv - a) := by
+  dsimp
+  have hMsgB :=
+    branchMessage_eq_some_of_occupied C B hB
+  have hMsgR :=
+    branchMessage_eq_some_of_occupied C B.reverseBranch hR
+  have hScoreB :
+      score T C B.root =
+        B.effectiveInput C +
+          F (B.reverseBranch.effectiveInput C) := by
+    simpa [hMsgR] using
+      (score_eq_effectiveInput_add_reverse C B)
+  have hScoreR :
+      score T C B.parent =
+        B.reverseBranch.effectiveInput C +
+          F (B.effectiveInput C) := by
+    have h :=
+      score_eq_effectiveInput_add_reverse C B.reverseBranch
+    simpa [hMsgB] using h
+  simp only [scoreDefect, hMsgB, hMsgR,
+    messageContribution_some, neg_neg]
+  constructor
+  · congr 1
+    omega
+  · congr 1
+    omega
+
+/-- Concrete TreeStack form of the arbitrary-defect edge classification:
+for an edge with occupied support on both sides and nonpositive endpoint
+scores, its two recursive messages lie in one of the exhaustive defect states. -/
+theorem defectEdgeState_of_scores_nonpos
+    (C : Configuration V) (B : OrientedBranch T)
+    (hB : B.Occupied C)
+    (hR : B.reverseBranch.Occupied C)
+    (hRoot : score T C B.root ≤ 0)
+    (hParent : score T C B.parent ≤ 0) :
+    DefectEdgeState
+      (messageContribution (branchMessage C B))
+      (messageContribution (branchMessage C B.reverseBranch))
+      (scoreDefect T C B.root)
+      (scoreDefect T C B.parent) := by
+  have hEq :=
+    B.defect_equations_of_both_occupied C hB hR
+  apply defectEdgeState_of_equations
+  · exact (scoreDefect_nonneg_iff T C B.root).2 hRoot
+  · exact (scoreDefect_nonneg_iff T C B.parent).2 hParent
+  · exact hEq.1
+  · exact hEq.2
+
+end OrientedBranch
 
 end TreeStack
