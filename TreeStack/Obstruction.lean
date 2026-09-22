@@ -39,7 +39,7 @@ theorem extremalConfig_eq_one_of_mem_leafVertices
     (hv : v ∈ leafVertices T r) :
     extremalConfig T r v = 1 := by
   have hvr : v ≠ r := by
-    simpa [leafVertices] using hv
+    exact (by simpa [leafVertices] using hv).1
   simp [extremalConfig_of_ne_root T r hvr, hv]
 
 theorem extremalConfig_eq_zero_of_ne_root_not_mem_leafVertices
@@ -68,7 +68,6 @@ theorem mass_extremalConfig
           oneOn (leafVertices T r) v =
           mass (oneOn (leafVertices T r)) := by
             rw [mass]
-            symm
             apply Finset.sum_subset (Finset.erase_subset r Finset.univ)
             intro v hvUniv hvNotErase
             have hvr : v = r := by
