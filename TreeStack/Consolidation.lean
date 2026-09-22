@@ -623,6 +623,120 @@ theorem auxSource_rootAssignmentValid
   · intro v
     rw [auxHeight_eq_dist_auxSource]
 
+/-- One genuine boundary merge preserves all root-assignment invariants. -/
+theorem rootAssignmentValid_merge_boundary
+    (h : V → ℕ) (ρ : V → V)
+    (hValid : RootAssignmentValid (T := T) h ρ)
+    {a b : V} (hadj : T.graph.Adj a b)
+    (hDifferent : ρ a ≠ ρ b) :
+    RootAssignmentValid (T := T) h
+      (mergeAssignment ρ (ρ a) (ρ b)
+        (boundaryMergeRoot (T := T) (ρ a) (ρ b) a b)) := by
+  rcases hValid with ⟨hIdem, hConn, hDom⟩
+  let r := ρ a
+  let s := ρ b
+  let A := assignmentFiber ρ r
+  let B := assignmentFiber ρ s
+  let t := boundaryMergeRoot (T := T) r s a b
+  have hrs : r ≠ s := by
+    simpa [r, s] using hDifferent
+  have haA : a ∈ A := by
+    simp [A, r]
+  have hbB : b ∈ B := by
+    simp [B, s]
+  have hrFix : ρ r = r := by
+    simpa [r] using hIdem a
+  have hsFix : ρ s = s := by
+    simpa [s] using hIdem b
+  have hrA : r ∈ A := by
+    simp [A, hrFix]
+  have hsB : s ∈ B := by
+    simp [B, hsFix]
+  have hDisj : Disjoint A B := by
+    rw [Finset.disjoint_left]
+    intro v hvA hvB
+    have hvr : ρ v = r := by
+      simpa [A] using hvA
+    have hvs : ρ v = s := by
+      simpa [B] using hvB
+    exact hrs (hvr.symm.trans hvs)
+  have hAConn : TreePathConnected (T := T) A := by
+    simpa [A] using hConn r
+  have hBConn : TreePathConnected (T := T) B := by
+    simpa [B] using hConn s
+  have hADom : HeightDominated (T := T) h A r := by
+    refine ⟨hrA, ?_⟩
+    intro v hv
+    have hvr : ρ v = r := by
+      simpa [A] using hv
+    simpa [hvr] using hDom v
+  have hBDom : HeightDominated (T := T) h B s := by
+    refine ⟨hsB, ?_⟩
+    intro v hv
+    have hvs : ρ v = s := by
+      simpa [B] using hv
+    simpa [hvs] using hDom v
+  have hMerged :
+      HeightDominated (T := T) h (A ∪ B) t := by
+    simpa [t] using
+      heightDominated_boundaryMergeRoot_union_of_adj
+        (T := T) h hAConn hBConn hDisj
+        haA hbB hadj hADom hBDom
+  have ht : t = r ∨ t = s := by
+    simpa [t] using
+      boundaryMergeRoot_eq_left_or_right (T := T) r s a b
+  refine ⟨?_, ?_, ?_⟩
+  · intro v
+    by_cases hvSide : ρ v = r ∨ ρ v = s
+    · have htFix : ρ t = t := by
+        rcases ht with htr | hts
+        · subst t
+          exact hrFix
+        · subst t
+          exact hsFix
+      simp [mergeAssignment, hvSide, htFix, ht]
+    · have hvr : ρ v ≠ r := fun hv => hvSide (Or.inl hv)
+      have hvs : ρ v ≠ s := fun hv => hvSide (Or.inr hv)
+      have hOldFix : ρ (ρ v) = ρ v := hIdem v
+      simp [mergeAssignment, hvSide, hOldFix, hvr, hvs]
+  · intro q
+    rcases ht with htr | hts
+    · subst t
+      by_cases hqr : q = r
+      · subst q
+        rw [assignmentFiber_merge_left]
+        exact treePathConnected_union_of_adj
+          hAConn hBConn haA hbB hadj
+      · by_cases hqs : q = s
+        · subst q
+          rw [assignmentFiber_merge_left_other_empty ρ hrs]
+          exact treePathConnected_empty (T := T)
+        · rw [assignmentFiber_merge_eq_of_ne ρ hqr hqs]
+          exact hConn q
+    · subst t
+      by_cases hqs : q = s
+      · subst q
+        rw [assignmentFiber_merge_right]
+        exact treePathConnected_union_of_adj
+          hAConn hBConn haA hbB hadj
+      · by_cases hqr : q = r
+        · subst q
+          rw [assignmentFiber_merge_right_other_empty ρ hrs]
+          exact treePathConnected_empty (T := T)
+        · rw [assignmentFiber_merge_eq_of_ne ρ hqr hqs]
+          exact hConn q
+  · intro v
+    by_cases hvSide : ρ v = r ∨ ρ v = s
+    · have hvUnion : v ∈ A ∪ B := by
+        rw [Finset.mem_union]
+        rcases hvSide with hvr | hvs
+        · exact Or.inl (by simpa [A] using hvr)
+        · exact Or.inr (by simpa [B] using hvs)
+      have hvBound := hMerged.2 v hvUnion
+      simpa [mergeAssignment, hvSide] using hvBound
+    · have hvBound := hDom v
+      simpa [mergeAssignment, hvSide] using hvBound
+
 /-- Across an edge joining two distinct source fibres, tree distance splits
 exactly at that boundary edge. -/
 theorem dist_eq_dist_add_one_add_dist_of_adj_sourceFibers
