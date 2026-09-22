@@ -1,9 +1,9 @@
 # Palomar packaging plan
 
-This repository is being prepared for Palomar, but this document does not
-perform or authorize registration. Registration remains a separate maintainer
-action against one immutable 40-character commit after all mechanical gates
-pass.
+This repository has completed Palomar packaging and mechanical preflight, but
+this document does not perform or authorize registration. Registration remains
+a separate maintainer action against one immutable 40-character commit after
+the final main-branch checks pass.
 
 ## Advertised result
 
@@ -89,12 +89,7 @@ candidate commit.
 
 ## Final freeze checklist
 
-1. ordinary TreeStack CI green;
-2. statement-surface workflow green;
-3. Apache-2.0 root licence and metadata remain synchronized;
-4. official Palomar full preflight green, including Comparator, protected
-   Challenge compilation, Lean kernel export, and NanoDa replay;
-5. packaging PR merged;
-6. post-merge `main` validation and Palomar preflight green;
-7. record the final immutable `main` SHA and only then use the Palomar
-   submission form.
+The packaging PR has been merged and the full Palomar preflight has passed.
+Before registration, use the current `main` commit only after its ordinary
+TreeStack CI and Palomar full preflight are both green, then record that exact
+40-character SHA. Registration itself is intentionally outside this workflow.
