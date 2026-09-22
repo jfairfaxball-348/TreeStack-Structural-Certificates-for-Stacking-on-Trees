@@ -95,6 +95,100 @@ def SupportEdge (C : Configuration V) (B : OrientedBranch T) : Prop :=
   simp [SupportEdge, and_comm]
 
 
+/-- The occupied exterior side of a retained edge lies on the reverse side of
+every genuine child edge.  This is the one-step separation fact that makes the
+retained support core path-closed without changing the ambient vertex type. -/
+theorem reverse_child_occupied_of_supportEdge
+    (C : Configuration V) (B : OrientedBranch T)
+    (hEdge : B.SupportEdge C) (c : B.Child) :
+    (B.childBranch c).reverseBranch.Occupied C := by
+  rcases hEdge.2 with ⟨y, hyReverseB, hyPos⟩
+  have hyNotChild : y ∉ (B.childBranch c).vertices := by
+    intro hyChild
+    have hyB : y ∈ B.vertices :=
+      B.childBranch_vertices_subset c hyChild
+    exact
+      (Finset.disjoint_left.mp B.vertices_disjoint_reverseBranch)
+        hyB hyReverseB
+  rcases (B.childBranch c).mem_vertices_or_mem_reverseBranch y with
+    hyChild | hyReverseChild
+  · exact (hyNotChild hyChild).elim
+  · exact ⟨y, hyReverseChild, hyPos⟩
+
+/-- Below a retained support edge, a genuine child edge is retained exactly
+when its child branch contains positive support.  The occupied reverse side is
+supplied by the exterior witness of the parent retained edge. -/
+theorem child_supportEdge_iff_occupied_of_supportEdge
+    (C : Configuration V) (B : OrientedBranch T)
+    (hEdge : B.SupportEdge C) (c : B.Child) :
+    (B.childBranch c).SupportEdge C ↔
+      (B.childBranch c).Occupied C := by
+  constructor
+  · intro hChild
+    exact hChild.1
+  · intro hChildOcc
+    exact
+      ⟨hChildOcc,
+        B.reverse_child_occupied_of_supportEdge C hEdge c⟩
+
+/-- A rooted certificate that a vertex is reached from an oriented-branch root
+by descending only through retained support edges.  It is an in-place path
+object for the minimal support core. -/
+inductive SupportDescent (C : Configuration V) :
+    (B : OrientedBranch T) → V → Prop
+  | root (B : OrientedBranch T) :
+      SupportDescent C B B.root
+  | child (B : OrientedBranch T) (c : B.Child) {x : V}
+      (hEdge : (B.childBranch c).SupportEdge C)
+      (hTail : SupportDescent C (B.childBranch c) x) :
+      SupportDescent C B x
+
+/-- Every positive-support vertex on the root side of a retained edge is joined
+to the edge root by a descent consisting entirely of retained support edges.
+This is the rooted path-closure form of connectedness of the minimal support
+subtree. -/
+theorem supportDescent_of_mem_pos
+    (C : Configuration V) (B : OrientedBranch T)
+    (hEdge : B.SupportEdge C) {x : V}
+    (hx : x ∈ B.vertices) (hxPos : 0 < C x) :
+    SupportDescent C B x := by
+  classical
+  by_cases hxr : x = B.root
+  · subst x
+    exact SupportDescent.root B
+  · rcases B.exists_childBranch_mem_of_mem_vertices_ne_root hx hxr with
+      ⟨c, hxChild⟩
+    have hChildOcc : (B.childBranch c).Occupied C :=
+      ⟨x, hxChild, hxPos⟩
+    have hChildEdge : (B.childBranch c).SupportEdge C :=
+      (B.child_supportEdge_iff_occupied_of_supportEdge C hEdge c).2 hChildOcc
+    exact
+      SupportDescent.child B c hChildEdge
+        (supportDescent_of_mem_pos
+          C (B.childBranch c) hChildEdge hxChild hxPos)
+termination_by B.card
+decreasing_by
+  exact B.childBranch_card_lt _
+
+/-- If the root of a retained edge is not itself occupied, some retained child
+edge continues the support core. -/
+theorem exists_child_supportEdge_of_supportEdge_of_root_not_pos
+    (C : Configuration V) (B : OrientedBranch T)
+    (hEdge : B.SupportEdge C) (hRoot : ¬ 0 < C B.root) :
+    ∃ c : B.Child, (B.childBranch c).SupportEdge C := by
+  rcases hEdge.1 with ⟨x, hxB, hxPos⟩
+  have hxNe : x ≠ B.root := by
+    intro hxr
+    subst x
+    exact hRoot hxPos
+  rcases B.exists_childBranch_mem_of_mem_vertices_ne_root hxB hxNe with
+    ⟨c, hxChild⟩
+  refine ⟨c, ?_⟩
+  exact
+    (B.child_supportEdge_iff_occupied_of_supportEdge C hEdge c).2
+      ⟨x, hxChild, hxPos⟩
+
+
 /-- If an edge is retained by the support core and there is no retained child
 edge at its root, then that root is occupied.  This is the in-place form of
 the statement that every leaf of the minimal connected support subtree is
