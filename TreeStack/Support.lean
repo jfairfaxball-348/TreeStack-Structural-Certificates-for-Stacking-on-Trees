@@ -329,6 +329,31 @@ theorem supportEdge_defectArrow_or_reverse_or_both_neg
       right
       exact ⟨hForwardNeg, lt_of_not_ge hReverse⟩
 
+
+/-- Retained edges whose later weighted edge estimate has a genuine defect
+excess.  Oriented-type edges are defective exactly when the head defect is
+positive; a two-negative edge is defective exactly when at least one endpoint
+defect is positive (equivalently, it is not the neutral (-1,-1) state under the
+defect equations).  The definition is symmetric in the underlying edge. -/
+def DefectiveSupportEdge (C : Configuration V) (B : OrientedBranch T) : Prop :=
+  B.SupportEdge C ∧
+    ((0 ≤ messageContribution (branchMessage C B) ∧
+        0 < scoreDefect T C B.parent) ∨
+      (0 ≤ messageContribution (branchMessage C B.reverseBranch) ∧
+        0 < scoreDefect T C B.root) ∨
+      ((messageContribution (branchMessage C B) < 0 ∧
+          messageContribution (branchMessage C B.reverseBranch) < 0) ∧
+        (0 < scoreDefect T C B.root ∨
+          0 < scoreDefect T C B.parent)))
+
+@[simp] theorem defectiveSupportEdge_reverse_iff
+    (C : Configuration V) (B : OrientedBranch T) :
+    B.reverseBranch.DefectiveSupportEdge C ↔
+      B.DefectiveSupportEdge C := by
+  simp only [DefectiveSupportEdge, supportEdge_reverse_iff,
+    reverseBranch_reverse, reverseBranch_root, reverseBranch_parent]
+  aesop
+
 end OrientedBranch
 
 /-- If all positive piles are concentrated at one vertex, that vertex's rooted
