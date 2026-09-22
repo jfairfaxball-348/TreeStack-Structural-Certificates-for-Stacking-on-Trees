@@ -1223,6 +1223,55 @@ theorem executeAllOccupiedChildren
         _ = 0 := hC0
   exact ⟨D, hReach, hRoot', hParent, hNonroot⟩
 
+/-- Once all non-root branch vertices are clear, an even root pile 2k
+with k at least one is cleared optimally by k outward boundary moves. -/
+theorem attainRootTransfer_even
+    (B : OrientedBranch T) (E : Configuration V) (k : ℕ)
+    (hk : 1 ≤ k)
+    (hRoot : E B.root = 2 * k)
+    (hNonroot :
+      ∀ v ∈ B.vertices, v ≠ B.root → E v = 0) :
+    ∃ D : Configuration V,
+      B.BranchReach E D ∧
+      B.Cleared D ∧
+      (D B.parent : ℤ) =
+        (E B.parent : ℤ) + F (E B.root : ℤ) := by
+  classical
+  have hEnough : 2 * k ≤ E B.root := by
+    omega
+  rcases BranchReach.repeat_move B B.adj
+      B.root_mem_carrier B.parent_mem_carrier E k hEnough with
+    ⟨D, hReach, hDroot, hDparent, hOther⟩
+  have hRootZero : D B.root = 0 := by
+    rw [hDroot, hRoot]
+    omega
+  have hCleared : B.Cleared D := by
+    intro v hv
+    by_cases hvr : v = B.root
+    · subst v
+      exact hRootZero
+    · have hvp : v ≠ B.parent := by
+        intro hvp
+        subst v
+        exact B.parent_not_mem_vertices hv
+      rw [hOther v hvr hvp]
+      exact hNonroot v hv hvr
+  have hkZ : 0 ≤ (k : ℤ) := by positivity
+  have hkPosZ : 0 < (k : ℤ) := by exact_mod_cast hk
+  have hRootZ : (E B.root : ℤ) = 2 * (k : ℤ) := by
+    exact_mod_cast hRoot
+  have hF : F (E B.root : ℤ) = (k : ℤ) := by
+    apply (F_eq_nonneg_iff (z := (E B.root : ℤ))
+      (k := (k : ℤ)) hkZ).2
+    exact Or.inl ⟨hkPosZ, hRootZ⟩
+  have hParentZ :
+      (D B.parent : ℤ) =
+        (E B.parent : ℤ) + (k : ℤ) := by
+    exact_mod_cast hDparent
+  refine ⟨D, hReach, hCleared, ?_⟩
+  rw [hF]
+  exact hParentZ
+
 theorem MoveSignature.zero_supportedOn (B : OrientedBranch T) :
     MoveSignature.SupportedOn (MoveSignature.zero T) B := by
   intro u v h
