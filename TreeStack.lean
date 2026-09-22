@@ -14,3 +14,4 @@ import TreeStack.DefectCharge
 import TreeStack.Auxiliary
 import TreeStack.AuxiliaryCharge
 import TreeStack.GlobalCharge
+import TreeStack.LeafSlack
