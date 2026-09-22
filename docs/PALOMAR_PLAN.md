@@ -53,6 +53,9 @@ The live PalomarSubmission repository was audited at
 
 `a09f5c38ee58bf92c459b974b174ff4063ebea5f`.
 
+The current intake contract requires a 12-character lowercase alphanumeric
+preflight request id; this repository uses `treestackpf1`.
+
 `.github/workflows/palomar-preflight.yml` pins both the reusable workflow
 reference and `pipeline_commit` to that exact SHA and requests `mode: full`.
 
