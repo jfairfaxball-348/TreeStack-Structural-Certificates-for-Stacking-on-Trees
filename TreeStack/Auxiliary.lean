@@ -425,17 +425,6 @@ theorem auxHeight_eq_zero_of_no_incoming
   rw [auxHeight]
   simp [hNo]
 
-/-- The root of an empty branch has unit auxiliary weight. -/
-theorem auxWeightInt_eq_one_of_not_occupied
-    (C : Configuration V) (ambientRoot : V)
-    (hScores : ∀ v, score T C v ≤ 0)
-    (B : OrientedBranch T) (hEmpty : ¬ B.Occupied C) :
-    auxWeightInt C ambientRoot hScores B.root = 1 := by
-  have hHeight : auxHeight C ambientRoot hScores B.root = 0 :=
-    auxHeight_eq_zero_of_no_incoming C ambientRoot hScores B
-      (no_auxArrow_to_root_of_not_occupied C ambientRoot B hEmpty)
-  simp [auxWeightInt, auxWeight, hHeight]
-
 /-- Powers-of-two auxiliary weights attached to longest-path heights. -/
 noncomputable def auxWeight
     (C : Configuration V) (ambientRoot : V)
@@ -484,6 +473,17 @@ theorem auxWeightInt_nonneg
     (v : V) :
     0 ≤ auxWeightInt C ambientRoot hScores v := by
   simp [auxWeightInt]
+
+/-- The root of an empty branch has unit auxiliary weight. -/
+theorem auxWeightInt_eq_one_of_not_occupied
+    (C : Configuration V) (ambientRoot : V)
+    (hScores : ∀ v, score T C v ≤ 0)
+    (B : OrientedBranch T) (hEmpty : ¬ B.Occupied C) :
+    auxWeightInt C ambientRoot hScores B.root = 1 := by
+  have hHeight : auxHeight C ambientRoot hScores B.root = 0 :=
+    auxHeight_eq_zero_of_no_incoming C ambientRoot hScores B
+      (no_auxArrow_to_root_of_not_occupied C ambientRoot B hEmpty)
+  simp [auxWeightInt, auxWeight, hHeight]
 
 /-- Integer doubling form used directly by `DefectCharge.lean`. -/
 theorem two_mul_auxWeightInt_le_of_auxArrow
