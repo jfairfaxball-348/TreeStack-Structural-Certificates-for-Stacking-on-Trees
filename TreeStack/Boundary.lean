@@ -263,19 +263,8 @@ theorem taskGainSum_orderedTasks (gain : α → ℤ) (tasks : List α) :
 
 theorem mem_orderedTasks_iff (gain : α → ℤ) (tasks : List α) (t : α) :
     t ∈ orderedTasks gain tasks ↔ t ∈ tasks := by
-  simp only [orderedTasks, positiveTasks, zeroTasks, negativeTasks,
-    List.mem_append, List.mem_filter]
-  constructor
-  · rintro (h | h)
-    · exact h.1
-    · rcases h with h | h <;> exact h.1
-  · intro ht
-    by_cases hp : 0 < gain t
-    · exact Or.inl ⟨ht, hp⟩
-    · by_cases hz : gain t = 0
-      · exact Or.inr (Or.inl ⟨ht, hz⟩)
-      · have hn : gain t < 0 := by omega
-        exact Or.inr (Or.inr ⟨ht, hn⟩)
+  simp [orderedTasks, positiveTasks, zeroTasks, negativeTasks]
+  omega
 
 theorem orderedTasks_nodup (gain : α → ℤ) {tasks : List α}
     (h : tasks.Nodup) :
@@ -291,16 +280,16 @@ theorem orderedTasks_nodup (gain : α → ℤ) {tasks : List α}
     · rw [List.nodup_append]
       exact ⟨hz, hn, by
         intro t htZero htNeg
-        simp only [zeroTasks, List.mem_filter] at htZero
-        simp only [negativeTasks, List.mem_filter] at htNeg
+        simp [zeroTasks] at htZero
+        simp [negativeTasks] at htNeg
         omega⟩
     · intro t htPos htRest
-      simp only [positiveTasks, List.mem_filter] at htPos
+      simp [positiveTasks] at htPos
       simp only [List.mem_append] at htRest
       rcases htRest with htZero | htNeg
-      · simp only [zeroTasks, List.mem_filter] at htZero
+      · simp [zeroTasks] at htZero
         omega
-      · simp only [negativeTasks, List.mem_filter] at htNeg
+      · simp [negativeTasks] at htNeg
         omega
 
 /-- Positive/zero/negative scheduling lemma from the audited construction.
@@ -1011,9 +1000,14 @@ theorem executeOccupiedTaskSchedule
           hOccE hMsgE hSafe.1 with
         ⟨E₁, hClear₁, hRoot₁⟩
       rcases hClear₁ with ⟨hReachRaw, hCleared₁⟩
+      have hStart :
+          (B.childBranch t.child).withBoundary E (E B.root) = E := by
+        have hSelf := (B.childBranch t.child).withBoundary_self E
+        simpa [childBranch] using hSelf
       have hReachChild :
           (B.childBranch t.child).BranchReach E E₁ := by
-        simpa using hReachRaw
+        rw [hStart] at hReachRaw
+        exact hReachRaw
       have hReachParent : B.BranchReach E E₁ :=
         BranchReach.of_child B t.child hReachChild
       have hParent₁ : E₁ B.parent = E B.parent :=
@@ -1174,9 +1168,19 @@ theorem executeAllOccupiedChildren
           (E B.root : ℤ) + taskGainSum gain scheduled := hRoot
       _ =
           (E B.root : ℤ) + taskGainSum gain baseTasks := by
-            rw [scheduled, taskGainSum_orderedTasks]
+            change
+              (E B.root : ℤ) +
+                  taskGainSum gain (orderedTasks gain baseTasks) =
+                (E B.root : ℤ) + taskGainSum gain baseTasks
+            rw [taskGainSum_orderedTasks]
       _ = (E B.root : ℤ) + childMessageSum C B := by
-            rw [baseTasks, taskGainSum_occupiedChildTasks]
+            change
+              (E B.root : ℤ) +
+                  taskGainSum
+                    (fun t : B.OccupiedChild C => t.gain)
+                    (B.occupiedChildTasks C) =
+                (E B.root : ℤ) + childMessageSum C B
+            rw [taskGainSum_occupiedChildTasks]
   have hNonroot :
       ∀ v ∈ B.vertices, v ≠ B.root → D v = 0 := by
     intro v hvB hvRoot
@@ -1192,12 +1196,14 @@ theorem executeAllOccupiedChildren
           exact hOcc⟩⟩
       have htChild : t.child = c := by
         apply Child.eq_of_vertex_eq
-        simp [t]
+        calc
+          t.child.vertex = t.1 := t.child_vertex
+          _ = c.vertex := rfl
       have htBase : t ∈ baseTasks := by
         simpa [baseTasks] using B.mem_occupiedChildTasks C t
       have htScheduled : t ∈ scheduled := by
-        rw [scheduled, mem_orderedTasks_iff]
-        exact htBase
+        change t ∈ orderedTasks gain baseTasks
+        exact (mem_orderedTasks_iff gain baseTasks t).2 htBase
       have htClear := hCleared t htScheduled
       rw [htChild] at htClear
       exact htClear v hvc
