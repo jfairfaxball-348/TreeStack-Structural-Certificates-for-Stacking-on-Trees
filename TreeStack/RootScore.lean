@@ -648,7 +648,7 @@ theorem Reach.exists_moveSignature
         rcases hmPersist A hOcc hmzero with ⟨w, hwA, hwpos⟩
         by_cases hvA : v ∈ A.vertices
         · refine ⟨v, hvA, ?_⟩
-          simp [move, huv.ne]
+          simp [move]
         · have huA : u ∉ A.vertices := by
             intro huA
             have hEdge :=
@@ -663,16 +663,16 @@ theorem Reach.exists_moveSignature
             · rcases h with ⟨huParent, hvRoot⟩
               subst u
               exact A.parent_not_mem_vertices huA
-        have hwu : w ≠ u := by
-          intro h
-          subst w
-          exact huA hwA
-        have hwv : w ≠ v := by
-          intro h
-          subst w
-          exact hvA hwA
-        refine ⟨w, hwA, ?_⟩
-        simpa [move, hwu, hwv] using hwpos
+          have hwu : w ≠ u := by
+            intro h
+            subst w
+            exact huA hwA
+          have hwv : w ≠ v := by
+            intro h
+            subst w
+            exact hvA hwA
+          refine ⟨w, hwA, ?_⟩
+          simpa [move, hwu, hwv] using hwpos
 
 
 /-- Net signature flux into a candidate target, summed over all possible
