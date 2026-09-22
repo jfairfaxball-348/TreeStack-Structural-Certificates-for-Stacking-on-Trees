@@ -206,11 +206,7 @@ theorem sum_dart_eq_sum_edge_pair (f : T.graph.Dart → ℤ) :
       apply Fintype.sum_congr
       intro e
       rw [Fintype.sum_bool]
-      change
-        f (dartOfEdgeBool (T := T) (e, false)) +
-            f (dartOfEdgeBool (T := T) (e, true)) =
-          f (edgeDart (T := T) e) + f (edgeDart (T := T) e).symm
-      simp [dartOfEdgeBool]
+      simp [edgeBoolEquivDart_apply, dartOfEdgeBool, add_comm]
 
 /-- Reindex a dart by its head vertex and its tail as a neighbor of that
 head. -/
@@ -376,8 +372,9 @@ theorem sum_edgeEndpointWeight_eq_auxDegreePotential
   rw [hDart] at hGroup
   exact hGroup.symm
 
+set_option maxHeartbeats 800000
+
 /-- Global sum of the local owner-paid edge inequalities. -/
-set_option maxHeartbeats 800000 in
 theorem sum_auxEdgeContribution_le_degree_add_defect
     (C : Configuration V) (ambientRoot : V)
     (hRootPos : 0 < C ambientRoot)
@@ -399,8 +396,10 @@ theorem sum_auxEdgeContribution_le_degree_add_defect
         C ambientRoot hRootPos hScores e
   rw [Finset.sum_add_distrib,
     sum_edgeEndpointWeight_eq_auxDegreePotential] at hLocal
-  exact hLocal.trans (add_le_add_left
-    (sum_edgeOwner_charge_le_auxDefectBudget C ambientRoot hScores) _)
+  exact hLocal.trans (add_le_add (le_refl _)
+    (sum_edgeOwner_charge_le_auxDefectBudget C ambientRoot hScores))
+
+set_option maxHeartbeats 200000
 
 /-- Global weighted defect cancellation.  This is the major Stage 1 bound:
 the defect budget in the exact score expansion cancels all owner charges. -/
