@@ -78,10 +78,10 @@ theorem exists_walk_within_auxSourceFiber
     simpa using hx
   have hsy : auxSource C ambientRoot hScores y = r := by
     simpa using hy
-  let px : T.graph.Walk x r := by
-    simpa [hsx] using auxWalk C ambientRoot hScores x
-  let py : T.graph.Walk y r := by
-    simpa [hsy] using auxWalk C ambientRoot hScores y
+  let px : T.graph.Walk x r :=
+    (auxWalk C ambientRoot hScores x).copy rfl hsx
+  let py : T.graph.Walk y r :=
+    (auxWalk C ambientRoot hScores y).copy rfl hsy
   let p : T.graph.Walk x y := px.append py.reverse
   refine ⟨p, ?_⟩
   intro z hz
