@@ -619,9 +619,11 @@ No mathematical Lean proof obligation remains. PR #17 and its post-merge
 `main` validation are complete, and external human mathematical review has
 been reported complete by the maintainer.
 
-The active stage is Palomar packaging and mechanical verification. The
-statement surface and preflight workflow are being prepared without changing
-the mathematical source. The repository licence has been set to Apache-2.0 with matching Palomar
-metadata. After a preflight-green immutable commit is frozen, the remaining stages
-are the separate Palomar registration decision and research-paper/publication
-work. No unsupported priority claim is made by the Lean development itself.
+Palomar packaging and mechanical verification are complete. The Mathlib-only
+Challenge, Solution surface, Comparator configuration, Apache-2.0 licence,
+v0.4 metadata, statement-surface checks, and official full Palomar preflight
+have all passed without changing the mathematical source.
+
+The remaining stages are the separate maintainer decision to register the final
+immutable commit with Palomar and then research-paper/publication work. No
+unsupported priority claim is made by the Lean development itself.
