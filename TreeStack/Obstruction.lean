@@ -112,14 +112,14 @@ theorem OrientedBranch.exists_childVertex_of_degree_ne_one
     ∃ v : V, B.IsChildVertex v := by
   classical
   have hpos : 0 < T.graph.degree B.root :=
-    T.graph.degree_pos_iff_exists_adj.mpr ⟨B.parent, B.adj⟩
+    (T.graph.degree_pos_iff_exists_adj B.root).2 ⟨B.parent, B.adj⟩
   have hgt : 1 < T.graph.degree B.root := by omega
   have hcard : 1 < (T.graph.neighborFinset B.root).card := by
     simpa using hgt
   obtain ⟨v, hv, hvne⟩ :=
     Finset.exists_mem_ne hcard B.parent
   refine ⟨v, ?_, hvne⟩
-  exact (T.graph.mem_neighborFinset v).mp hv
+  exact (T.graph.mem_neighborFinset B.root v).mp hv
 
 /-- If the branch root has degree one, its parent is its unique neighbor and
 there is no genuine child branch. -/
@@ -272,7 +272,22 @@ theorem obstruction_branchMessage
                 have hMsg :=
                   obstruction_branchMessage T r
                     (B.childBranch c) hrChild
-                simpa [OrientedBranch.childMessageTerm, h, c] using hMsg
+                rw [OrientedBranch.childMessageTerm]
+                simp only [h, dite_true]
+                change
+                  OrientedBranch.messageContribution
+                      (OrientedBranch.branchMessage C
+                        (B.childBranch (B.childOfVertex v h))) =
+                    -obstructionHeight
+                      (B.childBranch (B.childOfVertex v h))
+                have hMsg' :
+                    OrientedBranch.branchMessage C
+                        (B.childBranch (B.childOfVertex v h)) =
+                      some (-obstructionHeight
+                        (B.childBranch (B.childOfVertex v h))) := by
+                  simpa [C, c] using hMsg
+                rw [hMsg']
+                rfl
               · simp [OrientedBranch.childMessageTerm, h]
         _ = -H := by
               dsimp [H]
@@ -291,7 +306,6 @@ theorem obstruction_branchMessage
     ring
 termination_by B.card
 decreasing_by
-  exact B.childBranch_card_lt c₀
   exact B.childBranch_card_lt (B.childOfVertex v h)
 
 
