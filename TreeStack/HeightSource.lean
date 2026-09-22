@@ -142,7 +142,7 @@ theorem auxSourceWalk_support_height_le
       simpa [u] using
         auxParent_height_add_one C ambientRoot hScores v hPos
     simp only [SimpleGraph.Walk.support_cons] at hx
-    rcases Finset.mem_cons.mp hx with hEqX | hxTail
+    rcases List.mem_cons.mp hx with hEqX | hxTail
     · subst x
       exact le_rfl
     · have hRec :=
@@ -332,7 +332,7 @@ theorem auxSource_eq_of_mem_auxSourceWalk_support
       rfl
     rw [hWalk] at hx
     simp only [SimpleGraph.Walk.support_cons] at hx
-    rcases Finset.mem_cons.mp hx with hEq | hxTail
+    rcases List.mem_cons.mp hx with hEq | hxTail
     · subst x
       rfl
     · have hRec :=
