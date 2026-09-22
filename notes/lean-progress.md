@@ -1,15 +1,13 @@
 # Lean formalization progress
 
-Status: **PR #17 now contains the complete Lean proof through the exact
-Csernák–Soukup stacking equality.**  The branch starts from the merged PR #16
-baseline on `main` and adds global weighted defect cancellation, occupied-leaf
-slack, ambient-tree height consolidation, the arbitrary-defect estimator upper
-bound, exact-size universality at `estim T`, and the final stacking-number
-equality.  Draft development workflow run #228 compiled the full imported Lean
-tree successfully at branch head
-`482eff2eff834edb27a51e058aa88723c7cac0b5`.  The complete ready-PR validation
-and post-merge `main` validation remain required before this milestone is
-recorded as merged.
+Status: **the complete Lean proof through the exact Csernák–Soukup stacking
+equality is merged on `main`.** PR #17, “Lean: global defect cancellation to
+exact stacking equality,” merged as
+`2bffb748a3d56147e2561a6a026b497c99e15686`. The complete ready-PR workflow
+passed as run #232 and the post-merge `main` workflow passed as run #233.
+External human mathematical review of the completed result has also been
+reported complete by the maintainer. The remaining project stages are Palomar
+packaging/verification and publication preparation, not Lean proof repair.
 
 ## Pinned environment
 
@@ -527,9 +525,9 @@ lake build
 lake env lean Audit.lean
 ```
 
-The lower-bound obstruction and all structural/local charging layers through
-PR #15 are complete on `main`.  PR #16 supplies the auxiliary orientation,
-acyclic height/weight construction, and concrete weighted owner-charge layer.
+All Lean layers through PR #17 are complete on `main`, including the
+lower-bound obstruction, auxiliary orientation and charging machinery, global
+weighted cancellation, arbitrary-defect upper bound, and final exact equality.
 
 ## PR #17 global upper bound and exact equality
 
@@ -617,13 +615,14 @@ the proof-hole guard and `lake build`.
 
 ## Remaining work
 
-No mathematical Lean proof obligation remains on the PR #17 branch once the
-headline theorem above compiles.  Before merge, the complete ready-PR workflow
-must still pass the Python regression suite, bounded verifier, `compileall`,
-`lake build`, and `lake env lean Audit.lean`.  After merge, the corresponding
-`main` workflow must also pass.
+No mathematical Lean proof obligation remains. PR #17 and its post-merge
+`main` validation are complete, and external human mathematical review has
+been reported complete by the maintainer.
 
-After those validation gates, the remaining project work is non-formal:
-external mathematical review, the prior-art/originality audit, Palomar
-packaging/verification, and research-paper preparation.  No novelty claim is
-made by the Lean development itself.
+The active stage is Palomar packaging and mechanical verification. The
+statement surface and preflight workflow are being prepared without changing
+the mathematical source. A repository licence is still a maintainer legal
+decision and must be selected before Palomar can pass its required root-licence
+check. After a preflight-green immutable commit is frozen, the remaining stages
+are the separate Palomar registration decision and research-paper/publication
+work. No unsupported priority claim is made by the Lean development itself.
