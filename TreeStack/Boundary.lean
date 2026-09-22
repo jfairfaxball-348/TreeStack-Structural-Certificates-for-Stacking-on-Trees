@@ -2486,7 +2486,9 @@ theorem boundary_attainment
     let b : ℕ := (2 - effectiveInput C B).toNat
     have hbCast :
         (b : ℤ) = 2 - effectiveInput C B := by
-      rw [b, Int.toNat_of_nonneg hbNonneg]
+      change (((2 - effectiveInput C B).toNat : ℕ) : ℤ) =
+        2 - effectiveInput C B
+      rw [Int.toNat_of_nonneg hbNonneg]
     have hqEnoughZ :
         2 * (b : ℤ) ≤ (q : ℤ) := by
       rw [hF] at hFinalF
@@ -2501,12 +2503,14 @@ theorem boundary_attainment
         B.parent_mem_carrier B.root_mem_carrier
         (B.withBoundary C q) b hPreEnough with
       ⟨Epre, hPreReach, hPreParent, hPreRoot, hPreOther⟩
+    have hPreRootNat :
+        Epre B.root = C B.root + b := by
+      simpa [B.withBoundary_of_mem_vertices C q
+        B.root_mem_vertices] using hPreRoot
     have hPreRootZ :
         (Epre B.root : ℤ) =
           (C B.root : ℤ) + (b : ℤ) := by
-      rw [hPreRoot,
-        B.withBoundary_of_mem_vertices C q B.root_mem_vertices]
-      push_cast
+      exact_mod_cast hPreRootNat
     have hScheduleFinal :
         (Epre B.root : ℤ) + childMessageSum C B = 2 := by
       calc
@@ -2555,12 +2559,18 @@ theorem boundary_attainment
     rcases B.attainRootTransfer_even E₁ 1 (by omega)
         hE₁Root hNonroot with
       ⟨D, hRootReach, hCleared, hDParent⟩
+    have hPreParentNat :
+        Epre B.parent = q - 2 * b := by
+      simpa [B.withBoundary_parent C q] using hPreParent
     have hPreParentZ :
         (Epre B.parent : ℤ) =
           (q : ℤ) - 2 * (b : ℤ) := by
-      rw [hPreParent, B.withBoundary_parent C q,
-        Nat.cast_sub hqEnough]
-      push_cast
+      calc
+        (Epre B.parent : ℤ) = ((q - 2 * b : ℕ) : ℤ) := by
+          exact_mod_cast hPreParentNat
+        _ = (q : ℤ) - 2 * (b : ℤ) := by
+          rw [Nat.cast_sub hqEnough]
+          push_cast
     have hParentFinal :
         (D B.parent : ℤ) = (q : ℤ) + d := by
       rw [hDParent, hChildParent, hE₁RootZ, F_two,
