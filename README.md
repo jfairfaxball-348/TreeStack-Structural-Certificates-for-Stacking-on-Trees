@@ -75,15 +75,35 @@ project stage.
 
 ## Lean formalization
 
-Lean Phase 1 is underway. The current formal development has machine-checked
-the exact-size stacking semantics, the audit repair proving upward closure of
-universal exact sizes, the arithmetic core of the branch transfer function,
-the source-exact estimator with its elementary lower bound, strict child-branch
-containment/cardinality decrease, and the well-founded recursive branch
-message with `EMPTY` kept separate from integer zero. Move-signature and
-branch-local legal-reachability structures now state the exact boundary
-invariant precisely. The immediate formal frontier is proving that invariant;
-the rooted score theorem remains downstream.
+The Lean development now machine-checks the exact-size stacking semantics,
+the exact oriented-branch boundary invariant, and the rooted score
+characterization
+
+[
+operatorname{StackableAt}(T,C,r) iff 0 < S_r(C).
+]
+
+It also formalizes the explicit estimator obstruction.  For every selected
+root (r), the configuration placing (sigma(T,r)-1) pebbles at (r), one
+pebble at every other leaf, and zero elsewhere has exact mass
+
+[
+operatorname{rootEstimate}(T,r)-1,
+]
+
+and every rooted score of that configuration is exactly zero.  Hence it is
+globally non-stackable.  Choosing a root attaining (operatorname{estim}(T))
+gives a machine-checked non-stackable configuration of mass
+
+[
+operatorname{estim}(T)-1.
+]
+
+This completes the Lean lower-bound obstruction layer.  The remaining global
+formalization frontier is the upper bound: support pruning and the
+arbitrary-defect estimator inequality needed to show that every configuration
+of size (operatorname{estim}(T)) is stackable on every nontrivial finite
+tree.
 
 The Lean environment is pinned by `lean-toolchain` and
 `lake-manifest.json`. To reproduce the full CI path:
