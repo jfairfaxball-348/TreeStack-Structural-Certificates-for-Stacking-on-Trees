@@ -44,7 +44,8 @@ theorem one_le_auxWeightInt
     auxWeight_pos C ambientRoot hScores v
   have hone : 1 ≤ auxWeight C ambientRoot hScores v := by
     omega
-  exact_mod_cast hone
+  change (1 : ℤ) ≤ (auxWeight C ambientRoot hScores v : ℤ)
+  exact Int.ofNat_le.mpr hone
 
 /-- If an ambient leaf has non-unit auxiliary weight, then it is occupied.
 Positive height supplies an incoming auxiliary arrow; that arrow is retained,
@@ -74,9 +75,13 @@ theorem leaf_pos_of_auxWeightInt_ne_one
   have hSupport : B.SupportEdge C := by
     simpa [B] using auxArrow_supportEdge C ambientRoot hArrow
   rcases hSupport.2 with ⟨x, hx, hxPos⟩
+  have hLeaf' : T.graph.degree B.reverseBranch.root = 1 := by
+    change T.graph.degree v = 1
+    exact hLeaf
   have hSingleton : B.reverseBranch.vertices = {v} := by
-    apply vertices_eq_singleton_of_degree_one
-    simpa [B] using hLeaf
+    have h :=
+      vertices_eq_singleton_of_degree_one B.reverseBranch hLeaf'
+    simpa [B] using h
   have hxv : x = v := by
     rw [hSingleton] at hx
     simpa using hx
