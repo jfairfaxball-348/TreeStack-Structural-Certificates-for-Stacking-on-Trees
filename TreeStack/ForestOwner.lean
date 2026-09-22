@@ -127,18 +127,12 @@ theorem rootedOwner_reverse
     (r : V) (B : OrientedBranch T) :
     B.reverseBranch.rootedOwner r = B.rootedOwner r := by
   classical
-  unfold rootedOwner
-  simp only [reverseBranch_root, reverseBranch_parent]
-  by_cases hForward :
-      T.graph.dist r B.root = T.graph.dist r B.parent + 1
-  · have hNotReverse :
-        T.graph.dist r B.parent ≠ T.graph.dist r B.root + 1 := by
-      omega
-    rw [if_neg hNotReverse, if_pos hForward]
-  · have hReverse :
-        T.graph.dist r B.parent = T.graph.dist r B.root + 1 :=
-      (T.isTree.dist_eq_dist_add_one_of_adj r B.adj).resolve_left hForward
-    rw [if_pos hReverse, if_neg hForward]
+  rcases T.isTree.dist_eq_dist_add_one_of_adj r B.adj with hForward | hReverse
+  · simp [rootedOwner, reverseBranch, hForward]
+    omega
+  · simp [rootedOwner, reverseBranch, hReverse]
+    omega
+
 
 end OrientedBranch
 
