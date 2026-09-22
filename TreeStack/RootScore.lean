@@ -41,10 +41,10 @@ theorem incidentBranch_vertices_disjoint
     have heq' : v = u := by
       simpa [A, incidentBranch] using heq
     exact huv heq'.symm
+  have hvComp0 : B.root ∈ B.component.supp :=
+    SimpleGraph.ConnectedComponent.connectedComponentMk_mem
   have hvComp : v ∈ B.component.supp := by
-    simpa [B, incidentBranch] using
-      (SimpleGraph.ConnectedComponent.connectedComponentMk_mem :
-        B.root ∈ B.component.supp)
+    simpa [B, incidentBranch] using hvComp0
   have hxComp : x ∈ B.component.supp := by
     simpa [OrientedBranch.vertices] using hxB
   have hreach : B.deletedGraph.Reachable v x := by
