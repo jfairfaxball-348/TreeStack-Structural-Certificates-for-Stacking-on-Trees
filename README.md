@@ -133,12 +133,14 @@ boundary, trust statement, and validation status.
 
 ## Palomar packaging status
 
-The protected Palomar statement surface, Solution surface, Comparator
-configuration, v0.4 metadata draft, verification documentation, and pinned full
-preflight workflow are prepared on the Palomar packaging branch. Registration
-has **not** been performed.
+Lean formalization is complete. External human mathematical review is complete.
+Palomar packaging is complete, and the official full mechanical preflight has
+passed, including Comparator, protected Challenge provenance, Lean kernel
+checking, and independent NanoDa replay. Palomar registration has **not** been
+performed.
 
-The repository now uses the Apache-2.0 licence, with a single root `LICENSE`
-file and matching `project.license` metadata. The remaining Palomar gate is
-purely mechanical: the full preflight must pass at the exact candidate commit.
-See `docs/PALOMAR_PLAN.md` for the freeze protocol.
+The repository uses the Apache-2.0 licence, with a single root `LICENSE` file
+and matching `project.license` metadata. The immutable commit entered in the
+Palomar submission form must be one whose own post-merge TreeStack CI and full
+Palomar preflight are green. See `docs/PALOMAR_PLAN.md` for the freeze
+protocol.
