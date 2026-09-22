@@ -307,17 +307,14 @@ theorem auxSource_eq_of_mem_auxSourceWalk_support
     (hx : x ∈ (auxSourceWalk C ambientRoot hScores v).2.support) :
     auxSource C ambientRoot hScores x =
       auxSource C ambientRoot hScores v := by
-  by_cases hZero : auxHeight C ambientRoot hScores v = 0
-  · have hWalk :
-        (auxSourceWalk C ambientRoot hScores v).2 =
-          SimpleGraph.Walk.nil := by
-      rw [auxSourceWalk]
-      simp [hZero]
-    rw [hWalk] at hx
+  rw [auxSourceWalk] at hx
+  split at hx
+  next hZero =>
     simp at hx
     subst x
     rfl
-  · have hPos : 0 < auxHeight C ambientRoot hScores v :=
+  next hZero =>
+    have hPos : 0 < auxHeight C ambientRoot hScores v :=
       Nat.pos_of_ne_zero hZero
     let u := auxParent C ambientRoot hScores v
     have hSource :
@@ -325,16 +322,6 @@ theorem auxSource_eq_of_mem_auxSourceWalk_support
           auxSource C ambientRoot hScores v := by
       simpa [u] using
         auxSource_auxParent_of_pos C ambientRoot hScores v hPos
-    have hWalk :
-        (auxSourceWalk C ambientRoot hScores v).2 =
-          SimpleGraph.Walk.cons
-            (auxArrow_adj C ambientRoot
-              (auxParent_arrow_of_pos C ambientRoot hScores v hPos)).symm
-            (auxSourceWalk C ambientRoot hScores u).2 := by
-      rw [auxSourceWalk]
-      simp only [if_neg hZero]
-      rfl
-    rw [hWalk] at hx
     simp only [SimpleGraph.Walk.support_cons] at hx
     rcases List.mem_cons.mp hx with hEq | hxTail
     · subst x
@@ -348,7 +335,6 @@ decreasing_by
   have hEq :=
     auxParent_height_add_one C ambientRoot hScores v hPos
   omega
-
 
 end OrientedBranch
 
