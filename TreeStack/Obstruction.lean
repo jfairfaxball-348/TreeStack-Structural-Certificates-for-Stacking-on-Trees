@@ -414,6 +414,67 @@ theorem sum_childBranch_vertices (B : OrientedBranch T) (f : V → ℕ) :
               (B.vertices.erase B.root)
               (fun _ => Iff.rfl) f
 
+
+/-- Weighted internal-vertex potential carried by an oriented branch. -/
+noncomputable def internalPotential (B : OrientedBranch T) : ℕ :=
+  ∑ x ∈ B.vertices,
+    if 1 < T.graph.degree x then
+      T.graph.degree x * 2 ^ T.graph.dist B.root x
+    else
+      0
+
+theorem card_childFinset_add_one (B : OrientedBranch T) :
+    B.childFinset.card + 1 = T.graph.degree B.root := by
+  classical
+  have hp : B.parent ∈ T.graph.neighborFinset B.root := by
+    simpa using B.adj
+  simpa [childFinset] using
+    Finset.card_erase_add_one hp
+
+/-- Doubling the total child potential exactly recovers the parent-rooted
+potential of all non-root branch vertices. -/
+theorem two_mul_sum_child_internalPotential (B : OrientedBranch T) :
+    2 * (∑ c : B.Child, (B.childBranch c).internalPotential) =
+      ∑ x ∈ B.vertices.erase B.root,
+        if 1 < T.graph.degree x then
+          T.graph.degree x * 2 ^ T.graph.dist B.root x
+        else
+          0 := by
+  classical
+  calc
+    2 * (∑ c : B.Child, (B.childBranch c).internalPotential) =
+        ∑ c : B.Child, 2 * (B.childBranch c).internalPotential := by
+          rw [Finset.mul_sum]
+    _ = ∑ c : B.Child,
+        ∑ x ∈ (B.childBranch c).vertices,
+          if 1 < T.graph.degree x then
+            T.graph.degree x * 2 ^ T.graph.dist B.root x
+          else
+            0 := by
+          apply Finset.sum_congr rfl
+          intro c _
+          rw [internalPotential, Finset.mul_sum]
+          apply Finset.sum_congr rfl
+          intro x hx
+          by_cases hInt : 1 < T.graph.degree x
+          · have hdist :=
+              B.dist_root_eq_child_dist_add_one c hx
+            simp [hInt, hdist, pow_succ]
+            ring
+          · simp [hInt]
+    _ = ∑ x ∈ B.vertices.erase B.root,
+        if 1 < T.graph.degree x then
+          T.graph.degree x * 2 ^ T.graph.dist B.root x
+        else
+          0 := by
+          exact
+            B.sum_childBranch_vertices
+              (fun x =>
+                if 1 < T.graph.degree x then
+                  T.graph.degree x * 2 ^ T.graph.dist B.root x
+                else
+                  0)
+
 /-- Every descendant branch of the selected root is occupied by the explicit
 obstruction, and its exact recursive message is the negative obstruction
 height.  The hypothesis says precisely that the selected root lies outside
