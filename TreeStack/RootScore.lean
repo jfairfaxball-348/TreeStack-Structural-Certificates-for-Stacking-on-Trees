@@ -674,4 +674,152 @@ theorem Reach.exists_moveSignature
         refine ⟨w, hwA, ?_⟩
         simpa [move, hwu, hwv] using hwpos
 
+
+/-- Net signature flux into a candidate target, summed over all possible
+neighbors. Nonedges contribute zero because every positive signature count is
+supported on an actual tree edge. -/
+noncomputable def rootSignatureFluxSum
+    (m : MoveSignature T) (r : V) : ℤ :=
+  ∑ u : V,
+    (m.count u r : ℤ) - 2 * (m.count r u : ℤ)
+
+theorem rootSignatureFluxSum_eq
+    (m : MoveSignature T) (r : V) :
+    rootSignatureFluxSum m r =
+      (m.incoming r : ℤ) - 2 * (m.outgoing r : ℤ) := by
+  rw [rootSignatureFluxSum, MoveSignature.incoming, MoveSignature.outgoing]
+  push_cast
+  rw [Finset.sum_sub_distrib, ← Finset.mul_sum]
+
+/-- Any legal stack at r forces the rooted score to be positive. -/
+theorem score_pos_of_stackableAt
+    [DecidableEq V]
+    (T : FiniteTree V) (C : Configuration V) (r : V)
+    (hStackable : StackableAt T.graph C r) :
+    0 < score T C r := by
+  classical
+  rcases hStackable with ⟨D, hReach, hStack⟩
+  rcases Reach.exists_moveSignature hReach with
+    ⟨m, hmBal, hmPersist⟩
+  have hTerm :
+      ∀ u : V,
+        (m.count u r : ℤ) - 2 * (m.count r u : ℤ) ≤
+          rootMessageTerm T C r u := by
+    intro u
+    by_cases hAdj : T.graph.Adj u r
+    · let B : OrientedBranch T := incidentBranch T r u hAdj
+      have hClears : MoveSignature.Clears m C B := by
+        intro w hw
+        have hwr : w ≠ r := by
+          intro hEq
+          subst w
+          exact B.parent_not_mem_vertices hw
+        have hzero : D w = 0 := hStack.2 w hwr
+        have hbal := hmBal w
+        rw [hzero] at hbal
+        simpa [MoveSignature.BalancesAt] using hbal.symm
+      have hCausal :
+          ∀ A : OrientedBranch T,
+            A.vertices ⊆ B.vertices →
+            A.Occupied C →
+            MoveSignature.CausalOutward m A := by
+        intro A hAB hOcc
+        apply Nat.pos_of_ne_zero
+        intro hzero
+        rcases hmPersist A hOcc hzero with ⟨w, hwA, hwpos⟩
+        have hwB : w ∈ B.vertices := hAB hwA
+        have hwr : w ≠ r := by
+          intro hEq
+          subst w
+          exact B.parent_not_mem_vertices hwB
+        have hz : D w = 0 := hStack.2 w hwr
+        rw [hz] at hwpos
+        omega
+      have hBounds :=
+        OrientedBranch.signature_branchFlux_bounds
+          m C B hClears hCausal
+      have hFlux :
+          (m.count u r : ℤ) - 2 * (m.count r u : ℤ) =
+            OrientedBranch.MoveSignature.boundaryFlux m B := by
+        rfl
+      rw [hFlux]
+      by_cases hOcc : B.Occupied C
+      · have hBound := (hBounds.1 hOcc).1
+        have hMsg :=
+          OrientedBranch.branchMessage_eq_some_of_occupied C B hOcc
+        have hTermEq :
+            rootMessageTerm T C r u =
+              F (OrientedBranch.effectiveInput C B) := by
+          rw [rootMessageTerm]
+          simp only [dif_pos hAdj]
+          simpa [B, incidentBranch, hMsg]
+        rw [hTermEq]
+        exact hBound
+      · rcases hBounds.2 hOcc with ⟨k, hk⟩
+        have hMsg :=
+          OrientedBranch.branchMessage_eq_empty_of_not_occupied C B hOcc
+        have hTermZero : rootMessageTerm T C r u = 0 := by
+          rw [rootMessageTerm]
+          simp only [dif_pos hAdj]
+          simpa [B, incidentBranch, hMsg]
+        rw [hTermZero, hk]
+        positivity
+    · have hIn : m.count u r = 0 := by
+        apply Nat.eq_zero_of_not_pos
+        intro hpos
+        exact hAdj (m.supported hpos)
+      have hOut : m.count r u = 0 := by
+        apply Nat.eq_zero_of_not_pos
+        intro hpos
+        exact hAdj (m.supported hpos).symm
+      simp [rootMessageTerm, hAdj, hIn, hOut]
+  have hFluxLe :
+      rootSignatureFluxSum m r ≤ rootMessageSum T C r := by
+    rw [rootSignatureFluxSum, rootMessageSum]
+    exact Finset.sum_le_sum fun u _ => hTerm u
+  have hRootBal := hmBal r
+  have hDle : (D r : ℤ) ≤ score T C r := by
+    calc
+      (D r : ℤ) =
+          (C r : ℤ) + (m.incoming r : ℤ) -
+            2 * (m.outgoing r : ℤ) := hRootBal
+      _ = (C r : ℤ) + rootSignatureFluxSum m r := by
+            rw [rootSignatureFluxSum_eq]
+            ring
+      _ ≤ (C r : ℤ) + rootMessageSum T C r := by
+            linarith
+      _ = score T C r := rfl
+  have hDpos : 0 < (D r : ℤ) := by
+    exact_mod_cast hStack.1
+  omega
+
+/-- Exact rooted characterization: a configuration can be stacked at r
+exactly when its recursive rooted score is positive. -/
+theorem stackableAt_iff_score_pos
+    [DecidableEq V]
+    (T : FiniteTree V) (C : Configuration V) (r : V) :
+    StackableAt T.graph C r ↔ 0 < score T C r := by
+  constructor
+  · exact score_pos_of_stackableAt T C r
+  · exact stackableAt_of_score_pos T C r
+
+/-- Global non-stackability is equivalent to every rooted score being
+nonpositive. -/
+theorem not_stackable_iff_all_scores_nonpos
+    [DecidableEq V]
+    (T : FiniteTree V) (C : Configuration V) :
+    ¬ Stackable T.graph C ↔ ∀ r : V, score T C r ≤ 0 := by
+  rw [Stackable]
+  push_neg
+  constructor
+  · intro h r
+    have hn : ¬ 0 < score T C r := by
+      intro hp
+      exact h r ((stackableAt_iff_score_pos T C r).2 hp)
+    omega
+  · intro h r hs
+    have hp := (stackableAt_iff_score_pos T C r).1 hs
+    have hn := h r
+    omega
+
 end TreeStack
