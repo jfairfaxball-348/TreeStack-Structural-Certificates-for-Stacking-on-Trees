@@ -1,0 +1,118 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/mathlib-initiative/formalization.yaml/main/schema/formalization.schema.json
+version: "v0.4"
+
+project:
+  name: "Tree stacking equals the Csernák--Soukup estimator on nontrivial finite trees"
+  description: >-
+    A Lean 4 proof of the corrected nontrivial-tree form of the
+    Csernák--Soukup tree-stacking conjecture. For every finite tree with at
+    least two vertices, the exact-size stacking number equals the explicit
+    rooted-distance-and-degree estimator. The one-vertex case is excluded
+    because the source stacking-number convention restricts admissible
+    thresholds to t >= 2 while the displayed estimator is 1 on the one-vertex
+    tree.
+  authors:
+    - name: "John Fairfax-Ball"
+      github: "jfairfaxball-348"
+  license: "Apache-2.0"
+  responsible_maintainers:
+    - "John Fairfax-Ball"
+
+classification:
+  arxiv: ["math.CO"]
+  msc2020: ["05C05"]
+
+sources:
+  - title: "Stacking and clearing in graph pebbling"
+    authors:
+      - "Tamás Csernák"
+      - "Lajos Soukup"
+    id: "arXiv:2604.22341v1"
+    type: "paper"
+    location: "https://arxiv.org/abs/2604.22341"
+    relationship: "adapts"
+    note: >-
+      The source introduces the stacking number and states the tree estimator
+      formula as a conjecture. This formalization proves the formula for finite
+      trees with at least two vertices. The explicit nontriviality hypothesis
+      records the convention issue at one vertex rather than silently changing
+      either the source stacking threshold or the estimator.
+
+status:
+  scope: >-
+    Proves TreeStack.stack_eq_estim_of_two_le_card: for every finite simple
+    connected acyclic graph T on a finite vertex type V, if 2 <= |V| then
+    stack(T) = estim(T). UniversalStackable uses configurations of exactly the
+    specified mass, and stack is the least exact mass t satisfying both 2 <= t
+    and universal stackability. The one-vertex case is deliberately outside
+    the theorem. The proof development also formalizes the exact rooted
+    branch-message invariant, estimator obstruction, arbitrary-defect upper
+    bound, and global weighted cancellation needed for the equality.
+  sorry_count: 0
+  sorry_in_definitions: 0
+  axioms: ["propext", "Quot.sound", "Classical.choice"]
+
+automation:
+  methods:
+    - method: "agent"
+      models: ["OpenAI GPT-5.6 Sol"]
+      framework: "ChatGPT and Codex"
+      tool_setup: >-
+        Human-directed AI-assisted mathematics, Lean development, repository
+        operations, and documentation using ChatGPT, local Codex workflows, the
+        GitHub connector, GitHub Actions, Lean tactics, Python regression
+        checks, and theorem-level axiom audits.
+      cost:
+        wall_time: "multiple interactive sessions in September 2026"
+        spend_usd: "subscription-based; exact API-equivalent spend not tracked"
+        hardware: "GitHub-hosted Linux CI and ChatGPT-hosted tool execution"
+      prompting_notes: >-
+        Prompts required exact preservation of the source semantics, including
+        exact-size universality, the t >= 2 stacking threshold, and the
+        distinction between an empty recursive branch state (Option.none) and
+        an integer message some 0. Later prompts required adversarial proof
+        audits, full CI, and Palomar packaging.
+  spend_usd: "subscription-based; exact API-equivalent spend not tracked"
+  notes: >-
+    The human maintainer selected the research target and scope, directed the
+    proof-validation programme, required repeated machine checks, and controls
+    legal/licensing and publication decisions. AI assistance was used
+    extensively throughout the formalization and packaging work.
+
+fidelity:
+  divergences: >-
+    The advertised theorem explicitly assumes at least two vertices. This is a
+    convention correction rather than a change to the pebbling dynamics: the
+    source stacking-number convention requires admissible thresholds t >= 2,
+    while its displayed tree estimator evaluates to 1 on the one-vertex tree.
+    UniversalStackable remains exact-size, not "at least t". No other known
+    semantic divergence is introduced in the advertised result.
+
+review:
+  status: "external human mathematical review completed"
+  notes: >-
+    The repository maintainer reports that an external human mathematical
+    review of the completed result has been completed. No reviewer name,
+    affiliation, review date, or quotation is recorded in the repository or
+    supplied for publication here, so none is asserted in this metadata.
+    Separate machine validation includes the complete Lean build, theorem-level
+    axiom audit, and Python regression checks; a successful Palomar full
+    mechanical preflight is a required packaging gate before submission.
+
+alignment:
+  namespace: "TreeStack"
+  statements:
+    - source: "Csernák--Soukup (2026), tree-stacking estimator conjecture"
+      lean: "TreeStack.stack_eq_estim_of_two_le_card"
+      module: "TreeStack.Stacking"
+      status: "proved"
+      note: >-
+        States stack(T) = estim(T) for every finite tree with
+        2 <= Fintype.card V. The explicit cardinality condition is essential
+        for alignment with the source convention at the one-vertex boundary.
+
+acknowledgements: >-
+  Tamás Csernák and Lajos Soukup for introducing the stacking parameter and
+  formulating the tree estimator conjecture; Mathlib and Lean for the formal
+  infrastructure; and Comparator and Palomar for the protected statement and
+  independent-kernel verification pipeline.

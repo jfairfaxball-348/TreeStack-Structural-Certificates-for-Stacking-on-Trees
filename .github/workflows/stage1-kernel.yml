@@ -1,0 +1,42 @@
+name: Palomar Statement Surface
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: palomar-statement-${{ github.event.pull_request.number || github.ref }}-${{ github.sha }}
+  cancel-in-progress: false
+
+jobs:
+  statement-surface:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Audit Challenge boundary
+        shell: bash
+        run: |
+          test "$(grep -c '^import ' Challenge.lean)" -eq 1
+          grep -qx 'import Mathlib' Challenge.lean
+          test "$(grep -n -E '(^|[[:space:]])sorry([[:space:]]|$)' Challenge.lean | wc -l)" -eq 1
+          if grep -n -E '(^|[[:space:]])(admit|axiom)([[:space:]]|$)' Challenge.lean; then
+            echo "Unexpected Challenge proof escape"
+            exit 1
+          fi
+      - name: Kernel build
+        uses: leanprover/lean-action@38fbc41a8c28c4cbaec22d7f7de508ec2e7c0dd9
+        with:
+          build: true
+      - name: Build Palomar Challenge and Solution targets
+        run: lake build Challenge Solution
+      - name: Compile Palomar surfaces and audit
+        run: |
+          lake env lean Challenge.lean
+          lake env lean Solution.lean
+          lake env lean PalomarAudit.lean
