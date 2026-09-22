@@ -165,7 +165,7 @@ import TreeStack
 #check TreeStack.OrientedBranch.TwoNegativeOwnerArrow
 #check TreeStack.OrientedBranch.AuxArrow
 #print axioms TreeStack.OrientedBranch.auxArrow_or_reverse_of_defectiveSupportEdge
-#print axioms TreeStack.OrientedBranch.auxArrow_defectiveGraph
+#print axioms TreeStack.OrientedBranch.auxArrow_supportEdge
 #print axioms TreeStack.OrientedBranch.not_auxArrow_reverse
 #print axioms TreeStack.OrientedBranch.auxArrow_no_reflTransGen_reverse
 #print axioms TreeStack.OrientedBranch.auxArrow_transGen_irrefl
