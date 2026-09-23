@@ -77,7 +77,7 @@ Proof notes:
 - `notes/defect-flow.md` — arbitrary-defect generalized-flow theorem;
 - `notes/main-inequality.md` — summary of the now-proved global inequality and
   failed stronger local normalization statements;
-- `notes/literature.md` — preliminary prior-art audit.
+- `notes/literature.md` — completed comprehensive public-record prior-art/originality audit.
 
 The reproduced published atlas baseline through order 7 is in
 `data/published_baseline_through_7.csv`.  No order-11 census is part of this
