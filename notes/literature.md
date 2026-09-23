@@ -1,133 +1,227 @@
-# Literature and novelty audit
+# Literature and originality audit
 
-Status: preliminary, not sufficient for an originality claim.  Last updated
-2026-09-21 after the arbitrary-defect proof was obtained.
+**Status:** comprehensive public-record audit completed 2026-09-23.
 
-## Direct source
+## Conclusion
 
-Csernák and Soukup, *Stacking and clearing in graph pebbling*,
-arXiv:2604.22341v1, introduces the stacking parameter, proves general results,
-and states the tree estimator as Conjecture 10.3.  Section 10 gives an
-almost-stacked sufficient condition and obtains the upper bound only under the
-Almost Stacked Hypothesis.  The arXiv record still describes the tree formula
-as conjectural and computationally motivated.  As of 2026-09-21, its submission
-history still lists only v1 (2026-04-24).
+No prior published or publicly accessible proof was located of the
+Csernák--Soukup tree-stacking estimator conjecture
+
+[
+|V(T)|\ge 2 \Longrightarrow \operatorname{stack}(T)=\operatorname{estim}(T),
+]
+
+and no equivalent theorem was located under the alternative formulations and
+terminology searched below.
+
+Accordingly, as of 2026-09-23, the strongest defensible originality statement
+from this audit is:
+
+> The present project appears to contain the first publicly available proof of
+> the Csernák--Soukup tree-stacking estimator conjecture identified by a
+> comprehensive public-record search.
+
+This is a negative literature-search conclusion, not an absolute priority
+guarantee. Unpublished manuscripts, private communications, work not indexed by
+the searched public systems, or earlier work using terminology too remote to be
+retrieved cannot be ruled out. The conclusion should be corrected if earlier
+work is subsequently identified.
+
+## Advertised result checked
+
+The audit was keyed to the exact advertised theorem in the repository:
+
+`TreeStack.stack_eq_estim_of_two_le_card`, asserting that for every finite
+simple connected acyclic graph on at least two vertices, the source
+Csernák--Soukup stacking number equals their explicit tree estimator.
+
+The one-vertex convention correction is not treated as an originality claim.
+
+## Direct source and current status of the conjecture
+
+Tamás Csernák and Lajos Soukup, *Stacking and clearing in graph pebbling*,
+arXiv:2604.22341v1, introduces the stacking and clearing parameters. Section 10
+defines the tree estimator, proves the estimator upper bound under the Almost
+Stacked Hypothesis, and then states the unconditional equality as Conjecture
+10.3. The paper reports computational verification for all trees with at most
+seven vertices.
 
 Source: <https://arxiv.org/abs/2604.22341>.
 
-The associated public repository `lajossoukup/pebbling` uses a reverse-state
-enumeration over whole configurations.  Inspection at commit
-`701cdd93dd19869a9b90947edd6361efd81cfc1f` found no rooted integer-message
-solver.  The repository and its Zenodo record are essential provenance for the
-order-at-most-seven census, but they do not presently overlap the proposed
-linear-time characterization.
+The arXiv record was checked through 2026-09-23. No later version resolving
+Conjecture 10.3 was located.
 
-## Closest recent work
+The associated public computation repository was also inspected at commit
+`701cdd93dd19869a9b90947edd6361efd81cfc1f`:
 
-Adauto, Bardenova, Bidav, and Hurlbert, *Target Pebbling in Trees*,
-arXiv:2504.10460v2, gives polynomial algorithms and extremal descriptions for
-satisfying a fixed demand `D` on a tree.  Its main machinery is path partitions,
-greedy minimal solutions, and superstack extremal configurations.  The paper's
-definition says explicitly that a configuration is `D`-solvable if a sequence
-places **at least** `D(v)` pebbles at each vertex.  It neither requires nor
-tracks the removal of pebbles outside the demand support.
+<https://github.com/lajossoukup/pebbling>
 
-The distinction is substantive: target pebbling asks that the final
-configuration dominate `D` and allows arbitrary leftovers.  Stackability at a
-vertex requires every other vertex to be empty.  Odd residues can therefore
-force non-greedy cleanup moves such as `p->v->p`, which ordinary target
-reachability may discard.  The branch theorem and zero-score flow argument are
-not immediate instances of the target-pebbling algorithm.
+Its tree-estimation code computes the stacking number by whole-configuration
+enumeration and compares it with the estimator on the NetworkX atlas trees. The
+generated report records equality on the 24 nontrivial atlas trees through
+order seven. No proof of the general tree formula, rooted integer-message
+characterization, or generalized-flow certificate was found in that repository.
 
-Source: <https://arxiv.org/abs/2504.10460> (v2 dated 2026-01-22; definition in
-Section 1.2).
+## Forward and later-work checks
 
-A September 2026 search also finds the later Csernák–Soukup paper *Stacking and
-Clearing in Directed Graph Pebbling* (arXiv:2606.04659).  Its advertised main
-results concern existence on strongly connected digraphs and an exact formula
-for directed cycles.  Inspection did not locate a resolution of the undirected
-tree estimator conjecture there.
+Exact-title, author, arXiv-identifier, formula, and conjecture-number searches
+were run through public web and scholarly-index surfaces. Searches included
+`2604.22341`, the exact paper title, `Conjecture 10.3`,
+`stack(T)=estim(T)`, `sigma_T(r)`, `Almost Stacked Hypothesis`, and
+equivalent textual descriptions of moving all pebbles to one vertex.
+
+The later paper by the same authors,
+
+Tamás Csernák and Lajos Soukup, *Stacking and Clearing in Directed Graph
+Pebbling*, arXiv:2606.04659v1,
+
+studies the directed analogue and proves an exact formula for directed cycles.
+It cites the undirected work but does not resolve the undirected tree estimator
+conjecture.
 
 Source: <https://arxiv.org/abs/2606.04659>.
 
-Exact-title, arXiv-ID, author, and formula searches on 2026-09-21 found this
-directed follow-up and secondary summaries, but no later paper claiming a proof
-of the undirected tree formula.  This is evidence about the searches performed,
-not a complete citation-index audit and not a novelty claim.
+Public arXiv/graph-pebbling listings and exact-title/identifier searches through
+2026-09-23 located no later independent paper claiming a proof of the tree
+formula. Public searches aimed at Semantic Scholar, OpenAlex, zbMATH,
+MathSciNet, Google Scholar, Crossref, and general web indexing likewise located
+no independent resolution. Some of those services expose only partial public
+index data, so this is recorded as search coverage rather than a claim of
+complete database access.
 
-## Relation of the new zero-score proof to searched machinery
+## Closest recent tree work
 
-The project now proves the zero-score optimization by an oriented integer
-edge-state model, longest-directed-path exponential weights, and a
-connected-partition consolidation lemma.  No inspected source has yet been
-identified as stating this exact combination.  That observation is **not** a
-novelty claim: a full citation-index and terminology audit is still required.
+Matheus Adauto, Viktoriya Bardenova, Yunus Bidav, and Glenn Hurlbert,
+*Target Pebbling in Trees*, arXiv:2504.10460v2, later published in
+*Discrete Mathematics* 349 (2026), article 115029, gives a polynomial-time
+algorithm for the target-pebbling number of a tree and characterizes extremal
+configurations.
 
-The empty-branch correction is also specific to exact clearing.  An empty
-branch is a separate state from integer message zero; replacing it by zero can
-create spurious algebraic edge states.  This issue is not automatically visible
-in target-reachability formulations that allow leftovers.
+Source: <https://arxiv.org/abs/2504.10460>.
 
-## Audit after the arbitrary-defect proof
+This is the closest recent tree-pebbling result found, but its target condition
+is different. A configuration is (D)-solvable when pebbling moves can leave
+**at least** (D(v)) pebbles at each demanded vertex. Extra pebbles elsewhere
+may remain. TreeStack stackability instead requires the final configuration to
+be supported at a single vertex: every other vertex must be empty.
 
-The proof in `defect-flow.md` uses an exact classification of the two directed
-messages on an edge with endpoint defects, an injective assignment of defective
-forest edges to endpoints, and exponential longest-path weights.  A targeted
-search was made for this combination and for equivalent terminology: exact
-configuration transformation, demand pebbling, tree pruning,
-squishing/squashing, transition digraphs, no-cycle lemmas, generalized and
-integer flows on trees, discrete convex optimization on trees, and pebbling
-weight-function duality.
+That distinction is mathematically substantive. Exact clearing can require
+moves whose purpose is to eliminate an odd residual pebble, including local
+backtracking that ordinary root/target reachability can discard. The
+TreeStack branch-message theorem and defect-flow argument therefore do not
+follow from the target-pebbling algorithm.
 
-The closest inspected mechanisms remain different:
+## Classical and adjacent pebbling mechanisms checked
 
-- Bunde–Chambers–Cranston–Milans–West, *Pebbling and Optimal Pebbling in
-  Graphs*, defines ordinary root reachability, uses the no-cycle lemma, gives a
-  tree pebbling algorithm, and proves a squishing lemma for root-unsolvable
-  distributions.  Its target condition is reaching a root, so unused pebbles
-  may remain.  Its no-cycle reduction is not valid verbatim for exact clearing,
-  where an odd residual pebble can require moves in both directions on an edge.
+The audit compared the advertised theorem and its proof mechanisms with the
+main nearby strands of graph-pebbling literature.
+
+- **Classical rooted and tree pebbling.** Chung's tree formulas and later tree
+  algorithms optimize delivery to a prescribed root. They permit unused
+  pebbles away from the target.
+- **Bunde--Chambers--Cranston--Milans--West, _Pebbling and Optimal Pebbling in
+  Graphs_.** This develops ordinary root solvability, a no-cycle lemma,
+  squishing/smoothing tools, and a linear-time tree pebbling algorithm. Its
+  reachability target is not exact clearing.
   Source: <https://arxiv.org/abs/math/0510621>.
-- Hurlbert, *A Linear Optimization Technique for Graph Pebbling*, develops the
-  Weight Function Lemma and dual certificates from rooted subtree strategies.
-  It concerns ordinary root solvability.  The exponential weights are related
-  in spirit, but no inspected statement supplies the defect-edge equations,
-  injective owner cancellation, or exact-clearing conclusion used here.
+- **Hurlbert, _A Linear Optimization Technique for Graph Pebbling_.** The
+  Weight Function Lemma and rooted subtree strategies provide dual upper-bound
+  certificates for ordinary root solvability. Related exponential weights do
+  not supply the exact-clearing message equations, defect ownership, or
+  connected-partition consolidation used here.
   Source: <https://arxiv.org/abs/1101.5641>.
-- General discrete-convex and submodular-flow searches found broad integer
-  optimization frameworks, but no source identified the transfer map or the
-  tree-specific defect-owner inequality in this project.  Because terminology
-  may differ, this negative search result is not sufficient for originality.
+- **Cover pebbling and the Cover Pebbling/Stacking Theorem.** Sjöstrand, and
+  independently Vuong--Wyckoff, show that for positive cover demands an
+  extremal obstruction may be taken to have its *initial* pebbles stacked at
+  one vertex. Older literature therefore uses words such as "stacking" and
+  "concentrate all pebbles", but this is an extremal reduction of starting
+  configurations, not the Csernák--Soukup operation of legally transforming an
+  arbitrary configuration into a stack.
+- **Cover rubbling and stacking.** Haynes--Keaton (2020) proves a rubbling
+  analogue of the cover-pebbling stacking theorem. Its meaning of stacking is
+  the same extremal-initial-distribution notion, not the 2026 stacking number.
+  DOI: <https://doi.org/10.1016/j.disc.2020.112080>.
+- **Cup stacking.** Fay--Hurlbert--Tennant, *Cup Stacking in Graphs*,
+  arXiv:2310.06192, uses "stackable" for a different token-moving game with
+  different moves and initial conditions. It is not graph pebbling in the
+  Csernák--Soukup sense.
+  Source: <https://arxiv.org/abs/2310.06192>.
+- **Directed/oriented pebbling.** Older oriented-pebbling work was searched for
+  "simple configuration", "concentrate", and all-pebbles-at-one-vertex
+  terminology. The matching passages found were again descriptions of
+  cover-pebbling extremal reductions or different directed move systems, not
+  the undirected tree theorem here.
 
-## Classical mechanisms checked so far
+## Equivalent-terminology and formula searches
 
-- Chung's rooted-tree path partitions and `t`-fold pebbling formulas optimize
-  delivery to a fixed target, not exact clearing of all other vertices.
-- The cover pebbling/stacking theorem (Sjöstrand; independently Vuong and
-  Wyckoff) concerns positive target demands and extremal initial stacks.
-- Squishing/squashing lemmas reduce the location of obstructions on threads;
-  they do not provide the signed exact-clearing transfer used here.
-- No-cycle/transition-digraph lemmas certify ordinary target reachability after
-  deleting cycles.  They cannot be applied verbatim here: exact clearing of an
-  odd branch can require both orientations of one edge.
-- Existing tree and outerplanar reachability algorithms prune branches by
-  moving as many pebbles as possible toward a fixed target.  That state is
-  nonnegative and does not encode the cost of removing a residual singleton.
+To reduce the risk of missing an equivalent result under different language,
+the audit searched combinations including:
 
-## Searches still required
+- stacking number / stackable configuration / stacked configuration;
+- concentrate, collect, gather, aggregate, or move all pebbles to one vertex;
+- exact reachability, exact transformation, exact clearing, and no leftovers;
+- target pebbling, demand pebbling, cover pebbling, rubbling, and cup stacking;
+- tree pruning, squishing/squashing, no-cycle and transition-digraph methods;
+- integer/generalized flow on trees, gain flow, defect charging, endpoint
+  charging, exponential potentials, and weight-function duality;
+- direct formula fragments and normalizations involving `stack(T)`,
+  `estim(T)`, rooted distance sums, degrees, leaf terms, and
+  `sigma_T(r)`.
 
-- A reliable citation-index check for every work citing arXiv:2604.22341 and
-  later journal metadata.  Web search found only the same authors' directed
-  follow-up, but that is not a complete citation graph.
-- Full-text inspection of the tree/outerplanar reachability algorithms and
-  weighted-graph pebbling algorithms, not only abstracts and keyword searches.
-- Broader formula searches using equivalent normalizations of `F`, especially
-  threshold/cost rather than signed-gain conventions.
-- Direct comparison with demand-pebbling and exact-transformation variants in
-  which unwanted leftover pebbles must be eliminated.
-- Search for generalized-flow, endpoint-charging, or exponential-potential
-  consolidation lemmas equivalent to either generalized-flow proof.
-- Expert comparison of the arbitrary-defect owner argument with pebbling
-  weight-function duality and integer generalized-flow duality.
+No searched formulation produced a prior theorem equivalent to
+`stack(T)=estim(T)` for all finite nontrivial trees.
 
-No novelty claim should be made until these items are complete.
+## Comparison with the TreeStack proof architecture
+
+The repository's proof has three structural layers that were separately checked
+against the searched literature:
+
+1. an exact rooted branch-message theorem characterizing stackability at a
+   prescribed root by the sign of a single recursively defined integer score;
+2. an explicit zero-score obstruction of mass (operatorname{estim}(T)-1);
+3. an arbitrary-defect generalized-flow certificate, using edge-message
+   classification, defect ownership/cancellation, exponential height weights,
+   source fibres, and connected-partition consolidation to prove the global
+   upper bound.
+
+Related ideas occur individually in ordinary pebbling, flow optimization, and
+weight-function methods, but no inspected public source was found stating the
+same theorem or a result that subsumes these exact-clearing arguments.
+
+## Public-code and repository checks
+
+The source authors' public computation repository was inspected directly as
+described above. Web searches for the exact conjecture number, source formula,
+and theorem language on public code-hosting surfaces found no separate proof
+repository or formalization predating this project.
+
+A global authenticated code-index search across every hosting service was not
+available, so this item should be read as a public web/repository search rather
+than an exhaustive scan of all private or unindexed code.
+
+## Audit limitations
+
+This audit is intended to be comprehensive for **publicly discoverable prior
+work**, not metaphysically exhaustive. In particular:
+
+- no search can exclude unpublished or private work;
+- subscription bibliographic databases may expose less information to public
+  search than to institutional subscribers;
+- terminology can in principle be so different that keyword retrieval misses an
+  equivalent theorem;
+- no claim is made that the source authors or other domain experts have
+  certified priority for this project;
+- external human mathematical review of the proof is a separate fact and is not
+  treated as an originality certification.
+
+Within those limits, the audit found no prior published or publicly accessible
+proof and therefore closes the repository's previously recorded
+prior-art/originality gap as of 2026-09-23.
+
+## Re-audit trigger
+
+Before journal submission or if substantial time passes before publication,
+rerun the exact-title/arXiv-ID forward search and the graph-pebbling arXiv search
+to catch work posted after 2026-09-23. Any earlier proof subsequently located
+should be added here and the originality wording in the README and
+`formalization.yaml` revised promptly.
