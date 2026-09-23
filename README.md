@@ -7,8 +7,11 @@ Csernák–Soukup conjecture
 |V(T)|\ge2\implies \operatorname{stack}(T)=\operatorname{estim}(T).
 \]
 
-The project has three principal structural results. The completed mathematical
-argument has now received external human review. A comprehensive public-record
+The project has three principal structural results. The proof is self-assessed
+by the maintainer and has also received private, informal mathematical feedback
+from an external reader; that feedback is not represented as formal peer review,
+professional endorsement, or an independently documented mathematical review.
+A comprehensive public-record
 prior-art/originality audit was completed on 2026-09-23. It located no prior
 published or publicly accessible proof of the tree estimator conjecture, nor an
 equivalent theorem under the searched formulations. This supports describing
@@ -40,8 +43,10 @@ the project that
 \operatorname{stack}(T)=\operatorname{estim}(T)
 \]
 
-for every finite tree with at least two vertices. External human mathematical
-review of the completed result has been completed. A comprehensive public-record
+for every finite tree with at least two vertices. The proof is self-assessed by
+the maintainer. It also received private, informal mathematical feedback from an
+external reader, but no formal peer-review claim is made. A comprehensive
+public-record
 prior-art/originality audit completed on 2026-09-23 located no prior published
 or publicly accessible proof of this conjecture, and no equivalent theorem under
 the alternative formulations searched. The audit and its search scope are
@@ -119,10 +124,11 @@ TreeStack.stack_eq_estim_of_two_le_card :
 ```
 
 The one-vertex case is intentionally excluded because of the source convention
-that the stacking threshold is at least two. External human mathematical review
-of the completed result has been completed. The prior-art/originality audit
-remains conservative; the repository does not claim priority merely from
-mechanization or review.
+that the stacking threshold is at least two. The review status is self-assessed.
+Private, informal feedback was obtained from an external reader, but it is not
+claimed as formal peer review or professional endorsement. The completed
+public-record prior-art/originality audit is documented in
+`notes/literature.md`.
 
 The Lean environment is pinned by `lean-toolchain` and
 `lake-manifest.json`. To reproduce the complete validation path:
@@ -142,8 +148,10 @@ boundary, trust statement, and validation status.
 
 ## Palomar packaging status
 
-Lean formalization is complete. External human mathematical review is complete.
-The comprehensive public-record prior-art/originality audit is complete and is
+Lean formalization is complete. The review status is self-assessed, with
+additional private, informal feedback from an external reader; no formal
+peer-review or professional-endorsement claim is made. The comprehensive
+public-record prior-art/originality audit is complete and is
 logged in `notes/literature.md`. Palomar packaging is complete, and the official
 full mechanical preflight has
 passed, including Comparator, protected Challenge provenance, Lean kernel

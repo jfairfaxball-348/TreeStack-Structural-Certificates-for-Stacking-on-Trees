@@ -104,21 +104,22 @@ fidelity:
     semantic divergence is introduced in the advertised result.
 
 review:
-  status: "external human mathematical review completed"
+  status: "self-assessed"
   notes: >-
-    The repository maintainer reports that an external human mathematical
-    review of the completed result has been completed. No reviewer name,
-    affiliation, review date, or quotation is recorded in the repository or
-    supplied for publication here, so none is asserted in this metadata.
-    A comprehensive public-record prior-art/originality audit was completed on
-    2026-09-23. It located no prior published or publicly accessible proof of
-    the Csernák--Soukup tree-stacking estimator conjecture and no equivalent
-    theorem under the alternative formulations searched. The search record and
-    limitations are documented in notes/literature.md. The conclusion does not
-    exclude unpublished, private, or unindexed earlier work. Separate machine
-    validation includes the complete Lean build, theorem-level axiom audit, and
-    Python regression checks; Palomar mechanical verification is a separate
-    check.
+    The completed mathematical argument is self-assessed by the repository
+    maintainer. The proof has also received private, informal mathematical
+    feedback from an external reader. That feedback was not formally recorded
+    and is not represented here as peer review, professional endorsement, or an
+    independently documented external mathematical review. No reviewer name,
+    affiliation, date, or quotation is asserted. A comprehensive public-record
+    prior-art/originality audit was completed on 2026-09-23. It located no prior
+    published or publicly accessible proof of the Csernák--Soukup tree-stacking
+    estimator conjecture and no equivalent theorem under the alternative
+    formulations searched. The search record and limitations are documented in
+    notes/literature.md. Separate machine validation includes the complete Lean
+    build, theorem-level axiom audit, Python regression checks, Comparator,
+    protected Challenge provenance checks, and independent NanoDa replay;
+    Palomar editorial review is a separate automated check.
   prior_art:
     status: "comprehensive public-record audit completed"
     as_of: "2026-09-23"
