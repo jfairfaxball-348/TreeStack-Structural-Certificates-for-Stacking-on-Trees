@@ -7,7 +7,7 @@ package "treestack" where
 
 require mathlib from git
   "https://github.com/leanprover-community/mathlib4.git" @
-  "5ed2965256430c3649e86755f9576b54eca72435"
+  "065356127b1dc0016f66b7283ce0ce2c4055aa55"
 
 @[default_target]
 lean_lib TreeStack
