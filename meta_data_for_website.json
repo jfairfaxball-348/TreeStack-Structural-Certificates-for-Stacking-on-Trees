@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "title": "TreeStack — Structural Certificates for Stacking on Trees",
+  "slug": "treestack",
+  "status": "Formally verified",
+  "headline": "A Lean 4 proof of the corrected nontrivial-tree form of the Csernák–Soukup tree-stacking estimator conjecture.",
+  "year": 2026,
+  "description": "For every finite tree $T$ with at least two vertices, this project proves $\\operatorname{stack}(T)=\\operatorname{estim}(T)$, the corrected nontrivial-tree form of the Csernák–Soukup estimator conjecture. The result is machine-checked end to end in Lean 4, with Palomar mechanical verification and automated review completed; public Palomar registration is pending. A standalone research article is present in the repository, but no arXiv submission or DOI exists yet.",
+  "topics": [
+    "Graph theory",
+    "Graph pebbling",
+    "Formal verification"
+  ],
+  "github_url": "https://github.com/jfairfaxball-348/TreeStack-Structural-Certificates-for-Stacking-on-Trees",
+  "palomar_id": null,
+  "palomar_url": null,
+  "paper_url": "https://github.com/jfairfaxball-348/TreeStack-Structural-Certificates-for-Stacking-on-Trees/blob/main/paper/TreeStack.pdf",
+  "arxiv_id": null,
+  "arxiv_url": null,
+  "doi": null,
+  "formalisation_system": "Lean 4",
+  "verification": "The Lean 4 formalisation machine-checks the main theorem end to end. Palomar mechanical verification and automated review passed for revision 4d4969703a9f0ca7a51cbe7edf0f0338cc95cafb; public registration is pending.",
+  "attribution": "Original conjecture and estimator: Tamás Csernák and Lajos Soukup. Proof, Lean 4 formalisation, computational validation and research article: John Fairfax-Ball, with extensive AI assistance documented in the repository.",
+  "original_source": "Tamás Csernák and Lajos Soukup, “Stacking and clearing in graph pebbling”, arXiv:2604.22341v1, Conjecture 10.3.",
+  "featured": true,
+  "additional_links": [
+    {
+      "label": "Original problem",
+      "url": "https://arxiv.org/abs/2604.22341"
+    }
+  ]
+}
