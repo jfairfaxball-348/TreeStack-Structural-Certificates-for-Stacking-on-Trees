@@ -1,0 +1,74 @@
+\section{An extremal zero-score configuration}\label{sec:obstruction}
+Fix $r\in V(T)$ and root the tree at $r$. Define
+\begin{equation}\label{eq:obstruction}
+ C_r(v)=\begin{cases}
+ \sigma_T(r)-1,&v=r,\\
+ 1,&v\ne r\text{ and }\deg(v)=1,\\
+ 0,&\text{otherwise}.
+ \end{cases}
+\end{equation}
+For a nonroot vertex $v$, write $T_v$ for its descendant subtree and put
+\begin{equation}\label{eq:obstruction-height}
+ H_v=\begin{cases}
+ 1,&v\text{ has no children},\\
+ 3+2\sum_{u\text{ child of }v}H_u,&\text{otherwise}.
+ \end{cases}
+\end{equation}
+These are positive integers, with closed form
+\begin{equation}\label{eq:height-closed}
+ H_v=1+2\sum_{\substack{w\in V(T_v)\\\deg_T(w)>1}}
+                      \deg_T(w)2^{\dist(v,w)}.
+\end{equation}
+For a leaf this is immediate. For a nonleaf $v\ne r$, the number of
+children is $\deg_T(v)-1$. Substitution of the formula at its children
+gives
+\[
+ 3+2\sum_uH_u
+ =1+2\deg_T(v)+4\sum_u\sum_{\substack{w\in V(T_u)\\\deg_T(w)>1}}
+                        \deg_T(w)2^{\dist(u,w)},
+\]
+which is~\eqref{eq:height-closed} at $v$.
+Summing this closed form over the children of $r$ yields
+\begin{equation}\label{eq:height-root}
+ \sum_{u\text{ child of }r}H_u
+ =\deg_T(r)+\sum_{\substack{w\ne r\\\deg_T(w)>1}}
+                         \deg_T(w)2^{\dist(r,w)}
+ =\sigma_T(r)-1.
+\end{equation}
+
+\begin{theorem}\label{thm:obstruction}
+For the configuration $C_r$,
+\[
+ S_v(C_r)=0\quad(v\in V(T)),\qquad \mass{C_r}=E_T(r)-1.
+\]
+In particular, $C_r$ is nonstackable.
+\end{theorem}
+\begin{proof}
+Every descendant branch is occupied, since it contains a leaf other than
+$r$. The opposite side is occupied as well, since
+$C_r(r)=\sigma_T(r)-1\ge\deg_T(r)\ge1$.
+Induction from the leaves gives upward messages $d_{v\to p}=-H_v$:
+at a leaf this is $F(1)=-1$; at an internal nonroot vertex the effective
+input is $-\sum_uH_u$, so its message is
+$-3-2\sum_uH_u=-H_v$. Equation~\eqref{eq:height-root} implies
+$S_r(C_r)=0$.
+
+Now suppose $p$ has score zero and $v$ is its child. Removing the
+contribution $-H_v$ from its score gives effective input $H_v$ on the
+$p$-side of $pv$, hence $d_{p\to v}=F(H_v)$.
+If $v$ is a leaf, its score is $1+F(1)=0$. Otherwise let
+$K=\sum_{u\text{ child of }v}H_u\ge1$.
+Then $H_v=3+2K$, $F(H_v)=K$, and the score at $v$ is $-K+K=0$.
+Propagation away from $r$ proves the assertion at every vertex.
+Finally, the total mass is
+$\sigma_T(r)-1+\ell_T(r)=E_T(r)-1$.
+Nonstackability follows from Theorem~\ref{thm:root-score}.
+\end{proof}
+
+\begin{corollary}\label{cor:extremal-obstruction}
+There is a nonstackable configuration of mass $\estim(T)-1$ whose score
+is zero at every vertex.
+\end{corollary}
+\begin{proof}
+Choose a root maximizing $E_T$ and apply Theorem~\ref{thm:obstruction}.
+\end{proof}

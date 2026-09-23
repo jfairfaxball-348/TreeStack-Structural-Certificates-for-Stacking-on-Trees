@@ -54,6 +54,22 @@ recorded in `notes/literature.md`; its negative result is evidence for public
 priority, not a guarantee against unpublished, private, or unindexed earlier
 work.
 
+## Research article
+
+[*The stacking number of a tree*](paper/TreeStack.pdf) gives a standalone
+proof of the nontrivial-tree formula. The [canonical LaTeX source](paper/main.tex),
+[arXiv source bundle](paper/arxiv/TreeStack-arxiv.tar.gz),
+[submission metadata](paper/arxiv-metadata.txt), and
+[build instructions](paper/README.md) are in `paper/`. The publication-stage
+[literature audit](paper/literature-and-submission-audit.md) and
+[paper-to-Lean correspondence](paper/proof-correspondence.md) accompany it.
+
+Palomar mechanical verification of revision
+`4d4969703a9f0ca7a51cbe7edf0f0338cc95cafb` succeeded and its automated review
+identified no problems. Registration has been requested; the final public
+register entry is pending. The paper reserves its URL with an explicit
+placeholder. No arXiv submission has been made.
+
 ## Reproduce the bounded checks
 
 Use Python 3.9 or later in a virtual environment:

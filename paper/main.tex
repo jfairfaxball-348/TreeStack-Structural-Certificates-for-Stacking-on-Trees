@@ -1,0 +1,240 @@
+\documentclass[11pt]{amsart}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage[a4paper,margin=30mm]{geometry}
+\usepackage[hidelinks]{hyperref}
+\usepackage{url}
+\input{glyphtounicode}
+\pdfgentounicode=1
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\theoremstyle{remark}
+\newtheorem{remark}[theorem]{Remark}
+\DeclareMathOperator{\stack}{stack}
+\DeclareMathOperator{\estim}{estim}
+\DeclareMathOperator{\dist}{d}
+\DeclareMathOperator{\supp}{supp}
+\newcommand{\mass}[1]{\lvert #1\rvert}
+\newcommand{\NN}{\mathbb N}
+\newcommand{\ZZ}{\mathbb Z}
+\newcommand{\EMPTY}{\mathsf{EMPTY}}
+\newcommand{\StackableAt}{\operatorname{StackableAt}}
+\title{The stacking number of a tree}
+\author{John Fairfax-Ball}
+\date{}
+\subjclass[2020]{Primary 05C57; Secondary 05C05}
+\keywords{Graph pebbling, stacking number, trees, exact reachability}
+\hypersetup{pdftitle={The stacking number of a tree},pdfauthor={John Fairfax-Ball}}
+\begin{document}
+\begin{abstract}
+The stacking number of a graph is the least integer $t\ge2$ such that every
+configuration of $t$ pebbles can be transformed by pebbling moves into a
+configuration supported on one vertex. We prove that, for every finite tree
+$T$ with at least two vertices, this number equals the rooted
+distance-and-degree estimator conjectured by Csern\'ak and Soukup. The proof
+uses an exact recursive characterization of stackability at a prescribed
+vertex, an explicit zero-score obstruction, and a weighted cancellation
+argument for arbitrary nonstackable configurations. The complete theorem is
+formalized in Lean.
+\end{abstract}
+\maketitle
+
+\section{Introduction}
+A pebbling move removes two pebbles from a vertex and puts one pebble on an
+adjacent vertex. Csern\'ak and Soukup~\cite{cs2026} introduced the stacking
+number: how many pebbles guarantee that all remaining pebbles can be brought
+to a single vertex, whose location may depend on the configuration? They
+conjectured an explicit formula for trees and verified it computationally
+for every tree of order at most seven.
+
+For a finite tree $T$ and $r\in V(T)$, put
+\begin{align}
+ \ell_T(r)&=\bigl|\{v\ne r:\deg_T(v)=1\}\bigr|,\label{eq:leaves}\\
+ \sigma_T(r)&=1+\sum_{\substack{v\in V(T)\\v=r\text{ or }\deg_T(v)>1}}
+                 \deg_T(v)2^{\dist_T(r,v)},\label{eq:sigma}\\
+ E_T(r)&=\sigma_T(r)+\ell_T(r),\qquad
+ \estim(T)=\max_{r\in V(T)}E_T(r).\label{eq:estimator}
+\end{align}
+Here $\dist_T$ denotes graph distance. We retain the source notation
+$\sigma_T$ and $\estim$; our $\ell_T(r)$ is its $\operatorname{leaf}(r)$,
+and $E_T$ abbreviates its rooted estimator.
+Conjecture 10.3 of~\cite{cs2026} asserts $\stack(T)=\estim(T)$.
+
+The definition of the stacking number minimizes over $t\ge2$. Thus the
+one-vertex tree has stacking number $2$, whereas the displayed estimator is
+$1$. We state the conjecture with the explicit hypothesis $|V(T)|\ge2$;
+this isolates a boundary convention in the definitions.
+
+\begin{theorem}\label{thm:main}
+For every finite tree $T$ with at least two vertices,
+\[
+ \stack(T)=\estim(T).
+\]
+\end{theorem}
+
+We prove the tree-stacking estimator conjecture of Csern\'ak and Soukup for
+nontrivial trees. The proof has three structural ingredients.
+A branch sends an integer message across its boundary edge, recording the
+optimal gain or cost of clearing it. An empty branch is a separate state.
+These messages give an exact criterion $S_r(C)>0$ for stacking a
+configuration $C$ at $r$, including necessity for arbitrary move order.
+An explicit configuration of mass $\estim(T)-1$ has every score zero.
+For the reverse bound, the nonnegative defects $-S_v(C)$ satisfy local
+two-sided edge equations. We assign the excess contributions to distinct
+endpoints and cancel them against weighted defects. A consolidation lemma
+then bounds the auxiliary height weights by distances from one root.
+
+Classical graph pebbling prescribes a target vertex; see
+Chung~\cite{chung1989} and Hurlbert~\cite{hurlbert1999}.
+Cover pebbling prescribes positive demands at all vertices. Sj\"ostrand's
+theorem~\cite{sjostrand2005} reduces its universal threshold to distance
+potentials of configurations concentrated at one vertex.
+In stacking, every vertex outside the eventual target must be empty.
+The messages below account for this exact clearing condition.
+
+\section{Configurations and the estimator}
+All graphs in this paper are finite, simple and undirected. A tree is a
+nonempty connected acyclic graph. Unless expressly stated otherwise,
+$T$ has at least two vertices. We write $u\sim v$ for adjacency, and omit
+the subscript $T$ from degrees and distances when no confusion is possible.
+The natural numbers include zero.
+
+A \emph{configuration} is a function $C:V(T)\to\NN$; its mass is
+$\mass{C}=\sum_vC(v)$ and its support is $\supp(C)=\{v:C(v)>0\}$.
+The source writes $\|c\|$ for mass; we use $\mass{C}$.
+The move $u\to v$ is legal when $u\sim v$ and $C(u)\ge2$.
+It replaces $C(u)$ by $C(u)-2$ and $C(v)$ by $C(v)+1$.
+Reachability permits a finite sequence of legal moves, including the empty
+sequence. Each move decreases mass by one.
+
+A configuration is \emph{stacked at $r$} when
+$\supp(C)=\{r\}$. Write $\StackableAt(T,C,r)$ if a configuration stacked
+at $r$ is reachable from $C$. The configuration is \emph{stackable} if this
+holds for some $r$.
+In particular, the zero configuration is not stacked or stackable.
+The stacking number is the least integer $t\ge2$ for which every
+configuration of mass \emph{exactly} $t$ is stackable. Our proof will also
+establish the existence of such an integer for trees.
+
+Let $L$ be the number of degree-one vertices of $T$. The estimator has the
+following useful form, uniform in the root:
+\begin{equation}\label{eq:compact-estimator}
+ E_T(r)-1=L+\sum_{\deg(v)>1}\deg(v)2^{\dist(r,v)}.
+\end{equation}
+If $r$ is internal, this follows directly from the definition. If $r$ is
+a leaf, its degree-one term in $\sigma_T(r)$ replaces the leaf omitted from
+$\ell_T(r)$. Also
+\begin{equation}\label{eq:estim-large}
+ E_T(r)\ge |V(T)|+1.
+\end{equation}
+Indeed, in the expansion
+$1+\deg(r)+\ell_T(r)+\sum_{v\ne r,\,\deg(v)>1}\deg(v)2^{\dist(r,v)}$,
+the root degree is at least one and each of the other $|V(T)|-1$ vertices
+contributes at least one.
+
+\input{sections/messages}
+\input{sections/obstruction}
+\input{sections/upper}
+
+\section{The stacking formula}\label{sec:formula}
+One final point is required because the stacking number uses exact sizes.
+\begin{lemma}\label{lem:upward}
+Let $G$ be a connected graph on $n\ge2$ vertices. If $t\ge2$ and every
+configuration of mass $t$ is stackable, then $t>n$ and every configuration
+of mass $t+1$ is stackable.
+\end{lemma}
+\begin{proof}
+If $2\le t\le n$, put one pebble on each of $t$ distinct vertices.
+This configuration admits no legal move and is not stacked, a contradiction.
+Now let $\mass{C}=t+1$. Since $t+1>n$, some vertex has at least two
+pebbles. It has a neighbour by connectedness and $n\ge2$. One legal move
+produces a configuration of mass $t$, which is stackable by hypothesis.
+Prepend that move to a stacking sequence.
+\end{proof}
+
+\begin{proof}[Proof of Theorem~\ref{thm:main}]
+Theorem~\ref{thm:mass-bound} implies that every configuration of mass
+$\estim(T)$ is stackable. By~\eqref{eq:estim-large}, this is an admissible
+threshold at least two, so $\stack(T)\le\estim(T)$.
+On the other hand, Corollary~\ref{cor:extremal-obstruction} provides a
+nonstackable configuration of mass $\estim(T)-1$. If a universal exact
+size $t\ge2$ were smaller than $\estim(T)$, repeated application of
+Lemma~\ref{lem:upward} would make every configuration of mass
+$\estim(T)-1$ stackable. This contradiction proves the reverse inequality.
+\end{proof}
+
+The proof also gives an exact extremal statement:
+\begin{corollary}\label{cor:zero-extremal}
+For every nontrivial finite tree,
+\[
+ \max\{\mass{C}:C\text{ is not stackable}\}
+ =\max\{\mass{C}:S_v(C)=0\text{ for every }v\}
+ =\estim(T)-1.
+\]
+\end{corollary}
+\begin{proof}
+Every zero-score configuration is nonstackable by
+Theorem~\ref{thm:root-score}. The upper bound is Theorem~\ref{thm:mass-bound},
+and the zero-score obstruction attains it.
+\end{proof}
+
+For the singleton tree, every positive configuration is already stacked.
+Consequently $\stack(K_1)=2$ under the source threshold convention, while
+\eqref{eq:leaves}--\eqref{eq:estimator} give $\estim(K_1)=1$.
+
+\section{Formal verification and reproducibility}
+The complete theorem, including the message characterization, obstruction,
+weighted cancellation and exact-size threshold argument, has been formalized
+in Lean. The headline declaration is
+\begin{center}
+\texttt{TreeStack.stack\_eq\_estim\_of\_two\_le\_card}.
+\end{center}
+Its hypothesis and conclusion are, respectively,
+\[
+ 2\le\operatorname{Fintype.card}V,
+ \qquad
+ \texttt{TreeStack.stack}\ T=\texttt{TreeStack.estim}\ T,
+\]
+for a finite tree $T$ on $V$. The formalization proves the result for
+arbitrary finite trees, without an order bound.
+
+The source and reproduction instructions are available in the public
+repository~\cite{treestack}. The immutable formal-verification revision is
+\begin{center}
+\texttt{4d4969703a9f0ca7a51cbe7edf0f0338cc95cafb}.
+\end{center}
+It pins Lean 4.35.0-rc2 and a specific Mathlib revision. The theorem-level
+audit records only the standard axioms \texttt{propext},
+\texttt{Quot.sound} and \texttt{Classical.choice}.
+The proved declaration is separate from Palomar's protected Challenge
+statement. Palomar mechanical verification succeeded, including comparison
+with that statement and independent NanoDa kernel replay. Its automated
+review identified no problems, and registration was requested for this
+revision. Palomar verification record:
+\url{PALOMAR_VERIFICATION_URL_PLACEHOLDER}.
+This is a record of mechanical verification, not human peer review.
+
+The repository includes a theorem-to-source correspondence for this paper,
+the pinned dependency files, and commands for the Lean build and axiom audit.
+It also provides independent Python implementations of legal reachability
+and branch messages, and bounded regression checks. Those computations
+support reproduction and testing; the proofs above do not depend on finite
+enumeration. Later publication commits preserve the immutable verification
+revision.
+
+\subsection*{Development provenance}
+The work was developed with extensive AI assistance under the direction of
+the author, including mathematical exploration, Lean development, proof
+auditing and preparation of the exposition. The author selected the problem
+and scope and directed validation. This disclosure follows the development
+provenance recorded in the repository.
+
+\bibliographystyle{amsplain}
+\bibliography{references}
+\end{document}
