@@ -1,0 +1,168 @@
+\section{Branch messages and rooted stackability}\label{sec:messages}
+For an oriented edge $v\to p$, let $B_{v\mid p}$ be the component
+containing $v$ after deleting $vp$. Its root is $v$ and its external boundary
+vertex is $p$. The children are the branches $B_{u\mid v}$ with
+$u\sim v$, $u\ne p$. Call a branch \emph{occupied} when its restriction of
+$C$ is nonzero.
+
+Define the integer transfer function by
+\begin{equation}\label{eq:transfer}
+ F(x)=\begin{cases}
+ 2x-3,&x\le1,\\
+ x/2,&x\ge2\text{ even},\\
+ (x-3)/2,&x\ge3\text{ odd}.
+ \end{cases}
+\end{equation}
+In particular, $F(2)=1$ and $F(3)=0$.
+Messages take values in the disjoint union $\{\EMPTY\}\sqcup\ZZ$.
+For an empty branch put $m_{v\to p}=\EMPTY$. For an occupied branch put
+\begin{equation}\label{eq:message}
+ m_{v\to p}=d_{v\to p}:=
+ F\left(C(v)+\sum_{\substack{u\sim v,\ u\ne p\\B_{u\mid v}\text{ occupied}}}
+                          d_{u\to v}\right).
+\end{equation}
+The recursion terminates because each child branch has fewer vertices.
+Only integer messages are summed. When writing a sum over all neighbours
+we use the numerical contribution $\bar d_{u\to v}$, equal to
+$d_{u\to v}$ on occupied branches and $0$ on empty branches. This
+convention for sums does not identify the states $\EMPTY$ and $0$.
+The rooted score is
+\begin{equation}\label{eq:score}
+ S_r(C)=C(r)+\sum_{u\sim r}\bar d_{u\to r}.
+\end{equation}
+
+\begin{theorem}[Exact boundary invariant]\label{thm:boundary}
+Let $B=B_{v\mid p}$ be occupied with message $d=d_{v\to p}$.
+Work on the subtree induced by $B\cup\{p\}$, with initial configuration
+$C\restriction B$ on $B$ and $q\ge0$ pebbles at $p$.
+A positive stack at $p$ with $B$ empty is reachable if and only if
+$q+d>0$. In that case the greatest possible final pile at $p$ is $q+d$.
+\end{theorem}
+
+We prove necessity in a form that also applies when other branches
+interleave their moves at $p$.
+\begin{lemma}[Boundary flux]\label{lem:flux}
+Suppose a legal sequence clears $B_{v\mid p}$. Let $m_{a b}$ count its
+moves from $a$ to $b$, and put
+$\phi_{v\mid p}=m_{v p}-2m_{p v}$.
+If the branch is occupied initially, then
+\[
+ \phi_{v\mid p}\le d_{v\to p},\qquad
+ \phi_{v\mid p}\equiv d_{v\to p}\pmod3.
+\]
+If it is empty initially, then $\phi_{v\mid p}=-3k$ for some $k\ge0$.
+Moves elsewhere in the tree are permitted.
+\end{lemma}
+\begin{proof}
+The move counts satisfy, at every cleared vertex $w$,
+\begin{equation}\label{eq:balance}
+ C(w)+\sum_{z\sim w}m_{z w}-2\sum_{z\sim w}m_{w z}=0.
+\end{equation}
+For each initially occupied branch which is cleared, at least one move
+crosses its boundary outwards. Indeed, consider the move after which that
+branch becomes empty for the last time. An internal move leaves a pebble
+inside, and an inward move also does so. Thus this move is an outward
+boundary move. This observation applies to every occupied child branch,
+independently of the moves outside it.
+
+First consider an initially empty branch. Sum~\eqref{eq:balance} over
+its vertices. If $I$ is the number of internal moves and
+$a=m_{v p}$, $b=m_{p v}$, the result is $b-2a-I=0$.
+Hence its boundary flux is
+$a-2b=-3a-2I\le0$. It is divisible by three: give the boundary vertex
+sign $+1$ and alternate signs along tree edges. The signed sum of the
+balance equations over the branch is congruent to minus its boundary
+flux modulo three, because each internal move contributes a multiple of
+three. The initial and final signed sums on the empty branch vanish.
+This proves the assertion for empty branches, even when they are used
+temporarily.
+
+For an occupied branch, induct on its size. By induction, each occupied
+child has flux $d_i-3k_i$ with $k_i\ge0$, and each empty child has flux
+$-3k_i$. Put $x=C(v)+\sum d_i$ and $K=\sum k_i$, where the first sum
+runs over occupied children. At $v$, equation~\eqref{eq:balance} reads
+\[
+ y+b-2a=0,\qquad y=x-3K,\quad a=m_{v p}\ge1,\quad b=m_{p v}\ge0.
+\]
+For any integer $y$, these conditions imply
+\begin{equation}\label{eq:one-vertex-flux}
+ a-2b=2y-3a\le F(y),\qquad a-2b\equiv F(y)\pmod3.
+\end{equation}
+To see this, the least possible $a$ is
+$\max(1,\lceil y/2\rceil)$; substituting this value gives precisely
+the three cases of~\eqref{eq:transfer}. Any increase in $a$ lowers
+the flux by three.
+
+The transfer function satisfies
+\begin{equation}\label{eq:three-loss}
+ F(z-3)\le F(z),\qquad F(z)\equiv2z\pmod3.
+\end{equation}
+For the inequality, the difference $F(z)-F(z-3)$ is $6$ when $z\le1$,
+$6,3,3$ at $z=2,3,4$, respectively, and is $0$ for odd $z\ge5$ and
+$3$ for even $z\ge6$. The congruence follows from each case in
+\eqref{eq:transfer}. Thus $F(x-3K)\le F(x)$ and
+$F(x-3K)\equiv F(x)\pmod3$. Apply~\eqref{eq:one-vertex-flux}
+to finish the induction.
+\end{proof}
+
+\begin{proof}[Proof of Theorem~\ref{thm:boundary}]
+The final boundary pile in any allowed clearing sequence is $q+\phi$,
+so Lemma~\ref{lem:flux} proves necessity and the upper bound.
+For attainment we induct on the branch size.
+
+We use the following scheduling observation. Suppose disjoint occupied
+child branches have gains $d_i$, and a vertex initially has $a\ge0$
+pebbles. If $a+\sum_i d_i>0$, process branches with positive gain first,
+then those with zero gain, then those with negative gain. A positive-gain
+task has positive final pile even when begun at zero. Before a zero-gain
+task the pile is positive, since the total remaining gains are nonpositive
+and the final total is positive. During the negative-gain tasks the pile
+after each task is at least the final positive total. The inductive
+boundary invariant therefore realizes every task and leaves exactly
+$a+\sum_i d_i$. Tasks touch only their branch and the common boundary;
+no other task's initial interior configuration is changed.
+
+Let $x=C(v)+\sum_i d_i$ for the occupied children of $B$.
+If $x\ge2$, the observation clears the children and leaves $x$ at $v$.
+For $x=2k$, make $k$ moves from $v$ to $p$; the final boundary pile is
+$q+k=q+F(x)$.
+For $x=2k+1\ge3$, make $k$ moves from $v$ to $p$, leaving one pebble
+at $v$. The assumption $q+F(x)=q+k-1>0$ implies $q+k\ge2$.
+One move $p\to v$ followed by one move $v\to p$ is therefore legal;
+it clears $v$ and leaves $q+k-1$ at $p$.
+
+If $x\le1$, put $j=2-x\ge1$. The assumption
+$q+F(x)=q-2j+1>0$ implies $q\ge2j$. Make $j$ moves $p\to v$.
+The children's effective total at $v$ is now $x+j=2$.
+The observation clears them leaving two pebbles at $v$, and one final
+move $v\to p$ gives pile $q-2j+1=q+F(x)$.
+These constructions also cover the case with no children and complete
+the induction.
+\end{proof}
+
+\begin{theorem}[Exact rooted stackability]\label{thm:root-score}
+For every configuration $C$ on a finite tree and every vertex $r$,
+\[
+ \StackableAt(T,C,r)\quad\Longleftrightarrow\quad S_r(C)>0.
+\]
+Consequently $C$ is nonstackable if and only if all its scores are
+nonpositive.
+\end{theorem}
+\begin{proof}
+If the score is positive, apply the scheduling observation to the occupied
+branches incident with $r$, starting with $C(r)$ pebbles. It gives a stack
+of size exactly $S_r(C)$ at $r$.
+Conversely, in any sequence ending in a stack at $r$, every incident
+branch is cleared. Lemma~\ref{lem:flux} bounds the flux from each occupied
+branch by its message and from each empty branch by zero. The final pile
+is therefore at most $S_r(C)$, and it is positive.
+The final equivalence follows by quantifying over all targets.
+\end{proof}
+
+\begin{remark}
+An occupied one-vertex branch containing three pebbles has message
+$F(3)=0$. It can be cleared to its boundary only when the boundary has a
+positive initial pile. An empty branch may be left alone even when that
+pile is zero. This is why the recursive state must retain $\EMPTY$
+separately from the integer zero.
+\end{remark}

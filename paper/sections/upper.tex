@@ -1,0 +1,432 @@
+\section{The arbitrary-defect upper bound}\label{sec:upper}
+
+We now bound the mass of every configuration whose scores are all
+nonpositive.  All degrees, paths and distances in this section belong to the
+original tree.  In particular, the argument retains the empty branches:
+their contributions will be cancelled separately from the contributions of
+edges with occupied support on both sides.
+
+Let $T$ be a finite tree with at least two vertices, and let $C$ satisfy
+$S_v(C)\leq 0$ for every $v$.  Set
+\[
+ \delta_v=-S_v(C)\geq 0.
+\]
+If $C$ is identically zero the desired bound is immediate.  Henceforth choose
+an occupied vertex $o$, so that $C(o)>0$.  This vertex is used to assign edge
+owners; the estimator root obtained at the end may be different.
+
+\subsection{Retained edges and the local defect equations}
+
+For adjacent vertices $u,v$, write $T_{u\mid v}$ for the component containing
+$u$ after deleting $uv$.  Call $uv$ \emph{retained} if both
+$T_{u\mid v}$ and $T_{v\mid u}$ contain an occupied vertex.  Its two messages
+are then integers.  For any edge, let
+\[
+ \overline d_{u\to v}=
+ \begin{cases}
+ d_{u\to v},&T_{u\mid v}\text{ is occupied},\\
+ 0,&T_{u\mid v}\text{ is empty}.
+ \end{cases}
+\]
+This notation records the numerical contribution of a message in a score;
+it does not identify the message $\EMPTY$ with the integer message
+zero.  Thus
+\begin{equation}\label{eq:upper-score}
+ C(v)=-\delta_v-\sum_{u\sim v}\overline d_{u\to v}.
+\end{equation}
+
+\begin{lemma}[Support separation]\label{lem:upper-support}
+The two sides of an edge partition $V(T)$.  Every nonretained edge has
+exactly one empty side.  A retained edge lies on a path between two occupied
+vertices, and every edge of a path between two occupied vertices is retained.
+More specifically, if $uv$ is retained and $x$ is an occupied vertex in
+$T_{u\mid v}$, every edge on the path from $u$ to $x$ is retained.  If
+$uv$ is retained and no other retained edge is incident with $u$, then
+$C(u)>0$.
+Finally, an endpoint on the empty side of an edge is incident with no
+retained edge.
+\end{lemma}
+
+\begin{proof}
+Deleting an edge of a tree produces exactly two components, giving the
+partition.  Since $C(o)>0$, at least one component is occupied.  If both
+are occupied, choose one occupied vertex in each; their unique path crosses
+the deleted edge.  Conversely, deleting any edge on the path between two
+occupied vertices separates those vertices, so that edge is retained.
+
+For the more specific assertion, choose an occupied vertex $y$ in
+$T_{v\mid u}$.  The path from $x$ to $y$ consists of the path from $x$ to
+$u$, the edge $uv$, and the path from $v$ to $y$.  Every edge on its
+$x$--$u$ segment is therefore retained.  If $u$ is unoccupied, an occupied
+vertex $x$ on its side is distinct from $u$, and the edge of that
+segment incident with $u$ is a retained edge other than $uv$.  This proves
+the next assertion by contraposition.
+
+For the last assertion, let $T_{v\mid u}$ be empty.  The edge $uv$ itself
+is nonretained.  For every other neighbour $w$ of $v$, the component
+$T_{w\mid v}$ lies inside $T_{v\mid u}$ and is empty.  Hence $wv$ is
+also nonretained.
+\end{proof}
+
+For a retained edge $uv$, put $a=d_{u\to v}$ and $b=d_{v\to u}$.
+Removing the opposite message from each endpoint score gives the two
+effective branch inputs.  The message recursion therefore yields
+\begin{equation}\label{eq:upper-edge-equations}
+ a=F(-\delta_u-b),\qquad b=F(-\delta_v-a).
+\end{equation}
+These equations are only asserted for retained edges.
+
+\begin{lemma}[Classification of retained edge states]\label{lem:upper-classification}
+The solutions of \eqref{eq:upper-edge-equations} with
+$\delta_u,\delta_v\geq0$ have exactly the following forms, up to exchanging
+$u$ and $v$:
+\begin{enumerate}
+ \item An \emph{oriented state}, with
+ \begin{equation}\label{eq:upper-oriented}
+ a=k\geq0,\qquad b=-2(k+\delta_v)-3,
+ \qquad
+ \delta_u=2\delta_v\ \text{or}\ \delta_u=2\delta_v+3.
+ \end{equation}
+ The latter alternative requires $k>0$.  We direct this edge $u\to v$.
+ \item A \emph{two-negative state}, with unique $r,q\in\NN$ such that
+ \begin{equation}\label{eq:upper-negative}
+ a=-(2r+1),\quad b=-(2q+1),\quad
+ \delta_u=r+2q,\quad\delta_v=q+2r.
+ \end{equation}
+\end{enumerate}
+Both messages cannot be nonnegative.
+\end{lemma}
+
+\begin{proof}
+The definition of $F$ gives
+\begin{align*}
+ F(z)<0&\iff z\leq1,\\
+ F(z)=-(2r+1)&\iff z=1-r\qquad(r\geq0),\\
+ F(z)=k&\iff
+   \bigl(k>0\text{ and }z=2k\bigr)\text{ or }z=2k+3
+   \qquad(k\geq0).
+\end{align*}
+Indeed, the first two statements use $F(z)=2z-3$ for $z\leq1$;
+the even positive and odd positive cases of $F$ give the third, including
+the unique preimage $3$ of zero.
+
+If $a=k\geq0$, then $-\delta_v-k\leq0$, so the second edge equation
+gives $b=-2(k+\delta_v)-3<0$.  Substituting this into the first equation
+and using the nonnegative preimages gives either
+$-\delta_u+2k+2\delta_v+3=2k+3$, or the same left side equals $2k$
+with $k>0$.  These are exactly the two defect alternatives in
+\eqref{eq:upper-oriented}.  The case $b\geq0$ is symmetric.
+
+If both messages are negative, the first two identities express them
+uniquely as $-(2r+1)$ and $-(2q+1)$, with $r,q\geq0$.
+Their unique preimages give
+$-\delta_u+2q+1=1-r$ and
+$-\delta_v+2r+1=1-q$, proving \eqref{eq:upper-negative}.
+Conversely, substitution verifies every displayed state, subject to the
+stated restriction when $k=0$.
+\end{proof}
+
+Call an oriented state \emph{defective} if its head defect $\delta_v$ is
+positive.  Call a two-negative state defective if $r+q>0$.  The remaining
+two-negative state is the neutral state $(-1,-1)$, with both endpoint
+defects zero.  The defective retained edges form a forest, since they are
+a subset of the edges of $T$.
+
+\subsection{Owners, orientations and auxiliary weights}
+
+\begin{lemma}[Injective incident owners]\label{lem:upper-owners}
+For each edge $e=uv$, let $\omega(e)$ be the endpoint farther from $o$.
+Then $\omega$ is well defined and injective on $E(T)$.  If
+$T_{v\mid u}$ is empty, then $\omega(uv)=v$.
+\end{lemma}
+
+\begin{proof}
+The unique path from $o$ crosses $uv$ precisely when reaching the endpoint
+on the side not containing $o$.  Thus the endpoint distances differ by
+one.  The owner is the more distant endpoint.  Each vertex other than $o$
+has exactly one neighbour preceding it on its unique path from $o$;
+consequently it owns exactly that predecessor edge.  In particular two
+edges cannot share an owner.  If $T_{v\mid u}$ is empty, the occupied
+vertex $o$ lies on the $u$ side, so $v$ is the farther endpoint.
+\end{proof}
+
+Define an auxiliary partial orientation of $T$ as follows.  Keep the direction
+of every oriented state, including those with zero head defect.  Direct each
+defective two-negative edge toward its owner.  Leave neutral edges and
+nonretained edges unoriented.  The classification ensures that no edge has
+both directions.  Since $T$ has no undirected cycle, this directed graph has
+no directed cycle.
+
+Let $h(v)$ be the maximum length of a directed path ending at $v$, allowing
+the path of length zero, and set
+\begin{equation}\label{eq:upper-weights}
+ A_v=2^{h(v)}.
+\end{equation}
+The maximum exists because a directed path has no repeated vertex.
+For an auxiliary arrow $u\to v$, a longest path ending at $u$ can be
+extended by this arrow: if it already contained $v$, it would give a
+directed cycle.  Hence
+\begin{equation}\label{eq:upper-doubling}
+ h(v)\geq h(u)+1,\qquad A_v\geq2A_u.
+\end{equation}
+A vertex has positive height exactly when it has an incoming auxiliary
+arrow.  Since every auxiliary arrow is retained, Lemma~\ref{lem:upper-support}
+also shows that the endpoint on the empty side of any edge has height zero
+and weight one.
+
+\subsection{Local charges and global defect cancellation}
+
+For an undirected edge $e=uv$, define its weighted message contribution by
+\[
+ E_e=-\bigl(A_v\overline d_{u\to v}
+             +A_u\overline d_{v\to u}\bigr).
+\]
+Define two nonnegative charges, with disjoint conditions of application:
+\begin{align*}
+ Q_e^{\mathrm{ret}}
+  &=\begin{cases}
+     A_{\omega(e)}\delta_{\omega(e)},&e\text{ is retained and defective},\\
+     0,&\text{otherwise},
+    \end{cases}\\
+ Q_e^{\mathrm{emp}}
+  &=\begin{cases}
+     A_{\omega(e)}\delta_{\omega(e)},&e\text{ is nonretained},\\
+     0,&\text{otherwise}.
+    \end{cases}
+\end{align*}
+
+\begin{lemma}[Retained-edge charge]\label{lem:upper-retained-charge}
+For every retained edge $uv$,
+\[
+ E_{uv}\leq A_u+A_v+Q_{uv}^{\mathrm{ret}}.
+\]
+\end{lemma}
+
+\begin{proof}
+First consider an oriented state $u\to v$ with parameter $k\geq0$.
+By \eqref{eq:upper-oriented} and \eqref{eq:upper-doubling},
+\begin{align*}
+ E_{uv}
+ &=A_u\bigl(2(k+\delta_v)+3\bigr)-A_vk\\
+ &=3A_u+k(2A_u-A_v)+2A_u\delta_v\\
+ &\leq A_u+A_v+2A_u\delta_v.
+\end{align*}
+The excess $2A_u\delta_v$ is zero when the edge is nondefective.
+Otherwise either endpoint can pay it: the local defect relation gives
+$A_u\delta_u\geq2A_u\delta_v$, and doubling gives
+$A_v\delta_v\geq2A_u\delta_v$.  Thus it is bounded by the charge at
+the prescribed owner, regardless of whether that owner is the tail or head.
+
+For a defective two-negative state, name its endpoints so that the auxiliary
+direction is $u\to v$, with $v=\omega(uv)$, and use the parameters
+in \eqref{eq:upper-negative}.  Then
+\begin{align*}
+ E_{uv}
+ &=A_u+A_v+2A_vr+2A_uq\\
+ &\leq A_u+A_v+A_v(2r+q)\\
+ &=A_u+A_v+A_v\delta_v.
+\end{align*}
+Here $q\geq0$ and $2A_u\leq A_v$ justify the inequality.  A neutral
+edge has $r=q=0$ and contributes exactly $A_u+A_v$, completing the proof.
+\end{proof}
+
+\begin{lemma}[Empty-side cancellation]\label{lem:upper-empty-charge}
+If $T_{v\mid u}$ is empty, then
+\[
+ E_{uv}=A_v\delta_v=Q_{uv}^{\mathrm{emp}}.
+\]
+\end{lemma}
+
+\begin{proof}
+The message $m_{v\to u}$ is literally $\EMPTY$.  At $v$,
+the initial pile is zero, and every incident branch other than the $u$ side
+is empty.  Consequently
+$S_v(C)=d_{u\to v}$, where this last message is an integer because the
+$u$ side contains $o$.  Thus
+$\overline d_{v\to u}=0$ and $d_{u\to v}=-\delta_v$, giving
+$E_{uv}=A_v\delta_v$.  By Lemma~\ref{lem:upper-owners}, $v$ is the
+owner.  In addition $A_v=1$, as observed above.  No integer defect-state
+equations were applied to the empty message.
+\end{proof}
+
+\begin{proposition}[Weighted cancellation]\label{prop:upper-weighted}
+The auxiliary weighted mass satisfies
+\begin{equation}\label{eq:upper-weighted-bound}
+ \sum_v A_vC(v)\leq\sum_v\deg_T(v)A_v.
+\end{equation}
+\end{proposition}
+
+\begin{proof}
+Grouping \eqref{eq:upper-score} by undirected edges gives the exact identity
+\begin{equation}\label{eq:upper-weighted-identity}
+ \sum_v A_vC(v)=\sum_{e\in E(T)}E_e-\sum_v A_v\delta_v.
+\end{equation}
+Lemmas~\ref{lem:upper-retained-charge} and \ref{lem:upper-empty-charge}
+give, uniformly over all ambient edges,
+\[
+ E_{uv}\leq A_u+A_v+Q_{uv}^{\mathrm{ret}}+Q_{uv}^{\mathrm{emp}}.
+\]
+Each sum of the two charges is at most its one owner budget
+$A_{\omega(e)}\delta_{\omega(e)}$.  Owners are injective on all edges,
+and every vertex budget is nonnegative, so
+\[
+ \sum_e\bigl(Q_e^{\mathrm{ret}}+Q_e^{\mathrm{emp}}\bigr)
+ \leq\sum_e A_{\omega(e)}\delta_{\omega(e)}
+ \leq\sum_v A_v\delta_v.
+\]
+Substitution in \eqref{eq:upper-weighted-identity} cancels the budgets.
+Finally, each vertex weight occurs once for each incident edge, so
+$\sum_{uv\in E(T)}(A_u+A_v)=\sum_v\deg_T(v)A_v$.
+\end{proof}
+
+\subsection{Removing leaf weights}
+
+Let $L$ be the number of ambient vertices of degree one.
+
+\begin{lemma}[Ambient leaf slack]\label{lem:upper-leaf-slack}
+Every degree-one vertex $v$ with $A_v>1$ is occupied.  Consequently
+\begin{equation}\label{eq:upper-compact}
+ \mass{C}\leq L+\sum_{\deg_T(v)>1}\deg_T(v)2^{h(v)}.
+\end{equation}
+\end{lemma}
+
+\begin{proof}
+If $A_v>1$, then $h(v)>0$, so there is an incoming auxiliary arrow at
+$v$.  Its underlying edge is retained.  As $v$ has degree one, its side
+of that edge is the singleton $\{v\}$; retention implies $C(v)\geq1$.
+For any degree-one vertex, therefore,
+\[
+ A_v-1\leq (A_v-1)C(v):
+\]
+if $A_v=1$ both sides are zero, and otherwise $C(v)\geq1$ proves it.
+Since $A_v\geq1$ at every vertex, all configuration slack terms are
+nonnegative.  Using Proposition~\ref{prop:upper-weighted},
+\begin{align*}
+ \mass{C}
+ &=\sum_v A_vC(v)-\sum_v(A_v-1)C(v)\\
+ &\leq\sum_v\deg_T(v)A_v
+       -\sum_{\deg_T(v)=1}(A_v-1)\\
+ &=L+\sum_{\deg_T(v)>1}\deg_T(v)A_v.
+\end{align*}
+The last equality uses that every vertex of a nontrivial tree has positive
+degree.  Replacing $A_v$ by $2^{h(v)}$ proves the claim.  Thus occupied
+leaves pay the required slack, while unoccupied ambient leaves have unit
+weight and require no payment.
+\end{proof}
+
+\subsection{Consolidation to one ambient root}
+
+We prove a pointwise statement about heights before applying the estimator.
+A set of vertices is called connected here if the unique tree path between
+any two of its vertices stays in the set.  This agrees with connectedness
+of the induced subgraph, by uniqueness of paths in a tree.
+
+\begin{lemma}[Source partition]\label{lem:upper-source-partition}
+The vertices of $T$ can be partitioned into connected sets $P_i$ with
+vertices $s_i\in P_i$ such that
+\[
+ h(v)=\dist_T(s_i,v)\qquad(v\in P_i).
+\]
+\end{lemma}
+
+\begin{proof}
+For every $v$ of positive height, choose once and for all an incoming
+auxiliary arrow $p(v)\to v$ with $h(p(v))=h(v)-1$.  Such an arrow
+exists by taking the last edge of a longest directed path ending at $v$:
+its prefix has length $h(v)-1$, and \eqref{eq:upper-doubling} at the level
+of heights prevents the height of its penultimate vertex from being larger.
+
+Iterating $p$ decreases height by exactly one each time and ends at a
+vertex $s(v)$ of height zero after $h(v)$ steps.  No vertex repeats, so
+this predecessor chain is the unique tree path from $v$ to $s(v)$ and
+$h(v)=\dist_T(s(v),v)$.  Every vertex on the chain has the same terminal
+source, since its subsequent predecessor choices are fixed.  Each nonempty
+fibre $P_s=\{v:s(v)=s\}$ therefore contains $s$ and the full path from
+each of its vertices to $s$.  The path between two vertices of $P_s$ is
+contained in the union of their paths to $s$, hence stays in $P_s$.
+The nonempty fibres give the required connected partition.
+\end{proof}
+
+\begin{lemma}[Merging height-dominated parts]\label{lem:upper-merge}
+Let $A,B$ be disjoint nonempty connected vertex sets joined by an edge
+$xy$, with $x\in A$ and $y\in B$.  Suppose $a\in A$, $b\in B$ and
+$g:V(T)\to\NN$ satisfy
+\[
+ g(v)\leq\dist_T(a,v)\quad(v\in A),\qquad
+ g(v)\leq\dist_T(b,v)\quad(v\in B).
+\]
+Then $A\cup B$ is connected, and one of $a,b$ satisfies the same domination
+on all of $A\cup B$.
+\end{lemma}
+
+\begin{proof}
+Paths within the two sets, together with $xy$, connect their union.
+If $z\in A$ and $w\in B$, concatenate the path from $z$ to $x$ in
+$A$, the edge $xy$, and the path from $y$ to $w$ in $B$.  Disjointness
+makes this a simple path, so it is the unique tree path and
+\begin{equation}\label{eq:upper-boundary-distance}
+ \dist_T(z,w)=\dist_T(z,x)+1+\dist_T(y,w).
+\end{equation}
+Put $\alpha=\dist_T(a,x)$ and $\beta=\dist_T(b,y)$.
+If $\beta\leq\alpha+1$, then for every $v\in B$ the triangle
+inequality and \eqref{eq:upper-boundary-distance} give
+\[
+ g(v)\leq\dist_T(b,v)
+ \leq\beta+\dist_T(y,v)
+ \leq\alpha+1+\dist_T(y,v)=\dist_T(a,v).
+\]
+The pre-existing domination on $A$ is unchanged, so $a$ works.
+Otherwise $\beta>\alpha+1$, which implies $\alpha\leq\beta+1$;
+the same argument with the two sets exchanged shows that $b$ works.
+\end{proof}
+
+\begin{proposition}[Height-dominating root]\label{prop:upper-consolidation}
+There exists a vertex $r\in V(T)$ such that
+\begin{equation}\label{eq:upper-height-domination}
+ h(v)\leq\dist_T(r,v)\qquad(v\in V(T)).
+\end{equation}
+\end{proposition}
+
+\begin{proof}
+Begin with the connected source partition of
+Lemma~\ref{lem:upper-source-partition}; each part is height-dominated by
+its own source.  If there is more than one part, connectedness of $T$
+provides an edge joining two parts: for example, follow a path from a
+vertex in one part to a vertex outside it and take its first exit edge.
+Lemma~\ref{lem:upper-merge}, with $g=h$, merges those two parts and
+supplies a root that height-dominates their union.  The resulting sets are
+still a partition into connected, height-dominated parts.  Each merge
+reduces the number of parts by one, so finitely many merges leave the
+whole vertex set and one dominating root.
+\end{proof}
+
+\begin{theorem}[Arbitrary-defect upper bound]\label{thm:mass-bound}
+For every configuration $C$ on a finite tree $T$ with at least two vertices,
+\[
+ \bigl(S_v(C)\leq0\text{ for all }v\bigr)
+ \quad\Longrightarrow\quad
+ \mass{C}\leq\estim(T)-1.
+\]
+\end{theorem}
+
+\begin{proof}
+For $C=0$, the bound follows from the positive estimator formula.  Otherwise
+the preceding construction applies.  Choose the root $r$ from
+Proposition~\ref{prop:upper-consolidation}.  Since $2^x$ increases with
+$x$, Lemma~\ref{lem:upper-leaf-slack} gives
+\begin{align*}
+ \mass{C}
+ &\leq L+\sum_{\deg_T(v)>1}\deg_T(v)2^{h(v)}\\
+ &\leq L+\sum_{\deg_T(v)>1}\deg_T(v)2^{\dist_T(r,v)}\\
+ &\leq L+\max_{s\in V(T)}
+              \sum_{\deg_T(v)>1}\deg_T(v)2^{\dist_T(s,v)}
+   =\estim(T)-1.
+\end{align*}
+The final equality is the estimator identity~\eqref{eq:compact-estimator}.
+Every quantity in this calculation uses the ambient tree.
+\end{proof}
+
+Together with the exact score criterion (Theorem~\ref{thm:root-score}), Theorem~\ref{thm:mass-bound}
+implies that every non-stackable configuration has mass at most
+$\estim(T)-1$, and hence every configuration of mass $\estim(T)$ is
+stackable.
