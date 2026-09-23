@@ -8,8 +8,13 @@ Csernák–Soukup conjecture
 \]
 
 The project has three principal structural results. The completed mathematical
-argument has now received external human review; the prior-art/originality audit
-remains deliberately conservative and no unsupported priority claim is made:
+argument has now received external human review. A comprehensive public-record
+prior-art/originality audit was completed on 2026-09-23. It located no prior
+published or publicly accessible proof of the tree estimator conjecture, nor an
+equivalent theorem under the searched formulations. This supports describing
+the present work as the first public proof located by that audit, subject to the
+normal limitation that unpublished, private, or unindexed earlier work cannot be
+ruled out absolutely:
 
 1. an exact rooted branch-message theorem characterizing stackability at a
    prescribed vertex by the sign of one integer score;
@@ -36,9 +41,13 @@ the project that
 \]
 
 for every finite tree with at least two vertices. External human mathematical
-review of the completed result has been completed. The originality/prior-art
-audit remains preliminary, so the repository does not infer a priority claim
-from mechanization or review alone.
+review of the completed result has been completed. A comprehensive public-record
+prior-art/originality audit completed on 2026-09-23 located no prior published
+or publicly accessible proof of this conjecture, and no equivalent theorem under
+the alternative formulations searched. The audit and its search scope are
+recorded in `notes/literature.md`; its negative result is evidence for public
+priority, not a guarantee against unpublished, private, or unindexed earlier
+work.
 
 ## Reproduce the bounded checks
 
@@ -68,7 +77,7 @@ Proof notes:
 - `notes/defect-flow.md` — arbitrary-defect generalized-flow theorem;
 - `notes/main-inequality.md` — summary of the now-proved global inequality and
   failed stronger local normalization statements;
-- `notes/literature.md` — preliminary prior-art audit.
+- `notes/literature.md` — completed comprehensive public-record prior-art/originality audit.
 
 The reproduced published atlas baseline through order 7 is in
 `data/published_baseline_through_7.csv`.  No order-11 census is part of this
@@ -134,7 +143,9 @@ boundary, trust statement, and validation status.
 ## Palomar packaging status
 
 Lean formalization is complete. External human mathematical review is complete.
-Palomar packaging is complete, and the official full mechanical preflight has
+The comprehensive public-record prior-art/originality audit is complete and is
+logged in `notes/literature.md`. Palomar packaging is complete, and the official
+full mechanical preflight has
 passed, including Comparator, protected Challenge provenance, Lean kernel
 checking, and independent NanoDa replay. Palomar registration has **not** been
 performed.

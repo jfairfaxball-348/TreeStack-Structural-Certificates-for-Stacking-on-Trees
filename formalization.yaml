@@ -23,6 +23,20 @@ classification:
   msc2020: ["05C05"]
 
 sources:
+  - title: "Proof of the Csernák--Soukup tree-stacking estimator conjecture"
+    authors:
+      - "John Fairfax-Ball"
+    type: "original-proof"
+    relationship: "other"
+    note: >-
+      The advertised theorem is first presented and proved in this project.
+      A comprehensive public-record prior-art/originality audit completed on
+      2026-09-23 located no prior published or publicly accessible proof of the
+      conjecture, and no equivalent theorem under the alternative formulations
+      searched. The audit is logged in notes/literature.md. This is a
+      public-record priority conclusion, not a guarantee against unpublished,
+      private, or unindexed earlier work.
+
   - title: "Stacking and clearing in graph pebbling"
     authors:
       - "Tamás Csernák"
@@ -30,13 +44,14 @@ sources:
     id: "arXiv:2604.22341v1"
     type: "paper"
     location: "https://arxiv.org/abs/2604.22341"
-    relationship: "adapts"
+    relationship: "background"
     note: >-
       The source introduces the stacking number and states the tree estimator
-      formula as a conjecture. This formalization proves the formula for finite
-      trees with at least two vertices. The explicit nontriviality hypothesis
-      records the convention issue at one vertex rather than silently changing
-      either the source stacking threshold or the estimator.
+      formula as Conjecture 10.3, supported computationally through trees of
+      order seven. This project proves that conjecture for finite trees with at
+      least two vertices. The explicit nontriviality hypothesis records the
+      convention issue at one vertex rather than silently changing either the
+      source stacking threshold or the estimator.
 
 status:
   scope: >-
@@ -95,9 +110,27 @@ review:
     review of the completed result has been completed. No reviewer name,
     affiliation, review date, or quotation is recorded in the repository or
     supplied for publication here, so none is asserted in this metadata.
-    Separate machine validation includes the complete Lean build, theorem-level
-    axiom audit, and Python regression checks; a successful Palomar full
-    mechanical preflight is a required packaging gate before submission.
+    A comprehensive public-record prior-art/originality audit was completed on
+    2026-09-23. It located no prior published or publicly accessible proof of
+    the Csernák--Soukup tree-stacking estimator conjecture and no equivalent
+    theorem under the alternative formulations searched. The search record and
+    limitations are documented in notes/literature.md. The conclusion does not
+    exclude unpublished, private, or unindexed earlier work. Separate machine
+    validation includes the complete Lean build, theorem-level axiom audit, and
+    Python regression checks; Palomar mechanical verification is a separate
+    check.
+  prior_art:
+    status: "comprehensive public-record audit completed"
+    as_of: "2026-09-23"
+    conclusion: >-
+      No prior published or publicly accessible proof of the advertised
+      tree-stacking estimator theorem was located, and no equivalent theorem
+      was found under the alternative formulations searched.
+    limitations: >-
+      A negative public-record search cannot rule out unpublished, private, or
+      unindexed earlier work. No source author or domain expert is represented
+      here as having certified priority.
+    log: "notes/literature.md"
 
 alignment:
   namespace: "TreeStack"
