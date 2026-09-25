@@ -64,10 +64,10 @@ include the PDF, source archive, final log, extracted text, and preflight report
 
 ## Before arXiv submission
 
-Publication checks completed on 2026-09-23: 12 pages, no figures, a
-604-character metadata abstract, no unresolved references/citations or
-overfull boxes, and identical extracted text from the canonical and unpacked
-source builds. All 12 rendered pages were visually inspected. Independent
+Publication checks completed on 2026-09-25: 12 pages, no figures, a
+729-character metadata abstract, no unresolved references/citations or
+overfull boxes, zero publication placeholders, and identical extracted text
+from the canonical and unpacked source builds. All 12 rendered pages were visually inspected. Independent
 adversarial reviews checked the message, obstruction and upper-bound proofs
 against the Lean development; the correspondence files record the results.
 The existing Python suite passed all 23 tests, and the bounded verifier
