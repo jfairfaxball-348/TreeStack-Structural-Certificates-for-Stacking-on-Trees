@@ -1,13 +1,13 @@
 Title: The stacking number of a tree
 Authors: John Fairfax-Ball
 Abstract:
-The stacking number of a graph is the least integer $t\ge2$ such that every configuration of $t$ pebbles can be transformed by pebbling moves into a configuration supported on one vertex. We prove that, for every finite tree $T$ with at least two vertices, this number equals the rooted distance-and-degree estimator conjectured by Csern\'ak and Soukup. The proof uses an exact recursive characterization of stackability at a prescribed vertex, an explicit zero-score obstruction, and a weighted cancellation argument for arbitrary nonstackable configurations. The complete theorem is formalized in Lean.
-Comments: 12 pages, 0 figures. Complete Lean formalization available in the repository.
+The stacking number of a graph is the least integer $t\ge2$ such that every configuration of $t$ pebbles can be transformed by pebbling moves into a configuration supported on one vertex. We prove that, for every finite tree $T$ with at least two vertices, this number equals the rooted distance-and-degree estimator conjectured by Csern\'ak and Soukup. The proof uses an exact recursive characterization of stackability at a prescribed vertex, an explicit zero-score obstruction, and a weighted cancellation argument for arbitrary nonstackable configurations. The complete theorem is formalized in Lean 4; the formal result has also passed Palomar mechanical verification and is publicly registered as PALOMAR-2026-09-25-000010.
+Comments: 12 pages, 0 figures. Complete Lean formalization and public Palomar verification record available.
 Primary category: math.CO
 Cross-list: None
 MSC-class: 05C57 (Primary); 05C05 (Secondary)
 Report-no:
 Journal-ref:
 DOI:
-Palomar verification: PALOMAR_VERIFICATION_URL_PLACEHOLDER
+Palomar verification: https://palomar-registry.org/entry.html?id=PALOMAR-2026-09-25-000010&version=1
 Repository: https://github.com/jfairfaxball-348/TreeStack-Structural-Certificates-for-Stacking-on-Trees
