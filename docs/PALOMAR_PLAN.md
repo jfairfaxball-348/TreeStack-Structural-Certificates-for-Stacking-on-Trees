@@ -1,9 +1,10 @@
 # Palomar packaging plan
 
-This repository has completed Palomar packaging and mechanical preflight. This
-document does not perform or authorize registration. Registration remains a
-separate maintainer action against one immutable 40-character commit whose own
-post-merge validation is green.
+This repository has completed Palomar packaging, mechanical verification, and
+public registration. The verified result is registered as
+[PALOMAR-2026-09-25-000010](https://palomar-registry.org/entry.html?id=PALOMAR-2026-09-25-000010&version=1), version 1. The registration is the public record of the
+immutable verified result; later publication commits do not alter that
+verification revision.
 
 ## Advertised result
 
@@ -61,10 +62,9 @@ reference and `pipeline_commit` to that exact SHA, requests `mode: full`, and
 explicitly selects the current approved GitHub-hosted
 `palomar-standard-v1` execution profile for the public reusable preflight.
 
-The project pins Lean v4.34.0 and Mathlib
-`5ed2965256430c3649e86755f9576b54eca72435`. The canonical Mathlib revision's
-own `lean-toolchain` is exactly `leanprover/lean4:v4.34.0`, matching the
-project toolchain. Palomar's current minimum is v4.28.0.
+The registered project pins Lean `v4.35.0-rc2` and Mathlib
+`065356127b1dc0016f66b7283ce0ce2c4055aa55`, matching the repository's
+current `lean-toolchain` and `lake-manifest.json`.
 
 ## Metadata and human review
 
@@ -73,11 +73,10 @@ Csernák--Soukup conjecture source without making a priority claim, records the
 explicit one-vertex convention correction, and discloses extensive AI-assisted
 development.
 
-The maintainer has stated during this packaging handoff that external human
-mathematical review of the completed result is complete. No reviewer identity,
-affiliation, date, or quotation is recorded in the repository, so the metadata
-records only the fact of completed external human review and explicitly avoids
-inventing those details.
+The public metadata records the mathematical review status as self-assessed.
+Private informal feedback was obtained from an external reader, but it is not
+represented as peer review, professional endorsement, or an independently
+documented external mathematical review.
 
 ## Licence
 
@@ -108,4 +107,4 @@ and successful verification by both Lean's default kernel and NanoDa.
 6. post-merge `main` validation and Palomar preflight are green;
 7. use only the final immutable `main` SHA reported after the documentation
    freeze itself revalidates;
-8. Palomar registration remains a separate maintainer action.
+8. public registration completed as [PALOMAR-2026-09-25-000010](https://palomar-registry.org/entry.html?id=PALOMAR-2026-09-25-000010&version=1), version 1.
