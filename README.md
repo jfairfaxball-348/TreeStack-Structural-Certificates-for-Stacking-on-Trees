@@ -66,9 +66,9 @@ proof of the nontrivial-tree formula. The [canonical LaTeX source](paper/main.te
 
 Palomar mechanical verification of revision
 `4d4969703a9f0ca7a51cbe7edf0f0338cc95cafb` succeeded and its automated review
-identified no problems. Registration has been requested; the final public
-register entry is pending. The paper reserves its URL with an explicit
-placeholder. No arXiv submission has been made.
+identified no problems. The result is publicly registered as
+[PALOMAR-2026-09-25-000010](https://palomar-registry.org/entry.html?id=PALOMAR-2026-09-25-000010&version=1), version 1. The paper and arXiv metadata carry the same
+verification record. No arXiv submission has been made.
 
 ## Reproduce the bounded checks
 
@@ -168,11 +168,10 @@ Lean formalization is complete. The review status is self-assessed, with
 additional private, informal feedback from an external reader; no formal
 peer-review or professional-endorsement claim is made. The comprehensive
 public-record prior-art/originality audit is complete and is
-logged in `notes/literature.md`. Palomar packaging is complete, and the official
-full mechanical preflight has
+logged in `notes/literature.md`. Palomar packaging is complete, and the official full mechanical preflight has
 passed, including Comparator, protected Challenge provenance, Lean kernel
-checking, and independent NanoDa replay. Palomar registration has **not** been
-performed.
+checking, and independent NanoDa replay. Public registration is complete:
+[PALOMAR-2026-09-25-000010](https://palomar-registry.org/entry.html?id=PALOMAR-2026-09-25-000010&version=1), version 1.
 
 The repository uses the Apache-2.0 licence, with a single root `LICENSE` file
 and matching `project.license` metadata. The immutable commit entered in the
