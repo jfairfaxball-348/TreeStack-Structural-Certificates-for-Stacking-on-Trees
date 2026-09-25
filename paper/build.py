@@ -19,7 +19,8 @@ import tarfile
 
 PAPER = Path(__file__).resolve().parent
 BUILD = PAPER / ".build"
-PALOMAR = "PALOMAR_VERIFICATION_URL_PLACEHOLDER"
+PALOMAR_ID = "PALOMAR-2026-09-25-000010"
+PALOMAR = "https://palomar-registry.org/entry.html?id=PALOMAR-2026-09-25-000010&version=1"
 FIELDS = (
     "Title", "Authors", "Abstract", "Comments", "Primary category", "Cross-list",
     "MSC-class", "Report-no", "Journal-ref", "DOI", "Palomar verification", "Repository",
@@ -63,10 +64,7 @@ def without_comments(text: str) -> str:
 def check_text(text: str, label: str) -> None:
     require(not re.search(r"\b(?:TODO|FIXME|TBD)\b|\\todo\b|\?\?", text),
             f"Unresolved editorial marker in {label}")
-    # URL line breaks in extracted PDF text must not turn the one permitted
-    # marker into an apparently different placeholder.
-    remainder = re.sub(r"\s*".join(re.escape(char) for char in PALOMAR), "", text)
-    require(not re.search(r"\b[A-Z_]*PLACEHOLDER[A-Z_]*\b", remainder),
+    require(not re.search(r"\b[A-Z_]*PLACEHOLDER[A-Z_]*\b", text),
             f"Unexpected placeholder in {label}")
 
 
@@ -147,6 +145,8 @@ def metadata() -> dict[str, str]:
         require(not re.search(r"\\(?:stack|estim|TreeStack|cite|ref|eqref|newcommand)\b", fields[key]),
                 f"Expand local macros/references in metadata {key}")
     require(len(fields["Abstract"]) <= 1920, "Metadata abstract exceeds 1920 characters")
+    require(fields["Palomar verification"] == PALOMAR,
+            "Metadata Palomar verification URL does not match the registered record")
     check_text(raw, "arxiv-metadata.txt")
     return fields
 
@@ -224,6 +224,8 @@ def main() -> None:
     fields = metadata()
     pdfinfo, pdftotext = tool("pdfinfo"), tool("pdftotext")
     pages, text = pdf_details(local, pdfinfo, pdftotext)
+    require(PALOMAR_ID in re.sub(r"\s+", "", text),
+            "Registered Palomar identifier is missing from the compiled PDF")
     page_comment = re.search(r"\b(\d+) pages?\b", fields["Comments"])
     require(page_comment is not None and int(page_comment.group(1)) == pages,
             f"Metadata Comments must give the actual page count: {pages} pages")
@@ -269,7 +271,9 @@ def main() -> None:
         "extracted_bundle_compiles_without_bibtex": True,
         "canonical_and_bundle_pdf_text_identical": True,
         "unresolved_references_citations_or_overfull_boxes": 0,
-        "permitted_placeholder": PALOMAR if PALOMAR in re.sub(r"\s+", "", text) else None,
+        "publication_placeholders": 0,
+        "palomar_registration_id": PALOMAR_ID,
+        "palomar_verification": PALOMAR,
     }
     report_path.write_text(json.dumps(report, indent=2) + "\n")
     print(json.dumps(report, indent=2))
