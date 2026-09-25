@@ -5,11 +5,11 @@ equality is merged on `main`.** PR #17, “Lean: global defect cancellation to
 exact stacking equality,” merged as
 `2bffb748a3d56147e2561a6a026b497c99e15686`. The complete ready-PR workflow
 passed as run #232 and the post-merge `main` workflow passed as run #233.
-External human mathematical review of the completed result has also been
-reported complete by the maintainer. Palomar packaging and full mechanical
-preflight are now complete; the remaining project stages are the separate
-registration decision and research-paper/publication preparation, not Lean
-proof repair.
+The public mathematical-review status is self-assessed; private informal
+feedback was obtained from an external reader but is not claimed as formal peer
+review. Palomar packaging, full mechanical verification, and public registration
+are complete as PALOMAR-2026-09-25-000010, version 1. The remaining project stage is
+research-paper/arXiv publication, not Lean proof repair.
 
 ## Pinned environment
 
@@ -618,12 +618,12 @@ the proof-hole guard and `lake build`.
 ## Remaining work
 
 No mathematical Lean proof obligation remains. PR #17 and its post-merge
-`main` validation are complete, and external human mathematical review has
-been reported complete by the maintainer.
+`main` validation are complete. The public mathematical-review status is
+self-assessed.
 
 Palomar packaging and mechanical verification are complete. The protected
 statement surface is Mathlib-only, the repository licence is Apache-2.0 with
-matching metadata, and the full Palomar preflight has passed through Comparator,
-Lean kernel export, and NanoDa replay. The remaining stages are the separate
-Palomar registration decision and research-paper/publication work. No
-unsupported priority claim is made by the Lean development itself.
+matching metadata, and the full Palomar preflight passed through Comparator,
+Lean kernel export, and NanoDa replay. Public registration is complete as
+PALOMAR-2026-09-25-000010, version 1. The remaining stage is research-paper/arXiv publication.
+No unsupported priority claim is made by the Lean development itself.
