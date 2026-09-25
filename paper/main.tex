@@ -41,7 +41,8 @@ distance-and-degree estimator conjectured by Csern\'ak and Soukup. The proof
 uses an exact recursive characterization of stackability at a prescribed
 vertex, an explicit zero-score obstruction, and a weighted cancellation
 argument for arbitrary nonstackable configurations. The complete theorem is
-formalized in Lean.
+formalized in Lean 4; the formal result has also passed Palomar mechanical
+verification and is publicly registered as \texttt{PALOMAR-2026-09-25-000010}.
 \end{abstract}
 \maketitle
 
@@ -215,9 +216,9 @@ audit records only the standard axioms \texttt{propext},
 The proved declaration is separate from Palomar's protected Challenge
 statement. Palomar mechanical verification succeeded, including comparison
 with that statement and independent NanoDa kernel replay. Its automated
-review identified no problems, and registration was requested for this
-revision. Palomar verification record:
-\url{PALOMAR_VERIFICATION_URL_PLACEHOLDER}.
+review identified no problems. The verified result is publicly registered as
+\texttt{PALOMAR-2026-09-25-000010}, version 1. Palomar verification record:
+\url{https://palomar-registry.org/entry.html?id=PALOMAR-2026-09-25-000010&version=1}.
 This is a record of mechanical verification, not human peer review.
 
 The repository includes a theorem-to-source correspondence for this paper,
