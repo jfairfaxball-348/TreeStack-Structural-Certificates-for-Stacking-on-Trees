@@ -153,8 +153,8 @@ has been uploaded to or processed by arXiv.
 
 The build/preflight result and actual artifact counts belong in
 `paper/README.md` and the generated build report. The submission bundle must
-be regenerated from the canonical source after replacing the Palomar record
-placeholder. The author must select an arXiv license and complete personal
-account/endorsement information as required by arXiv, then inspect the PDF
-produced by arXiv before submitting. No submission is performed by this
+be regenerated from the canonical source containing the final public Palomar
+record (PALOMAR-2026-09-25-000010, version 1). The author must select an arXiv license and complete
+personal account/endorsement information as required by arXiv, then inspect the
+PDF produced by arXiv before submitting. No submission is performed by this
 publication workflow.
