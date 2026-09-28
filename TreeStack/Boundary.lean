@@ -1,6 +1,10 @@
-import Mathlib
-import TreeStack.PebblingMove
-import TreeStack.Message
+module
+
+public import Mathlib
+public import TreeStack.PebblingMove
+public import TreeStack.Message
+
+@[expose] public section
 
 namespace TreeStack
 
