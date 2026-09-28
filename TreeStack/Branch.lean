@@ -1,5 +1,9 @@
-import Mathlib
-import TreeStack.Basic
+module
+
+public import Mathlib
+public import TreeStack.Basic
+
+@[expose] public section
 
 namespace TreeStack
 
