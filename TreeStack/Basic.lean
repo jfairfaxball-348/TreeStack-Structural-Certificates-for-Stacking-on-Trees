@@ -1,4 +1,8 @@
-import Mathlib.Combinatorics.SimpleGraph.Acyclic
+module
+
+public import Mathlib.Combinatorics.SimpleGraph.Acyclic
+
+@[expose] public section
 
 namespace TreeStack
 
