@@ -1,5 +1,9 @@
-import Mathlib
-import TreeStack.Boundary
+module
+
+public import Mathlib
+public import TreeStack.Boundary
+
+@[expose] public section
 
 namespace TreeStack
 
