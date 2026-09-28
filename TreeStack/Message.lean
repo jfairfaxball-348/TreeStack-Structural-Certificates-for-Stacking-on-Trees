@@ -1,6 +1,10 @@
-import Mathlib
-import TreeStack.Transfer
-import TreeStack.Branch
+module
+
+public import Mathlib
+public import TreeStack.Transfer
+public import TreeStack.Branch
+
+@[expose] public section
 
 namespace TreeStack
 
