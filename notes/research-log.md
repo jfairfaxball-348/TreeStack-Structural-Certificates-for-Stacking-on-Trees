@@ -1,6 +1,13 @@
 # Research log
 
-## Proved (pending external review)
+> **Current project status (2026-09-29).** The proof and Lean 4 formalization
+> are complete, Palomar registration is public as
+> `PALOMAR-2026-09-25-000010`, and the research article is publicly available
+> as [arXiv:2609.31811](https://arxiv.org/abs/2609.31811) in math.CO. The
+> milestone labels below record the state of the project when those entries
+> were written; formal peer review is not claimed.
+
+## Proved
 
 - Exact branch-boundary invariant and the branch-message characterization; see
   `message-lemma.md`.
@@ -38,8 +45,8 @@
   \operatorname{stack}(T)=\operatorname{estim}(T)
   \]
 
-  for every finite tree with at least two vertices.  This conclusion is
-  pending external mathematical review and a complete prior-art audit.
+  for every finite tree with at least two vertices.  The complete public-record
+  prior-art audit was later completed; formal peer review is not claimed.
 
 ## Correction made during the zero-score audit
 
@@ -84,7 +91,10 @@ empty side.  The repaired edge-state equivalence is now stated with this lemma.
   through order 7.  A Python 3.9 compatibility shim for `typing.TypeAlias` was
   needed; their source was not modified.
 
-## Pending review / not yet completed
+## Historical pending items at this stage
+
+The following bullets record what remained when this stage of the research log
+was written; later completion status is summarized at the top of this file.
 
 - External mathematical review of the branch theorem, zero-score proof, and
   arbitrary-defect proof.
