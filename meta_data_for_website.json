@@ -6,7 +6,7 @@
   "headline": "A Lean 4 proof of the corrected nontrivial-tree form of the Csernák–Soukup tree-stacking estimator conjecture.",
   "year": 2026,
   "date": "2026-09-21",
-  "description": "For every finite tree $T$ with at least two vertices, this project proves $\\\\operatorname{stack}(T)=\\\\operatorname{estim}(T)$, the corrected nontrivial-tree form of the Csernák–Soukup estimator conjecture. The result is machine-checked end to end in Lean 4 and publicly registered after Palomar mechanical verification and automated review. The standalone research article is publicly available as arXiv:2609.31811 [math.CO].",
+  "description": "For every finite tree $T$ with at least two vertices, this project proves $\\operatorname{stack}(T)=\\operatorname{estim}(T)$, the corrected nontrivial-tree form of the Csernák–Soukup estimator conjecture. The result is machine-checked end to end in Lean 4 and publicly registered after Palomar mechanical verification and automated review. The standalone research article is publicly available as arXiv:2609.31811 [math.CO].",
   "topics": [
     "Graph theory",
     "Graph pebbling",
