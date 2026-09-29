@@ -2,18 +2,22 @@
   "schema_version": 1,
   "title": "TreeStack — Structural Certificates for Stacking on Trees",
   "slug": "treestack",
-  "status": "Awaiting arXiv",
+  "status": "arXiv preprint",
   "headline": "A Lean 4 proof of the corrected nontrivial-tree form of the Csernák–Soukup tree-stacking estimator conjecture.",
   "year": 2026,
   "date": "2026-09-21",
-  "description": "For every finite tree $T$ with at least two vertices, this project proves $\\operatorname{stack}(T)=\\operatorname{estim}(T)$, the corrected nontrivial-tree form of the Csernák–Soukup estimator conjecture. The result is machine-checked end to end in Lean 4 and publicly registered after Palomar mechanical verification and automated review. The standalone research article has been submitted to arXiv and is awaiting public availability.",
-  "topics": ["Graph theory", "Graph pebbling", "Formal verification"],
+  "description": "For every finite tree $T$ with at least two vertices, this project proves $\\\\operatorname{stack}(T)=\\\\operatorname{estim}(T)$, the corrected nontrivial-tree form of the Csernák–Soukup estimator conjecture. The result is machine-checked end to end in Lean 4 and publicly registered after Palomar mechanical verification and automated review. The standalone research article is publicly available as arXiv:2609.31811 [math.CO].",
+  "topics": [
+    "Graph theory",
+    "Graph pebbling",
+    "Formal verification"
+  ],
   "github_url": "https://github.com/jfairfaxball-348/TreeStack-Structural-Certificates-for-Stacking-on-Trees",
   "palomar_id": "PALOMAR-2026-09-25-000010",
   "palomar_url": "https://palomar-registry.org/entry.html?id=PALOMAR-2026-09-25-000010&version=1",
   "paper_url": "https://github.com/jfairfaxball-348/TreeStack-Structural-Certificates-for-Stacking-on-Trees/blob/main/paper/TreeStack.pdf",
-  "arxiv_id": null,
-  "arxiv_url": null,
+  "arxiv_id": "2609.31811",
+  "arxiv_url": "https://arxiv.org/abs/2609.31811",
   "doi": null,
   "formalisation_system": "Lean 4",
   "verification": "The Lean 4 formalisation machine-checks the main theorem end to end. Palomar mechanical verification and automated review passed for revision 4d4969703a9f0ca7a51cbe7edf0f0338cc95cafb; the result is publicly registered as PALOMAR-2026-09-25-000010, version 1.",
@@ -24,6 +28,10 @@
     {
       "label": "Original problem",
       "url": "https://arxiv.org/abs/2604.22341"
+    },
+    {
+      "label": "arXiv preprint",
+      "url": "https://arxiv.org/abs/2609.31811"
     }
   ]
 }
