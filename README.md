@@ -56,8 +56,10 @@ work.
 
 ## Research article
 
-[*The stacking number of a tree*](paper/TreeStack.pdf) gives a standalone
-proof of the nontrivial-tree formula. The [canonical LaTeX source](paper/main.tex),
+[*The stacking number of a tree*](https://arxiv.org/abs/2609.31811) is publicly
+available as **arXiv:2609.31811 [math.CO]**. A repository inspection copy is
+available as [paper/TreeStack.pdf](paper/TreeStack.pdf). The
+[canonical LaTeX source](paper/main.tex),
 [arXiv source bundle](paper/arxiv/TreeStack-arxiv.tar.gz),
 [submission metadata](paper/arxiv-metadata.txt), and
 [build instructions](paper/README.md) are in `paper/`. The publication-stage
@@ -67,8 +69,10 @@ proof of the nontrivial-tree formula. The [canonical LaTeX source](paper/main.te
 Palomar mechanical verification of revision
 `4d4969703a9f0ca7a51cbe7edf0f0338cc95cafb` succeeded and its automated review
 identified no problems. The result is publicly registered as
-[PALOMAR-2026-09-25-000010](https://palomar-registry.org/entry.html?id=PALOMAR-2026-09-25-000010&version=1), version 1. The paper and arXiv metadata carry the same
-verification record. No arXiv submission has been made.
+[PALOMAR-2026-09-25-000010](https://palomar-registry.org/entry.html?id=PALOMAR-2026-09-25-000010&version=1), version 1. The paper, submitted arXiv metadata,
+and public arXiv record carry the same verification record. arXiv assigned the
+permanent identifier [2609.31811](https://arxiv.org/abs/2609.31811); version 1
+was submitted on 2026-09-25.
 
 ## Reproduce the bounded checks
 
