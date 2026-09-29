@@ -615,7 +615,7 @@ the final draft compile repair is
 `482eff2eff834edb27a51e058aa88723c7cac0b5`.  Draft workflow run #228 passed
 the proof-hole guard and `lake build`.
 
-## Remaining work
+## Final project status
 
 No mathematical Lean proof obligation remains. PR #17 and its post-merge
 `main` validation are complete. The public mathematical-review status is
@@ -625,5 +625,7 @@ Palomar packaging and mechanical verification are complete. The protected
 statement surface is Mathlib-only, the repository licence is Apache-2.0 with
 matching metadata, and the full Palomar preflight passed through Comparator,
 Lean kernel export, and NanoDa replay. Public registration is complete as
-PALOMAR-2026-09-25-000010, version 1. The remaining stage is research-paper/arXiv publication.
-No unsupported priority claim is made by the Lean development itself.
+PALOMAR-2026-09-25-000010, version 1. The research article is now publicly
+available as [arXiv:2609.31811](https://arxiv.org/abs/2609.31811) in math.CO.
+No mathematical Lean proof obligation remains, and no unsupported priority
+claim is made by the Lean development itself.
