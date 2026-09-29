@@ -115,8 +115,10 @@ subject of the paper.
 
 ## Official arXiv requirements checked
 
-The following are current documentation checks, not a claim that the paper
-has been uploaded to or processed by arXiv.
+The following were the documentation checks used before the successful initial
+submission. arXiv has since processed the manuscript and assigned the permanent
+identifier [arXiv:2609.31811](https://arxiv.org/abs/2609.31811) in math.CO;
+the public record lists version 1 as submitted on 2026-09-25.
 
 1. [Submission overview](https://info.arxiv.org/help/submit/index.html).
    TeX is the preferred archival input for a TeX-authored paper. The generated
@@ -149,12 +151,13 @@ has been uploaded to or processed by arXiv.
    untested changes after the final local build. Figures, if any are later
    added, must already be in a format supported by the chosen engine.
 
-## Final handoff conditions
+## Initial submission outcome and future revisions
 
-The build/preflight result and actual artifact counts belong in
-`paper/README.md` and the generated build report. The submission bundle must
-be regenerated from the canonical source containing the final public Palomar
-record (PALOMAR-2026-09-25-000010, version 1). The author must select an arXiv license and complete
-personal account/endorsement information as required by arXiv, then inspect the
-PDF produced by arXiv before submitting. No submission is performed by this
-publication workflow.
+The initial submission completed these handoff conditions and is publicly
+available as [arXiv:2609.31811](https://arxiv.org/abs/2609.31811). The
+build/preflight result and actual artifact counts remain documented in
+`paper/README.md` and the generated build report. For any future revision, the
+submission bundle should be regenerated from the canonical source containing
+the final public Palomar record (PALOMAR-2026-09-25-000010, version 1), and the
+PDF produced by arXiv should again be inspected before replacement. No
+submission is performed automatically by this publication workflow.

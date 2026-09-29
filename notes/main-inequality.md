@@ -1,7 +1,9 @@
 # Main estimator inequality
 
-Status: proved within the project, pending external mathematical review and a
-complete prior-art audit.
+Status: proved within the project. The prior-art audit, Lean 4 formalization,
+Palomar registration, and arXiv posting as
+[arXiv:2609.31811](https://arxiv.org/abs/2609.31811) were later completed;
+formal peer review is not claimed.
 
 The global inequality is now
 
@@ -69,8 +71,9 @@ obstruction proves within this project
 \operatorname{stack}(T)=\operatorname{estim}(T)
 \]
 
-for every finite tree with at least two vertices.  This conclusion is pending
-external review; no novelty claim is made.
+for every finite tree with at least two vertices.  A complete public-record
+prior-art audit was later completed; formal peer review is not claimed, and no
+absolute novelty claim is made.
 
 ## Failed stronger local statements
 

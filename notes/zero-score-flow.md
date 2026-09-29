@@ -1,6 +1,9 @@
 # Zero-score generalized flow
 
-Status: proved within the project, pending external review and prior-art audit.
+Status: proved within the project. The prior-art audit, Lean 4 formalization,
+Palomar registration, and arXiv posting as
+[arXiv:2609.31811](https://arxiv.org/abs/2609.31811) were later completed;
+formal peer review is not claimed.
 
 This note proves the exact optimization problem that remains after imposing
 zero score at every vertex.  It also corrects an important formulation issue:
