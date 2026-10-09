@@ -109,3 +109,23 @@ The source uses ordinary BibTeX, standard packages, and no shell escape,
 external document references, special fonts, or generated figure conversion.
 The script checks technical portability; the submission service's compilation
 and preview remain the final arXiv-side checks.
+
+## Version 2 (prepared 2026-10-09)
+
+Changes from arXiv v1, for the replacement upload and journal submission:
+
+- The abstract and introduction lead with the resolution of the
+  Csernák–Soukup conjecture and present the exact rooted-score criterion
+  (Theorem 3.3) as a result in its own right.
+- New Corollary 3.5 computes all branch messages and rooted scores with
+  O(n) arithmetic operations. It is an algorithmic consequence of
+  `stackableAt_iff_score_pos` and is not part of the formal development.
+- The introduction cites Csernák–Soukup, arXiv:2610.09650, which proves the
+  lower bound and derives the upper bound from the Almost Stacked Hypothesis.
+- The provenance note is now a "Use of AI tools" statement.
+- `arxiv-metadata.txt` carries the new abstract and comments.
+
+Full preflight on 2026-10-09 (TeX Live 2023): 13 pages, 0 figures, a
+1054-character metadata abstract, no unresolved references, citations or
+overfull boxes, and identical extracted text from the canonical and unpacked
+source builds. The Lean development and the Palomar record are unchanged.

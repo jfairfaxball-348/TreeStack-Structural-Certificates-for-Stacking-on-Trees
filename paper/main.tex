@@ -33,16 +33,21 @@
 \hypersetup{pdftitle={The stacking number of a tree},pdfauthor={John Fairfax-Ball}}
 \begin{document}
 \begin{abstract}
-The stacking number of a graph is the least integer $t\ge2$ such that every
-configuration of $t$ pebbles can be transformed by pebbling moves into a
-configuration supported on one vertex. We prove that, for every finite tree
-$T$ with at least two vertices, this number equals the rooted
-distance-and-degree estimator conjectured by Csern\'ak and Soukup. The proof
-uses an exact recursive characterization of stackability at a prescribed
-vertex, an explicit zero-score obstruction, and a weighted cancellation
-argument for arbitrary nonstackable configurations. The complete theorem is
-formalized in Lean 4; the formal result has also passed Palomar mechanical
-verification and is publicly registered as \texttt{PALOMAR-2026-09-25-000010}.
+Csern\'ak and Soukup introduced the stacking number of a graph: the least
+integer $t\ge2$ such that every configuration of $t$ pebbles can be
+transformed by pebbling moves into a configuration supported on one vertex.
+They conjectured an explicit formula for the stacking number of a tree in
+terms of the degrees of its vertices and their distances from a chosen root.
+We prove this conjecture for every finite tree with at least two vertices.
+We also show that whether a configuration on a tree can be stacked at a given
+vertex is decided exactly by the sign of an integer score built from
+recursive branch messages; consequently, stackability can be tested with a
+linear number of arithmetic operations. The proof combines this criterion
+with an explicit zero-score obstruction and a weighted cancellation argument
+for arbitrary nonstackable configurations. The main theorem and the
+stackability criterion are formalized in Lean 4, and the main theorem has
+passed Palomar mechanical verification; it is publicly registered as
+\texttt{PALOMAR-2026-09-25-000010}.
 \end{abstract}
 \maketitle
 
@@ -78,6 +83,22 @@ For every finite tree $T$ with at least two vertices,
  \stack(T)=\estim(T).
 \]
 \end{theorem}
+
+In a subsequent preprint~\cite{cs2026ash}, Csern\'ak and Soukup prove the
+lower bound $\stack(T)\ge\estim(T)$ and derive the matching upper bound from
+their Almost Stacked Hypothesis. Theorem~\ref{thm:main} shows that the
+equality holds unconditionally. That preprint also normalizes the estimator
+as $\max\{2,\estim(T)\}$; with this convention the equality extends to the
+one-vertex tree.
+
+The proof yields an exact criterion of independent interest. For a
+configuration $C$ and a vertex $r$, Section~\ref{sec:messages} defines an
+integer score $S_r(C)$ by a recursion over the branches at $r$, and
+Theorem~\ref{thm:root-score} shows that $C$ can be stacked at $r$ if and
+only if $S_r(C)>0$. All the scores can be computed together with
+$O(|V(T)|)$ arithmetic operations (Corollary~\ref{cor:linear-time}), so the
+stackability of a given configuration on a tree can be decided without any
+search over sequences of moves.
 
 We prove the tree-stacking estimator conjecture of Csern\'ak and Soukup for
 nontrivial trees. The proof has three structural ingredients.
@@ -204,6 +225,12 @@ Its hypothesis and conclusion are, respectively,
 \]
 for a finite tree $T$ on $V$. The formalization proves the result for
 arbitrary finite trees, without an order bound.
+Theorem~\ref{thm:root-score} is the declaration
+\begin{center}
+\texttt{TreeStack.stackableAt\_iff\_score\_pos}.
+\end{center}
+Corollary~\ref{cor:linear-time} is an algorithmic consequence of that theorem
+and is not part of the formal development.
 
 The source and reproduction instructions are available in the public
 repository~\cite{treestack}. The immutable formal-verification revision is
@@ -230,12 +257,16 @@ support reproduction and testing; the proofs above do not depend on finite
 enumeration. Later publication commits preserve the immutable verification
 revision.
 
-\subsection*{Development provenance}
-The work was developed with extensive AI assistance under the direction of
-the author, including mathematical exploration, Lean development, proof
-auditing and preparation of the exposition. The author selected the problem
-and scope and directed validation. This disclosure follows the development
-provenance recorded in the repository.
+\subsection*{Use of AI tools}
+This work was developed with extensive assistance from AI tools, under the
+direction of the author, including mathematical exploration, Lean
+development, proof auditing and preparation of the exposition. The author
+selected the problem and scope and directed validation. The proofs in this
+paper are written to be checked without the formal development; those of the
+main theorem were also cross-checked against the Lean declarations, and the
+main theorem is verified in Lean as described above. The author takes full
+responsibility for the content of the paper. This disclosure follows the
+development provenance recorded in the repository.
 
 \bibliographystyle{amsplain}
 \bibliography{references}
