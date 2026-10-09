@@ -122,7 +122,10 @@ Changes from arXiv v1, for the replacement upload and journal submission:
   `stackableAt_iff_score_pos` and is not part of the formal development.
 - The introduction cites Csernák–Soukup, arXiv:2610.09650, which proves the
   lower bound and derives the upper bound from the Almost Stacked Hypothesis.
-- The provenance note is now a "Use of AI tools" statement.
+- The provenance note is now a "Use of AI tools" statement naming the tools
+  used (OpenAI's ChatGPT and Codex).
+- The author's ORCID iD (https://orcid.org/0009-0007-9017-4571), supplied by
+  the author, appears in the first-page footnote.
 - `arxiv-metadata.txt` carries the new abstract and comments.
 
 Full preflight on 2026-10-09 (TeX Live 2023): 13 pages, 0 figures, a
