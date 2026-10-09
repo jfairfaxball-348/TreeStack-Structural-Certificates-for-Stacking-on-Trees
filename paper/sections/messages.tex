@@ -166,3 +166,40 @@ positive initial pile. An empty branch may be left alone even when that
 pile is zero. This is why the recursive state must retain $\EMPTY$
 separately from the integer zero.
 \end{remark}
+
+\begin{corollary}[Computing stackability]\label{cor:linear-time}
+Let $T$ be a tree with $n$ vertices and let $C$ be a configuration on $T$.
+All messages $m_{v\to p}$ and all scores $S_r(C)$, $r\in V(T)$, can be
+computed with $O(n)$ arithmetic operations. Consequently, $O(n)$ arithmetic
+operations suffice to decide whether $C$ is stackable and to list every
+vertex at which it is stackable.
+\end{corollary}
+\begin{proof}
+Fix a vertex $\rho$ and list the vertices of $T$ in breadth-first order from
+$\rho$. Scanning this list backwards, determine for each $v\ne\rho$, with
+parent $p$, whether $B_{v\mid p}$ is occupied and, if it is, compute
+$d_{v\to p}$ by~\eqref{eq:message}. The inputs are $C(v)$ and the states
+of the branches $B_{u\mid v}$ at the children $u$ of $v$, all found earlier
+in the scan.
+
+Next scan the list forwards. When a vertex $p$ is reached, the states of all
+branches $B_{u\mid p}$ with $u\sim p$ are known: those at the children of $p$
+from the first scan, and the one at its parent earlier in this scan. Put
+\[
+ \Sigma(p)=C(p)+\sum_{u\sim p}\bar d_{u\to p},
+ \qquad
+ \omega(p)=\bigl|\{u\sim p:B_{u\mid p}\text{ occupied}\}\bigr|.
+\]
+Let $v$ be a child of $p$. The branch $B_{p\mid v}$ is occupied exactly when
+$C(p)>0$ or $B_{u\mid p}$ is occupied for some neighbour $u\ne v$ of $p$;
+the number of such neighbours is $\omega(p)-1$ if $B_{v\mid p}$ is occupied
+and $\omega(p)$ otherwise. If $B_{p\mid v}$ is occupied,
+then~\eqref{eq:message} gives
+\[
+ d_{p\to v}=F\bigl(\Sigma(p)-\bar d_{v\to p}\bigr).
+\]
+At each vertex $v$ each scan uses $O(\deg(v)+1)$ arithmetic operations, so
+both scans together use $O(n)$. Finally $S_r(C)=\Sigma(r)$
+by~\eqref{eq:score}, and Theorem~\ref{thm:root-score} converts the signs of
+the scores into the stated decisions.
+\end{proof}
